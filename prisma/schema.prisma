@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Authenticated bot twitter account - singleton
+model TwitterAccount {
+  updatedAt DateTime @default(now())
+
+  userId        String @unique // X user id eg: 1849649146669695000
+  userName      String // X user name eg: Proctar Elastos
+  userScreeName String // X user name eg: proctar2626
+
+  accessToken  String // X access token for this user, after web/pin authorization
+  accessSecret String // X secret token for this user, after web/pin authorization
+
+  PostedXPost PostedXPost[]
+}
+
+// Post retrieved from X. 
+// Can be a news post from a third party account, or for example, a post 
+// from any user in reply to one of our bot's posts.
+model XPost {
+  id String @unique @default(uuid())
+
+  createdAt DateTime @default(now()) // Entry creation date
+
+  text        String // Core post content
+  postId      String
+  authorId    String // X user id
+  contentDate DateTime // Post published date
+
+  parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
+  rootPostId   String // Parent post (id on X) - root tweet - usually, the tweet created by our bot - same as post id if root
+
+  // Categorization
+  isNewsPost Boolean // Whether this post is fetched as a crypto news to feed our bot.
+  isRealNews Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
+
+  // Link to bot post summary - only for news posts, the only ones used to build summaries
+  summaryPost   PostedXPost? @relation(fields: [postedXPostId], references: [id]) // X summary post created by our bot, and that used this source tweet for its composition
+  postedXPostId String?
+}
+
+enum OperationHistoryType {
+  FetchNewsPosts
+  FetchRepliesToSelf
+}
+
+// History of operations such as post fetched from X. Used for example to 
+// know where to resume to save API data usage.
+model OperationHistory {
+  id String @unique @default(uuid())
+
+  type      OperationHistoryType
+  createdAt DateTime             @default(now()) // Fetch date
+}
+
+// Post created for X, published through the bot account.
+model PostedXPost {
+  id String @unique @default(uuid())
+
+  createdAt   DateTime  @default(now()) // Draft creation date
+  publishedAt DateTime? // Date at which the post got published on X
+
+  text                 String // Tweet content
+  account              TwitterAccount @relation(fields: [twitterAccountUserId], references: [userId]) // Bot account used to send the tweet
+  twitterAccountUserId String
+
+  XPost XPost[] // source posts used to produce the summary
+}
+
+model WebPage {
+  id String @unique @default(uuid())
+
+  createdAt DateTime @default(now()) // Entry creation date
+
+  contentDate DateTime? // If known, date at which the web page was written/published
+}

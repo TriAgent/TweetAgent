@@ -1,0 +1,11 @@
+version: "3.8"
+name: aiwalletxzkp
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - '5495:5432'
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_DB=aiwalletxzkp
