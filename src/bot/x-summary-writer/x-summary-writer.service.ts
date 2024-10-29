@@ -6,13 +6,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { XPostType } from "@prisma/client";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { LangchainService } from "src/langchain/langchain.service";
+import { botPersonalityPromptChunk, forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { TwitterService } from "src/twitter/twitter.service";
 import { XPostsService } from "src/xposts/xposts.service";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
-import { forbiddenWordsPromptChunk } from "src/langchain/prompt-parts";
 
 /**
  * TODO:
@@ -61,17 +61,18 @@ export class XSummaryWriterService {
       );
       const vectorStoreRetriever = vectorStore.asRetriever();
 
-      const SYSTEM_TEMPLATE = `
-      Here is a list of several posts from twitter. 
-      Make a short summary of all of them. Crypto expert attitude BUT make sure to use simple terms. Neutral tone. Try to produce less than 40 words. 
-      Try to avoid too rough sentences separations with dots, and instead, try to compose in a text smoother to read with ideas
-      getting connected to each other when that's possible. Avoid using too many impressive adjectives, 
-      remain neutral. You can use a few sometimes tough.
-      ${forbiddenWordsPromptChunk()}
-      ---------------- 
-      {context}`;
+      const REQUEST_TEMPLATE = `
+        Here is a list of several posts from twitter. Make a short summary of all of them. 
+        ---------------- 
+        {context}
+      `;
 
-      const prompt = ChatPromptTemplate.fromMessages([["system", SYSTEM_TEMPLATE]]);
+      const prompt = ChatPromptTemplate.fromMessages([
+        ["system", botPersonalityPromptChunk()],
+        ["system", forbiddenWordsPromptChunk()],
+        ["system", tweetCharactersSizeLimitationPromptChunk()],
+        ["system", REQUEST_TEMPLATE]
+      ]);
 
       const model = this.langchain.getModel(1.5); // high temperature for more random output
 

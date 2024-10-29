@@ -2,7 +2,7 @@ import { BaseMessageLike } from "@langchain/core/messages";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StructuredTool } from "@langchain/core/tools";
 import { XPost } from "@prisma/client";
-import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
+import { botPersonalityPromptChunk, forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { langchain, twitterAuth, xPosts } from "src/services";
 import { z } from "zod";
 import { TweetTrait } from "../model/tweet-trait";
@@ -43,19 +43,24 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
       }
     }
 
-    const SYSTEM_TEMPLATE = `
-    The conversation is a twitter conversation. We have decided to write a reply for it. The parent tweet you are
-    replying to has been analyzed and you should include only the following items in the answer:
+    const REQUEST_TEMPLATE = `
+      The conversation is a twitter conversation. We have decided to write a reply for it. The parent tweet you are
+      replying to has been analyzed and you should include only the following items in the answer:
 
-    ${replyGuidelines}
-    ${forbiddenWordsPromptChunk()}
+      ${replyGuidelines}
 
-    Here is the tweet:
-    ---------------- 
-    {tweetContent}`;
+      Here is the tweet:
+      ---------------- 
+      {tweetContent}
+    `;
 
     // No actual user message, everything is in the system prompt.
-    const messages: BaseMessageLike[] = [["system", SYSTEM_TEMPLATE]];
+    const messages: BaseMessageLike[] = [
+      ["system", botPersonalityPromptChunk()],
+      ["system", forbiddenWordsPromptChunk()],
+      ["system", tweetCharactersSizeLimitationPromptChunk()],
+      ["system", REQUEST_TEMPLATE]
+    ];
 
     for (var post of conversation) {
       if (post.authorId === botAccount.userId)
@@ -64,10 +69,10 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
         messages.push(["human", `[twitter user ${post.authorId} wrote:] ${post.text}`])
     }
 
+    // Action request
     messages.push(["system",
       `Write the tweet reply. Remember you are replying mostly to the most recent 
-       tweet but do not @ the use ID in the reply. 
-       ${tweetCharactersSizeLimitationPromptChunk()}`]);
+       tweet but do not @ the use ID in the reply.`]);
 
     const prompt = ChatPromptTemplate.fromMessages(messages);
 

@@ -1,3 +1,4 @@
+import { BotConfig } from "src/config/bot-config";
 import { forbiddenBotWords } from "./fobidden-keywords";
 
 /**
@@ -5,10 +6,8 @@ import { forbiddenBotWords } from "./fobidden-keywords";
  */
 export const forbiddenWordsPromptChunk = () => {
   return `
-    -------
-    Also, don't use any of the following words in your reply:
+    Do not use any of the following words in your reply:
     ${forbiddenBotWords.join(", ")}
-    -------
   `;
 }
 
@@ -17,8 +16,8 @@ export const tweetCharactersSizeLimitationPromptChunk = () => {
 }
 
 /**
- * Tells the bot what kind of writing style and personnality it should use while producing content.
+ * Tells the bot what kind of writing style and personality it should use while producing content.
  */
-export const botPersonnalityPromptChunk = () => {
-
+export const botPersonalityPromptChunk = () => {
+  return BotConfig.Generation.Personality;
 }
