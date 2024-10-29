@@ -178,9 +178,6 @@ export class XReplierService {
       if (result.tweetReply) {
         const botAccount = await this.twitterAuth.getAuthenticatedBotAccount();
 
-        // Mark as handled, so we don't try to reply again
-        await this.xPosts.markAsReplied(xReply);
-
         // Schedule a post
         this.logger.log("Scheduling new X reply post");
         await this.prisma.xPost.create({
@@ -193,6 +190,10 @@ export class XReplierService {
           }
         });
       }
+
+      // No matter if we could generate a reply or not, mark as user's reply as 
+      // handled, so we don't try to handle it again later
+      await this.xPosts.markAsReplied(xReply);
     }
 
     await this.xPosts.sendPendingXPosts(XPostType.BotReply);

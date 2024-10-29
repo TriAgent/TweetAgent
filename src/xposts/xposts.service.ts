@@ -58,7 +58,7 @@ export class XPostsService {
         AND: [
           { publishedAt: { not: null } },
           // TODO: replace code below with a "publish not before date" field in database, to be more generic
-          { publishedAt: { lt: moment().subtract(2, "minutes").toDate() } }
+          { publishedAt: { gt: moment().subtract(2, "minutes").toDate() } }
         ]
       },
       orderBy: { publishedAt: "desc" }

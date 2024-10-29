@@ -3,6 +3,7 @@ import { END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph
 import { Injectable, Logger } from "@nestjs/common";
 import { OperationHistoryType, XPost, XPostType } from "@prisma/client";
 import * as moment from "moment";
+import { BotConfig } from "src/config/bot-config";
 import { LangchainService } from "src/langchain/langchain.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterService } from "src/twitter/twitter.service";
@@ -30,10 +31,7 @@ export class XPostsNewsService {
   }
 
   private async fetchLatestPosts() {
-    const targetTwitterAccounts = [
-      'BitcoinMagazine',
-      'crypto' // bloomberg crypto
-    ];
+    const targetTwitterAccounts = BotConfig.News.XSourceAccounts;
 
     // Check when we last fetched
     let latestFetchDate = await this.lastPostsFetchDate();

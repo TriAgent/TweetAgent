@@ -12,6 +12,7 @@ import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { TwitterService } from "src/twitter/twitter.service";
 import { XPostsService } from "src/xposts/xposts.service";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
+import { forbiddenWordsPromptChunk } from "src/langchain/prompt-parts";
 
 /**
  * TODO:
@@ -66,6 +67,7 @@ export class XSummaryWriterService {
       Try to avoid too rough sentences separations with dots, and instead, try to compose in a text smoother to read with ideas
       getting connected to each other when that's possible. Avoid using too many impressive adjectives, 
       remain neutral. You can use a few sometimes tough.
+      ${forbiddenWordsPromptChunk()}
       ---------------- 
       {context}`;
 

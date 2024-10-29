@@ -2,6 +2,7 @@ import { BaseMessageLike } from "@langchain/core/messages";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StructuredTool } from "@langchain/core/tools";
 import { XPost } from "@prisma/client";
+import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { langchain, twitterAuth, xPosts } from "src/services";
 import { z } from "zod";
 import { TweetTrait } from "../model/tweet-trait";
@@ -47,13 +48,11 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
     replying to has been analyzed and you should include only the following items in the answer:
 
     ${replyGuidelines}
+    ${forbiddenWordsPromptChunk()}
 
     Here is the tweet:
     ---------------- 
     {tweetContent}`;
-
-    // TODO: conversation history
-    // TODO: last message should ask to generate the reply
 
     // No actual user message, everything is in the system prompt.
     const messages: BaseMessageLike[] = [["system", SYSTEM_TEMPLATE]];
@@ -65,7 +64,10 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
         messages.push(["human", `[twitter user ${post.authorId} wrote:] ${post.text}`])
     }
 
-    messages.push(["system", "Write the tweet reply. Remember you are replying mostly to the most recent tweet but do not @ the use ID in the reply."]);
+    messages.push(["system",
+      `Write the tweet reply. Remember you are replying mostly to the most recent 
+       tweet but do not @ the use ID in the reply. 
+       ${tweetCharactersSizeLimitationPromptChunk()}`]);
 
     const prompt = ChatPromptTemplate.fromMessages(messages);
 
