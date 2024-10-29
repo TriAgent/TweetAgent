@@ -1,14 +1,13 @@
-import { AIMessage, BaseMessage } from "@langchain/core/messages";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { tool } from "@langchain/core/tools";
+import { BaseMessage } from "@langchain/core/messages";
 import { END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
 import { Injectable, Logger } from "@nestjs/common";
-import { OperationHistoryType, XPost } from "@prisma/client";
+import { OperationHistoryType, XPost, XPostType } from "@prisma/client";
 import * as moment from "moment";
 import { LangchainService } from "src/langchain/langchain.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterService } from "src/twitter/twitter.service";
-import { z } from "zod";
+import { categorizeNewsAgent } from "./agents/categorize-news.agent";
+import { categorizeNewsTool } from "./tools/categorize-news.tool";
 
 const FetchXPostsDelay = 1 * 60 * 60 * 1000; // 1 hour
 
@@ -53,18 +52,18 @@ export class XPostsNewsService {
     for (var post of posts) {
       const existingPost = await this.getDBPostByTwitterPostId(post.id);
       if (!existingPost) {
-        const parentXPost = post.referenced_tweets?.find(t => t.type === "replied_to");
+        const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
 
         // Save post to database
         const dbPost = await this.prisma.xPost.create({
           data: {
+            type: XPostType.ThirdPartyNews,
             text: post.text,
             authorId: post.author_id,
             postId: post.id,
-            contentDate: post.created_at,
-            isNewsPost: true,
-            parentPostId: parentXPost ? parentXPost.id : null,
-            rootPostId: parentXPost ? post.conversation_id : null
+            publishedAt: post.created_at,
+            parentPostId: parentXPostId ? parentXPostId : null,
+            rootPostId: parentXPostId ? post.conversation_id : post.id
           }
         });
         newPosts.push(dbPost);
@@ -99,6 +98,7 @@ export class XPostsNewsService {
   private async categorizeTweets() {
     const recentPosts = await this.prisma.xPost.findMany({
       where: {
+        type: XPostType.ThirdPartyNews,
         isRealNews: null,
         createdAt: { gt: moment().subtract(2, "days").toDate() } // care only about recent enough tweets for now
       },
@@ -119,64 +119,18 @@ export class XPostsNewsService {
    * or not relevant content.
    */
   private async categorizeAsRealNews(post: XPost) {
-    // Tools setup
-    const categorizeNewsTool = tool(
-      async ({ text, isNews }: { text: string, isNews: boolean }) => {
-        this.logger.log(`Categorizing tweet as ${isNews ? "REAL NEWS" : "NOT REAL NEWS"}: ${text}`);
+    const tools = [
+      categorizeNewsTool(this.logger, this.prisma, post) // ability to update a DB post with "isRealNews" info
+    ];
+    const mainAgent = categorizeNewsAgent(tools, post);
 
-        await this.prisma.xPost.update({
-          where: { id: post.id },
-          data: { isRealNews: isNews }
-        });
-      },
-      {
-        name: "save_categorization",
-        description: "Saves categorization of a twitter post as real news or not",
-        schema: z.object({
-          text: z.string().describe("Textual tweet content"),
-          isNews: z.boolean().describe("Whether this tweet can be considered as a real bitcoin news or not")
-        })
-      });
-    const tools = [categorizeNewsTool];
-
-    // Configure LLM model
-    const model = this.langchain.getModel().bindTools(tools);
-
-    // Base entry point
-    const mainAgent = async (state: typeof MessagesAnnotation.State) => {
-      const SYSTEM_TEMPLATE = `
-      Here is a twitter post related to crypto. You have to evaluate if this post is a 
-      real news that brings new information to users about the crypto landscape.
-      ---------------- 
-      {tweetContent}`;
-
-      // No actual user message, everything is in the system prompt.
-      const prompt = ChatPromptTemplate.fromMessages([["system", SYSTEM_TEMPLATE]]);
-
-      const response = await prompt.pipe(model).invoke({ tweetContent: post.text });
-      return { messages: [response] };
-    };
-
-    // Graph and nodes
     const graph = new StateGraph(MessagesAnnotation).addNode("agent", mainAgent);
-
-    // Edges (paths)
     graph.addEdge(START, "agent").addEdge("agent", END);
-
     const app = graph.compile();
 
-    // Invoke graph
+    // Invoke tools targeted by the graph
     const result: { messages: BaseMessage[] } = await app.invoke({});
-    if (result) {
-      // Execute the categorization tool based on parameters determined by the model
-      const firstMessage: AIMessage = result.messages[0]; // We should have only one output message
-
-      // Normally only one tool call as only one tweet is provided.
-      for (var toolCall of firstMessage.tool_calls) {
-        const targetTool = tools.find(t => t.name === toolCall.name);
-        await targetTool.invoke(toolCall.args);
-      }
-    }
+    await this.langchain.executeAllToolCalls(tools, result);
   }
 }
 

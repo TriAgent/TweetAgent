@@ -1,5 +1,6 @@
 import { BaseDocumentLoader } from "@langchain/core/document_loaders/base";
 import { Document } from "@langchain/core/documents";
+import { XPostType } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 
 export type SummaryDocument = Document<{ "author", "id" }>;
@@ -15,8 +16,9 @@ export class SummaryPostLoader extends BaseDocumentLoader {
   async load(): Promise<SummaryDocument[]> {
     const posts = await this.prisma.xPost.findMany({
       where: {
+        type: XPostType.ThirdPartyNews,
         isRealNews: true, // Post must be considered as a real news, useful to summarize
-        postedXPostId: null // Post must not be used by a summary post yet
+        summarizedById: null // Post must not be used by a summary post yet
       },
       orderBy: { createdAt: "desc" },
       take: 3

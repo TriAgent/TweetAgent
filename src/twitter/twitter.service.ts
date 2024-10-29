@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Moment } from "moment";
 import { splitStringAtWord } from "src/utils/strings";
-import { TweetV2 } from "twitter-api-v2";
+import { SendTweetV2Params, TweetV2 } from "twitter-api-v2";
 import { TwitterAuthService } from "./twitter-auth.service";
 
 @Injectable()
@@ -43,28 +43,39 @@ export class TwitterService {
 
   /**
    * Sends the given text as a tweet to the current bot X account.
-   * Returns the created post id (twitter post id)
+   * Returns the created post ids (in conversation order)
    */
-  public async publishTweet(tweetContent: string): Promise<string> {
+  public async publishTweet(tweetContent: string, inReplyToTweetId?: string): Promise<{ postId: string, text: string }[]> {
     const client = await this.auth.getAuthorizedClientForBot();
 
     // Split content if larger than 280 chars
-    const subTweets: string[] = [];
+    const subTweets: SendTweetV2Params[] = [];
     let remainingContent = tweetContent;
     while (remainingContent.length >= 280) {
       const parts = splitStringAtWord(remainingContent, 280 - 3); // -3 as we want space to ellipsis (...).
       remainingContent = parts[1];
-      subTweets.push(`${parts[0]}...`);
+      subTweets.push({
+        text: `${parts[0]}...`
+      });
     }
 
-    subTweets.push(remainingContent);
+    subTweets.push({ text: remainingContent });
+
+    // Attach to an existing tweet if we are writing a reply
+    if (inReplyToTweetId) {
+      subTweets[0].reply = {
+        in_reply_to_tweet_id: inReplyToTweetId
+      }
+    }
+
+    console.log("subTweets", subTweets)
 
     const createdTweets = await client.v2.tweetThread(subTweets);
 
     this.logger.log('Posted a new tweet thread:');
     this.logger.log(createdTweets);
 
-    return createdTweets?.[0].data.id; // Only return the parent tweet id for now
+    return createdTweets?.map(t => ({ postId: t.data.id, text: t.data.text }));
   }
 
   public async fetchRepliesToSelf(notBefore: Moment): Promise<TweetV2[]> {
@@ -72,7 +83,7 @@ export class TwitterService {
     const botAuth = await this.auth.getAuthenticatedBotAccount();
 
     const replies = await client.v2.search(`to: ${botAuth.userId}`, {
-      sort_order: "relevancy",
+      //sort_order: "relevancy",
       start_time: notBefore.toISOString(),
       'tweet.fields': 'created_at,id,author_id,text,conversation_id,referenced_tweets'
     });

@@ -18,32 +18,47 @@ model TwitterAccount {
   accessToken  String // X access token for this user, after web/pin authorization
   accessSecret String // X secret token for this user, after web/pin authorization
 
-  PostedXPost PostedXPost[]
+  PostedXPost XPost[]
+}
+
+enum XPostType {
+  ThirdPartyNews // Post created by third party accounts that we follow for their relevant content (source for our summaries)
+  BotSummary // Post created by our bot to summarize recent news
+  BotReply // Post created by out bot as a reply to other users
+  UserReply // Post created by other users as a reply to out bot posts, for example as reply to summary posts.
 }
 
 // Post retrieved from X. 
-// Can be a news post from a third party account, or for example, a post 
-// from any user in reply to one of our bot's posts.
+// Can be:
+// - a news post from a third party account
+// - a post from any user in reply to one of our bot's posts.
+// - our bot replies
+// - our bot summaries
 model XPost {
-  id String @unique @default(uuid())
+  id   String    @unique @default(uuid())
+  type XPostType
 
-  createdAt DateTime @default(now()) // Entry creation date
+  createdAt   DateTime  @default(now()) // Entry creation date
+  publishedAt DateTime? // Post published date
 
-  text        String // Core post content
-  postId      String
-  authorId    String // X user id
-  contentDate DateTime // Post published date
-
+  text         String // Core post content
+  postId       String? // ID of the post of X
   parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
-  rootPostId   String // Parent post (id on X) - root tweet - usually, the tweet created by our bot - same as post id if root
+  rootPostId   String? // Parent post (id on X) - root tweet - usually, the tweet created by our bot - same as post id if root
+  authorId     String // X user id
 
-  // Categorization
-  isNewsPost Boolean // Whether this post is fetched as a crypto news to feed our bot.
-  isRealNews Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
+  // "ThirdPartyNews" type specifics
+  isRealNews     Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
+  summarizedBy   XPost?   @relation(name: "SourcePosts", fields: [summarizedById], references: [id])
+  summarizedById String?
 
-  // Link to bot post summary - only for news posts, the only ones used to build summaries
-  summaryPost   PostedXPost? @relation(fields: [postedXPostId], references: [id]) // X summary post created by our bot, and that used this source tweet for its composition
-  postedXPostId String?
+  // "BotSummary" type specifics
+  account              TwitterAccount? @relation(fields: [twitterAccountUserId], references: [userId]) // Bot account used to send the tweet
+  twitterAccountUserId String?
+  summarySourcePosts   XPost[]         @relation(name: "SourcePosts") // source posts used to produce the summary
+
+  // "UserReply" type specifics
+  wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
 }
 
 enum OperationHistoryType {
@@ -54,30 +69,13 @@ enum OperationHistoryType {
 // History of operations such as post fetched from X. Used for example to 
 // know where to resume to save API data usage.
 model OperationHistory {
-  id String @unique @default(uuid())
-
+  id        String               @unique @default(uuid())
   type      OperationHistoryType
   createdAt DateTime             @default(now()) // Fetch date
 }
 
-// Post created for X, published through the bot account.
-model PostedXPost {
-  id String @unique @default(uuid())
-
-  createdAt   DateTime  @default(now()) // Draft creation date
-  publishedAt DateTime? // Date at which the post got published on X
-
-  text                 String // Tweet content
-  account              TwitterAccount @relation(fields: [twitterAccountUserId], references: [userId]) // Bot account used to send the tweet
-  twitterAccountUserId String
-
-  XPost XPost[] // source posts used to produce the summary
-}
-
 model WebPage {
-  id String @unique @default(uuid())
-
-  createdAt DateTime @default(now()) // Entry creation date
-
+  id          String    @unique @default(uuid())
+  createdAt   DateTime  @default(now()) // Entry creation date
   contentDate DateTime? // If known, date at which the web page was written/published
 }

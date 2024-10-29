@@ -1,0 +1,7 @@
+
+summaries: forbid those adjectives:
+- Efficiency - Innovation - Institution - Integration - Implementation - Landscape - Optimization - Realm - Tapestry - Transformation - Aligns - Augment - Delve - Embark - Facilitate - Maximize - Underscores - Utilize - According to - Additionally - Arguably - Certainly - Consequently - Hence - However - Indeed - Moreover - Nevertheless - Nonetheless - Notwithstanding - Thus - Undoubtedly - Adept - Commendable - Dynamic - Efficient - Ever-evolving - Exciting - Exemplary - Innovative - Invaluable - Robust - Seamless - Synergistic - Thought-provoking - Transformative - Utmost - Vibrant - Vital - Leverage - Pioneering - Revolutionize - Streamlined - Groundbreaking - enhancing - fostering - bolstering - envisions - harnesses - unveils
+
+---
+
+ideally also it uses first principle thinking (without saying first pricniple thinking) so what it talks about are fundamental truths

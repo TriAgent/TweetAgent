@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { CryptoNewsService } from "src/crypto-news/crypto-news.service";
-import { XReplierService } from "./x-replier.service";
-import { XSummaryWriterService } from "./x-summary-writer.service";
+import { XReplierService } from "./x-replier/x-replier.service";
+import { XSummaryWriterService } from "./x-summary-writer/x-summary-writer.service";
 
 @Injectable()
 export class BotService {

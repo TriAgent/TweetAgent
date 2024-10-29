@@ -68,6 +68,7 @@ export class TwitterAuthService implements OnModuleInit {
       accessSecret: authLink.oauth_token_secret
     });
 
+    this.logger.log("Signing in to target account");
     const { client: loggedClient, accessToken, accessSecret } = await step2Client.login(userPINCode);
     const user = await loggedClient.currentUser();
 

@@ -3,13 +3,14 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnablePassthrough, RunnableSequence } from "@langchain/core/runnables";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Injectable, Logger } from '@nestjs/common';
+import { XPostType } from "@prisma/client";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import * as moment from "moment";
 import { LangchainService } from "src/langchain/langchain.service";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { TwitterService } from "src/twitter/twitter.service";
+import { XPostsService } from "src/xposts/xposts.service";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
 
 /**
@@ -32,7 +33,8 @@ export class XSummaryWriterService {
     private twitterAuth: TwitterAuthService,
     private twitter: TwitterService,
     private prisma: PrismaService,
-    private langchain: LangchainService
+    private langchain: LangchainService,
+    private xPosts: XPostsService
   ) { }
 
   public run() {
@@ -92,7 +94,7 @@ export class XSummaryWriterService {
     }
 
     // Flush X posts queue
-    await this.sendQueuedXPosts();
+    await this.xPosts.sendPendingXPosts(XPostType.BotSummary);
 
     // Rearm
     setTimeout(() => {
@@ -108,8 +110,10 @@ export class XSummaryWriterService {
     const botAccount = await this.twitterAuth.getAuthenticatedBotAccount();
 
     // Create draft
-    const dbPost = await this.prisma.postedXPost.create({
+    const dbPost = await this.prisma.xPost.create({
       data: {
+        type: XPostType.BotSummary,
+        authorId: botAccount.userId,
         text: tweetContent,
         account: { connect: { userId: botAccount.userId } }
       }
@@ -118,51 +122,10 @@ export class XSummaryWriterService {
     // Mark source posts as used
     await this.prisma.xPost.updateMany({
       where: { id: { in: docs.map(d => d.metadata.id) } },
-      data: { postedXPostId: dbPost.id }
+      data: { summarizedById: dbPost.id }
     });
-  }
-
-  /**
-   * If the most recent post is not more recent than the minimal allowed time, 
-   * sends one next post (in case it was just created, or failed to publishe earlier.)
-   */
-  private async sendQueuedXPosts() {
-    // Make sure we haven't published too recently
-    const mostRecentlyPublishedPost = await this.prisma.postedXPost.findFirst({
-      where: {
-        AND: [
-          { publishedAt: { not: null } },
-          { publishedAt: { lt: moment().subtract(MinTimeBetweenXPosts, "milliseconds").toDate() } }
-        ]
-      },
-      orderBy: { publishedAt: "desc" }
-    });
-
-    if (mostRecentlyPublishedPost)
-      return;
-
-    // Find a tweet that we can send.
-    const postToSend = await this.prisma.postedXPost.findFirst({
-      where: { publishedAt: null }
-    });
-
-    // Nothing new to send for now
-    if (!postToSend)
-      return;
-
-    this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
-    const tweetId = await this.twitter.publishTweet(postToSend.text);
-
-    // Mark as sent
-    if (tweetId) {
-      await this.prisma.postedXPost.update({
-        where: { id: postToSend.id },
-        data: { publishedAt: new Date() }
-      });
-    }
   }
 }
-
 
 /*
     // Tools

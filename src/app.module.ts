@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppService } from './app.service';
 import { BootstrapModule } from './bootstrap/bootstrap.module';
 import { BotModule } from './bot/bot.module';
 import { CryptoNewsModule } from './crypto-news/crypto-news.module';
-import { TwitterModule } from './twitter/twitter.module';
 import { LangchainModule } from './langchain/langchain.module';
+import { TwitterModule } from './twitter/twitter.module';
+import { XPostsModule } from './xposts/xposts.module';
 
 @Module({
   imports: [
@@ -14,8 +14,8 @@ import { LangchainModule } from './langchain/langchain.module';
     BotModule,
     TwitterModule,
     CryptoNewsModule,
-    LangchainModule
-  ],
-  providers: [AppService],
+    LangchainModule,
+    XPostsModule
+  ]
 })
 export class AppModule { }
