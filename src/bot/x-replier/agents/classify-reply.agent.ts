@@ -28,7 +28,7 @@ export const classifyReplyAgent = (tools: StructuredTool[], reply: XPost) => {
     - if the content contains an opinion: "opinion".
     - if the content contains harsh, insulting, offensive: "offensive".
     - if the content contains a praise: "cheerful".
-    - if the content contains market price talk: "pricing".
+    - if the content contains market price or investment talk: "pricing".
 
     Here is the tweet:
     ---------------- 

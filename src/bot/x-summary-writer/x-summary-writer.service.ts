@@ -62,7 +62,10 @@ export class XSummaryWriterService {
       const vectorStoreRetriever = vectorStore.asRetriever();
 
       const REQUEST_TEMPLATE = `
-        Here is a list of several posts from twitter. Make a short summary of all of them. 
+        Below is a list of several posts from twitter. 
+        - Make a short summary that combines all of them. 
+        - Your text should be smooth easy to read, with ideas connected to each other when possible. 
+        - Try to connect sentences with coordination words instead of dots.
         ---------------- 
         {context}
       `;
@@ -74,7 +77,7 @@ export class XSummaryWriterService {
         ["system", REQUEST_TEMPLATE]
       ]);
 
-      const model = this.langchain.getModel(1.5); // high temperature for more random output
+      const model = this.langchain.getModel(); // high temperature for more random output
 
       const chain = RunnableSequence.from([
         {

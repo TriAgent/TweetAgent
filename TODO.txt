@@ -1,11 +1,21 @@
-- agent to extract keywords from bot posts, so we can add # (hashtag) in front of some of them
-- replier:
-  - more response types - but which ones? what do we want to say?
+HASHTAGS:
+  - agent to extract keywords from bot posts, so we can add # (hashtag) in front of some of them
+  - extract news post hashtags and provide them as metadata to post loader when building summary. Writer agent might use some of them in the summary post. 
 
 - Use case that could be improved?
-  -"Vitalik plans to create "the splurge".
-    - "Where can i get more info about that new "splurge" tech?"
-      - "You can check Ethereum's official blog or follow Vitalik Buterin on social media for updates on "The Splurge" tech. They often share insights and developments there."
-        -> we might be able to extract some urls. For example in the original source post, we get the https://t.co/vvRijeahpS link that is a blog post that talks about the splurge.
+  - Summary: "Vitalik plans to create "the splurge".
+  - User question: "Where can i get more info about that new "splurge" tech?"
+  - Bot reply: "You can check Ethereum's official blog or follow Vitalik Buterin on social media for updates on "The Splurge" tech. They often share insights and developments there."
+    -> we might be able to extract some urls. For example in the original source post, we get the https://t.co/vvRijeahpS link that is a blog post that talks about the splurge.
+    -> fetch news posts -> extract short urls -> scrap content and get real url + full page content -> analyze web page and save full + summary (+ vectorized for similar searches?) -> attach web page to post in DB -> X replier gets a tool for GPT to get a list of web pages related to some words -> gpt can build its answer using web page data or provide the url as reference.
+
+- Use case to improve:
+  - User reply: "What's the BTC price right now?"
+  - Bot reply: "We don't provide market price advice, but if I had a crystal ball, I'd be on a beach sipping a cocktail instead of tweeting!"
+    -> The question was not abotu future but current price...
+    -> We could provide a token pricing tool to the replier.
 
 - configure X bot account with avatar and background image.
+
+- replier:
+  - more response types - but which ones? what do we want to say?

@@ -62,7 +62,8 @@ export class XReplierService {
 
     // Fetch recent replies, not earlier than last time we checked
     this.logger.log(`Fetching recent X replies not earlier than ${latestFetchDate}`);
-    const replies = await this.twitter.fetchRepliesToSelf(moment(latestFetchDate));
+    const notBeforeDate = moment(latestFetchDate).subtract(5, "minutes"); // 5 minutes margin because of delay between real post date and availability in X api, there is a lag.
+    const replies = await this.twitter.fetchRepliesToSelf(notBeforeDate);
     this.logger.log(`Got ${replies.length} replies from twitter api`);
 
     // Store every reply that we don't have yet
@@ -127,9 +128,10 @@ export class XReplierService {
       }
     });
 
-    console.log("xReply", xReply)
-
     if (xReply) {
+      this.logger.log("Building X reply for post:");
+      this.logger.log(xReply);
+
       const tools = [
         // nothing yet
       ];
@@ -158,7 +160,9 @@ export class XReplierService {
       // // Invoke tools targeted by the graph
       const result: typeof replierStateAnnotation.State = await app.invoke({});
       // await this.langchain.executeAllToolCalls(tools, result);
-      console.log("result", result)
+
+      this.logger.log("Reply generation result:");
+      this.logger.log(result);
 
       if (result.tweetReply) {
         const botAccount = await this.twitterAuth.getAuthenticatedBotAccount();
@@ -177,7 +181,7 @@ export class XReplierService {
       }
 
       // No matter if we could generate a reply or not, mark as user's reply as 
-      // handled, so we don't try to handle it again later
+      // handled, so we don't try to handle it again later. A missed reply is better than being stuck forever.
       await this.xPosts.markAsReplied(xReply);
     }
 

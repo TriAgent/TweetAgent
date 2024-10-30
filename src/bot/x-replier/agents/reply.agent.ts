@@ -1,6 +1,7 @@
 import { BaseMessageLike } from "@langchain/core/messages";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StructuredTool } from "@langchain/core/tools";
+import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
 import { botPersonalityPromptChunk, forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { langchain, twitterAuth, xPosts } from "src/services";
@@ -13,8 +14,10 @@ import { replierStateAnnotation } from "../x-replier.service";
  */
 export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
   return async (state: typeof replierStateAnnotation.State) => {
+    const logger = new Logger("ReplyAgent");
+
     const outputSchema = z.object({
-      tweetReply: z.string().describe("The twwet reploy"),
+      tweetReply: z.string().describe("The tweet reply"),
     });
 
     const model = langchain().getModel().withStructuredOutput(outputSchema);
@@ -27,24 +30,22 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
     if (!conversation)
       return state;
 
-    let replyGuidelines = "";
-    for (var trait of state.tweetTraits) {
-      switch (trait) {
-        case TweetTrait.Pricing:
-          replyGuidelines += `- Tell that we don't provide market price advice, using a bit of humor.\n`;
-          break;
-        case TweetTrait.Cheerful:
-          replyGuidelines += `- Be grateful to the positive message received if it was a compliment, or simply reply with positive vibes.\n`;
-          break;
-        case TweetTrait.Opinion:
-          replyGuidelines += `- Give your opinion about what the user stated. You can agree or disagree but be factual.`;
-          break;
-        //TODO: OTHER TRAITS
-      }
+    const guidelineRules = {
+      [TweetTrait.Pricing]: "Tell that we don't provide market price advice, using a bit of humor.",
+      [TweetTrait.Cheerful]: "Be grateful to the positive message received if it was a compliment, or simply reply with positive vibes.",
+      [TweetTrait.Opinion]: "Give your opinion about what the user stated. You can agree or disagree but be factual."
     }
 
+    const replyGuidelines = state.tweetTraits
+      .map(tt => guidelineRules[tt]) // Map from rules, if any defined. Can be undefined
+      .filter(g => !!g) // Filter out undefined
+      .map(g => `- ${g}`) // Add trailing dash
+      .join("\n"); // Skip lines and make as string
+
+    console.log("replyGuidelines", replyGuidelines)
+
     const REQUEST_TEMPLATE = `
-      The conversation is a twitter conversation. We have decided to write a reply for it. The parent tweet you are
+      Below conversation is a twitter conversation. We have decided to write a reply for it. The parent tweet you are
       replying to has been analyzed and you should include only the following items in the answer:
 
       ${replyGuidelines}
@@ -64,20 +65,24 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
 
     for (var post of conversation) {
       if (post.authorId === botAccount.userId)
-        messages.push(["ai", `[we wrote:] ${post.text}`])
+        messages.push(["human", `[we wrote:] ${post.text}`])
       else
         messages.push(["human", `[twitter user ${post.authorId} wrote:] ${post.text}`])
     }
 
     // Action request
     messages.push(["system",
-      `Write the tweet reply. Remember you are replying mostly to the most recent 
-       tweet but do not @ the use ID in the reply.`]);
+      `Write the tweet reply. You are replying to the most recent 
+       tweet above, but do not @ the user ID in the reply.`]);
+
+    console.log("messages", messages)
 
     const prompt = ChatPromptTemplate.fromMessages(messages);
 
-    console.log("Generating tweet reply");
+    logger.log("Generating tweet reply");
     const response = await prompt.pipe(model).invoke({ tweetContent: reply.text });
+
+    console.log("response", state)
 
     state.tweetReply = response?.tweetReply;
 
