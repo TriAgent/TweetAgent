@@ -22,23 +22,30 @@ export class TwitterService {
     const query = accounts.map(u => `from:${u}`).join(" OR ");
 
     // Fetch API
-    const pagination = await client.v2.search({
-      query,
-      sort_order: "relevancy",
-      max_results: 10,
-      start_time: notBefore.toISOString(),
-      'tweet.fields': 'created_at,author_id,text',
-      //  /** ISO date string */
-      //  end_time?: string;
-      //  /** ISO date string */
-      //  start_time?: string;
-      //  max_results?: number;
-      //  since_id?: string;
-      //  until_id?: string;
-      //  next_token?: string;
-    });
+    try {
+      const pagination = await client.v2.search({
+        query,
+        sort_order: "recency",
+        max_results: 10,
+        start_time: notBefore.toISOString(),
+        'tweet.fields': 'created_at,author_id,text',
+        //  /** ISO date string */
+        //  end_time?: string;
+        //  /** ISO date string */
+        //  start_time?: string;
+        //  max_results?: number;
+        //  since_id?: string;
+        //  until_id?: string;
+        //  next_token?: string;
+      });
 
-    return pagination?.tweets;
+      return pagination?.tweets;
+    }
+    catch (e) {
+      this.logger.error(`Fetch posts error`);
+      this.logger.error(e);
+      return null;
+    }
   }
 
   /**
@@ -70,12 +77,19 @@ export class TwitterService {
 
     console.log("subTweets", subTweets)
 
-    const createdTweets = await client.v2.tweetThread(subTweets);
+    try {
+      const createdTweets = await client.v2.tweetThread(subTweets);
 
-    this.logger.log('Posted a new tweet thread:');
-    this.logger.log(createdTweets);
+      this.logger.log('Posted a new tweet thread:');
+      this.logger.log(createdTweets);
 
-    return createdTweets?.map(t => ({ postId: t.data.id, text: t.data.text }));
+      return createdTweets?.map(t => ({ postId: t.data.id, text: t.data.text }));
+    }
+    catch (e) {
+      this.logger.error(`Publish tweet error`);
+      this.logger.error(e);
+      return null;
+    }
   }
 
   public async fetchRepliesToSelf(notBefore: Moment): Promise<TweetV2[]> {

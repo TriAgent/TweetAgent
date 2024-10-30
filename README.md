@@ -18,6 +18,7 @@
 
 # Starting the bot
 
+- `docker-compose up -d`
 - `yarn bot:run`
 
 # Third party services

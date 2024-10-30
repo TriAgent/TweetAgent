@@ -40,20 +40,6 @@ export class XReplierService {
     private xPosts: XPostsService
   ) { }
 
-  /**
-   * TODO:
-   * - fetch replies via API
-   * - store replies into DB (so for ex we reply later, not instantly)
-   * - classify:
-   *  - has question? has disagreement?
-   *  - is request for financial advice?
-   *  - etc
-   * - based on all the classification factors, decide:
-   *  - to reply or not
-   *  - which agent replies
-   *  - post reply
-   */
-
   public run() {
     // Task 1 - Launch the reply fetcher 
     this.fetchRecentReplies();
@@ -145,8 +131,7 @@ export class XReplierService {
 
     if (xReply) {
       const tools = [
-        //TODO
-        // categorizeNewsTool(this.logger, this.prisma, post) // ability to update a DB post with "isRealNews" info
+        // nothing yet
       ];
       const _classifyReplyAgent = classifyReplyAgent(tools, xReply);
       const _shouldReplyRouter = shouldReplyRouter(tools, xReply);

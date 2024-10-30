@@ -10,7 +10,7 @@ import { TwitterService } from "src/twitter/twitter.service";
 import { categorizeNewsAgent } from "./agents/categorize-news.agent";
 import { categorizeNewsTool } from "./tools/categorize-news.tool";
 
-const FetchXPostsDelay = 1 * 60 * 60 * 1000; // 1 hour
+const FetchXPostsDelay = 5 * 60 * 1000; // 5 minutes
 
 /**
  * This service regularly fetches tweets about crypto news from X, categorizes them
@@ -43,36 +43,39 @@ export class XPostsNewsService {
     // Fetch recent posts, not earlier than last time we checked
     this.logger.log(`Fetching recent X posts not earlier than ${latestFetchDate}`);
     const posts = await this.twitter.fetchAuthorsPosts(targetTwitterAccounts, moment(latestFetchDate));
-    this.logger.log(`Got ${posts.length} posts from twitter api`);
 
-    // Store every post that we don't have yet
-    const newPosts: XPost[] = [];
-    for (var post of posts) {
-      const existingPost = await this.getDBPostByTwitterPostId(post.id);
-      if (!existingPost) {
-        const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
+    if (posts) {
+      this.logger.log(`Got ${posts.length} posts from twitter api`);
 
-        // Save post to database
-        const dbPost = await this.prisma.xPost.create({
-          data: {
-            type: XPostType.ThirdPartyNews,
-            text: post.text,
-            authorId: post.author_id,
-            postId: post.id,
-            publishedAt: post.created_at,
-            parentPostId: parentXPostId ? parentXPostId : null,
-            rootPostId: parentXPostId ? post.conversation_id : post.id
-          }
-        });
-        newPosts.push(dbPost);
+      // Store every post that we don't have yet
+      const newPosts: XPost[] = [];
+      for (var post of posts) {
+        const existingPost = await this.getDBPostByTwitterPostId(post.id);
+        if (!existingPost) {
+          const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
+
+          // Save post to database
+          const dbPost = await this.prisma.xPost.create({
+            data: {
+              type: XPostType.ThirdPartyNews,
+              text: post.text,
+              authorId: post.author_id,
+              postId: post.id,
+              publishedAt: post.created_at,
+              parentPostId: parentXPostId ? parentXPostId : null,
+              rootPostId: parentXPostId ? post.conversation_id : post.id
+            }
+          });
+          newPosts.push(dbPost);
+        }
       }
+
+      // Remember last fetch time
+      await this.prisma.operationHistory.create({ data: { type: OperationHistoryType.FetchNewsPosts } });
+
+      // Categorize
+      await this.categorizeTweets();
     }
-
-    // Remember last fetch time
-    await this.prisma.operationHistory.create({ data: { type: OperationHistoryType.FetchNewsPosts } });
-
-    // Categorize
-    await this.categorizeTweets();
 
     // Rearm to continue checking later
     setTimeout(() => {

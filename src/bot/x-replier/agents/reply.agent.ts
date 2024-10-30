@@ -34,7 +34,7 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
           replyGuidelines += `- Tell that we don't provide market price advice, using a bit of humor.\n`;
           break;
         case TweetTrait.Cheerful:
-          replyGuidelines += `- Be grateful to the positive message received if it was a compliment, or simply reply with the positive vibes.\n`;
+          replyGuidelines += `- Be grateful to the positive message received if it was a compliment, or simply reply with positive vibes.\n`;
           break;
         case TweetTrait.Opinion:
           replyGuidelines += `- Give your opinion about what the user stated. You can agree or disagree but be factual.`;
