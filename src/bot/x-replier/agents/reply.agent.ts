@@ -31,7 +31,8 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
       return state;
 
     const guidelineRules = {
-      [TweetTrait.Pricing]: "Tell that we don't provide market price advice, using a bit of humor.",
+      [TweetTrait.Pricing]: "Tell that we don't provide market price advice, using joyful tone. Be concise about this.",
+      [TweetTrait.Question]: "Answer the question if you really know. If you don't, don't reply to the this part.",
       [TweetTrait.Cheerful]: "Be grateful to the positive message received if it was a compliment, or simply reply with positive vibes.",
       [TweetTrait.Opinion]: "Give your opinion about what the user stated. You can agree or disagree but be factual."
     }
@@ -42,17 +43,12 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
       .map(g => `- ${g}`) // Add trailing dash
       .join("\n"); // Skip lines and make as string
 
-    console.log("replyGuidelines", replyGuidelines)
-
     const REQUEST_TEMPLATE = `
       Below conversation is a twitter conversation. We have decided to write a reply for it. The parent tweet you are
-      replying to has been analyzed and you should include only the following items in the answer:
+      replying to has been analyzed and you should include only the following items in the answer.
 
+      [Guidelines]
       ${replyGuidelines}
-
-      Here is the tweet:
-      ---------------- 
-      {tweetContent}
     `;
 
     // No actual user message, everything is in the system prompt.
@@ -72,15 +68,15 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
 
     // Action request
     messages.push(["system",
-      `Write the tweet reply. You are replying to the most recent 
-       tweet above, but do not @ the user ID in the reply.`]);
+      `Write the tweet reply. You are mainly replying to the most recent 
+       tweet above. Do not @ the user ID in the reply.`]);
 
     console.log("messages", messages)
 
     const prompt = ChatPromptTemplate.fromMessages(messages);
 
     logger.log("Generating tweet reply");
-    const response = await prompt.pipe(model).invoke({ tweetContent: reply.text });
+    const response = await prompt.pipe(model).invoke({});
 
     console.log("response", state)
 
