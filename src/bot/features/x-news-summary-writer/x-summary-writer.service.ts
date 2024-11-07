@@ -3,15 +3,16 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnablePassthrough, RunnableSequence } from "@langchain/core/runnables";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Injectable, Logger } from '@nestjs/common';
-import { XPostType } from "@prisma/client";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { BotFeature } from "src/bot/model/bot-feature";
 import { LangchainService } from "src/langchain/langchain.service";
-import { botPersonalityPromptChunk, forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
+import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { TwitterService } from "src/twitter/twitter.service";
 import { XPostsService } from "src/xposts/xposts.service";
+import { botPersonalityPromptChunk } from "../../model/prompt-parts/news-summary";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
 
 /**
@@ -27,7 +28,7 @@ const MinTimeBetweenXPosts = PostXSummaryDelayMs; // Used by retries when posts 
  * Summaries are posted on X.
  */
 @Injectable()
-export class XSummaryWriterService {
+export class XSummaryWriterService extends BotFeature {
   private logger = new Logger("XSummaryWriter");
 
   constructor(
@@ -36,9 +37,11 @@ export class XSummaryWriterService {
     private prisma: PrismaService,
     private langchain: LangchainService,
     private xPosts: XPostsService
-  ) { }
+  ) {
+    super();
+  }
 
-  public run() {
+  public scheduledExecution() {
 
     this.createRecentTweetsSummary();
   }
@@ -99,9 +102,6 @@ export class XSummaryWriterService {
       }
     }
 
-    // Flush X posts queue
-    await this.xPosts.sendPendingXPosts(XPostType.BotSummary);
-
     // Rearm
     setTimeout(() => {
       this.createRecentTweetsSummary();
@@ -118,7 +118,7 @@ export class XSummaryWriterService {
     // Create draft
     const dbPost = await this.prisma.xPost.create({
       data: {
-        type: XPostType.BotSummary,
+        publishRequestAt: new Date(),
         authorId: botAccount.userId,
         text: tweetContent,
         account: { connect: { userId: botAccount.userId } }

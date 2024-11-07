@@ -8,12 +8,12 @@ datasource db {
 }
 
 // Authenticated bot twitter account - singleton
-model TwitterAccount {
+model XPublisherAccount {
   updatedAt DateTime @default(now())
 
-  userId        String @unique // X user id eg: 1849649146669695000
-  userName      String // X user name eg: Proctar Elastos
-  userScreeName String // X user name eg: proctar2626
+  userId         String @unique // X user id eg: 1849649146669695000
+  userName       String // X user name eg: Proctar Elastos
+  userScreenName String // X user name eg: proctar2626
 
   accessToken  String // X access token for this user, after web/pin authorization
   accessSecret String // X secret token for this user, after web/pin authorization
@@ -21,49 +21,68 @@ model TwitterAccount {
   PostedXPost XPost[]
 }
 
-enum XPostType {
-  ThirdPartyNews // Post created by third party accounts that we follow for their relevant content (source for our summaries)
-  BotSummary // Post created by our bot to summarize recent news
-  BotReply // Post created by out bot as a reply to other users
-  UserReply // Post created by other users as a reply to out bot posts, for example as reply to summary posts.
+// Third party X account to map usernames with user ids
+model XAccount {
+  userId         String @unique // X user id eg: 1849649146669695000
+  userName       String // X user name eg: Proctar Elastos
+  userScreenName String // X user name eg: proctar2626
+
+  updatedAt DateTime @default(now())
 }
 
+// enum XPostType {
+//   ThirdPartyNews 
+//   BotSummary // Post created by our bot to summarize recent news
+//   BotReply // Post created by our bot as a reply to other users
+//   UserReply // Post created by other users as a reply to out bot posts, for example as reply to summary posts.
+// }
+
 // Post retrieved from X. 
-// Can be:
+// Can be from various sources, for example:
 // - a news post from a third party account
 // - a post from any user in reply to one of our bot's posts.
 // - our bot replies
 // - our bot summaries
+//
+// IMPORTANT NOTE: a post can be retrieved from various services. Keep in mind that its content might remain neutral
+// no matter where it was fetched from, especially from posts created by third parties. For example the summary bot can
+// fetch posts as third party news but that post might be used by another bot during its operations. They just work 
+// on different fields.
 model XPost {
-  id   String    @unique @default(uuid())
-  type XPostType
+  id String @unique @default(uuid())
 
-  createdAt   DateTime  @default(now()) // Entry creation date
-  publishedAt DateTime? // Post published date
+  createdAt        DateTime  @default(now()) // Entry creation date
+  publishRequestAt DateTime? // If this is a post we want to send, this is the date at which we asked to sed this post.
+  publishedAt      DateTime? // Post published date
 
+  // Raw X data
   text         String // Core post content
   postId       String? // ID of the post of X
   parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
   rootPostId   String? // Parent post (id on X) - root tweet - usually, the tweet created by our bot - same as post id if root
   authorId     String // X user id
 
-  // "ThirdPartyNews" type specifics
+  // News summary service specifics
   isRealNews     Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
   summarizedBy   XPost?   @relation(name: "SourcePosts", fields: [summarizedById], references: [id])
   summarizedById String?
 
-  // "BotSummary" type specifics
-  account              TwitterAccount? @relation(fields: [twitterAccountUserId], references: [userId]) // Bot account used to send the tweet
-  twitterAccountUserId String?
-  summarySourcePosts   XPost[]         @relation(name: "SourcePosts") // source posts used to produce the summary
+  // Bot summaries specifics
+  summarySourcePosts XPost[] @relation(name: "SourcePosts") // source posts used to produce the summary
 
-  // "UserReply" type specifics
+  // User replies to our bot specifics
   wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
+
+  // Specific to our published posts
+  account                XPublisherAccount? @relation(fields: [publisherAccountUserId], references: [userId]) // Bot account used to send the tweet
+  publisherAccountUserId String?
+
+  // ""
 }
 
 enum OperationHistoryType {
-  FetchNewsPosts
-  FetchRepliesToSelf
+  FetchAccountsPosts
+  FetchPostsWeAreMentionnedIn
 }
 
 // History of operations such as post fetched from X. Used for example to 

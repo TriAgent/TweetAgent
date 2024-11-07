@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { TwitterAccount } from '@prisma/client';
+import { XPublisherAccount } from '@prisma/client';
 import * as readline from 'readline/promises';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ensureEnv } from 'src/utils/ensure-env';
@@ -21,10 +21,15 @@ export class TwitterAuthService implements OnModuleInit {
     this.appSecret = ensureEnv("TWITTER_APP_SECRET");
   }
 
-  public getAuthenticatedBotAccount(): Promise<TwitterAccount> {
-    return this.prisma.twitterAccount.findFirst({
+  public async getAuthenticatedBotAccount(): Promise<XPublisherAccount> {
+    const botAccount = await this.prisma.xPublisherAccount.findFirst({
       orderBy: { updatedAt: "desc" }
-    })
+    });
+
+    if (!botAccount)
+      throw new Error(`No authenticated bot X account info found in database. Run 'yarn twitter:auth' to authorize first.`);
+
+    return botAccount;
   }
 
   public async getAuthorizedClientForBot(): Promise<client> {
@@ -33,9 +38,6 @@ export class TwitterAuthService implements OnModuleInit {
 
     // Get auth keys from DB
     const botAuth = await this.getAuthenticatedBotAccount();
-
-    if (!botAuth)
-      throw new Error(`No authenticated bot X account info found in database. Run 'yarn twitter:auth' to authorize first.`);
 
     this.botClient = new TwitterApi({
       appKey: this.appConsumerKey,
@@ -80,7 +82,7 @@ export class TwitterAuthService implements OnModuleInit {
     // Save auth access to DB
     const update = {
       userName: user.name,
-      userScreeName: user.screen_name,
+      userScreenName: user.screen_name,
 
       accessToken,
       accessSecret,
@@ -88,7 +90,7 @@ export class TwitterAuthService implements OnModuleInit {
       updatedAt: new Date()
     };
 
-    await this.prisma.twitterAccount.upsert({
+    await this.prisma.xPublisherAccount.upsert({
       where: { userId: user.id_str },
       create: { userId: user.id_str, ...update },
       update

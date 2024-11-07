@@ -12,10 +12,15 @@ HASHTAGS:
 - Use case to improve:
   - User reply: "What's the BTC price right now?"
   - Bot reply: "We don't provide market price advice, but if I had a crystal ball, I'd be on a beach sipping a cocktail instead of tweeting!"
-    -> The question was not abotu future but current price...
+    -> The question was not about future but current price...
     -> We could provide a token pricing tool to the replier.
 
-- configure X bot account with avatar and background image.
-
+- After generating a summary or reply, have a post processing agent to ask if the answer is meaningful text, to filter out hallucinations or buggy texts sometimes returned by GPT.
 - replier:
   - more response types - but which ones? what do we want to say?
+
+- List of potential useful tools:
+  - Live crypto price access
+  - Knowledge base of vector documents from recent blog posts, query by similar words
+  - Build, a EVM smart contract
+  - Sign and deploy a EVM smart contract

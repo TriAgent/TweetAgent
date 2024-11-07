@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { XPost, XPostType } from '@prisma/client';
+import { XPost } from '@prisma/client';
 import * as moment from 'moment';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterService } from 'src/twitter/twitter.service';
+import { TweetV2 } from 'twitter-api-v2';
 
 /**
- * Service that provides features for X (twitter) posts management.
- * Higher level than the lower level twitter fetch/post API.
+ * Service that provides generic features for X (twitter) posts management.
+ * Higher level than the lower level twitter fetch/post API but still independant from
+ * specialized bots content.
  */
 @Injectable()
 export class XPostsService {
@@ -44,17 +46,20 @@ export class XPostsService {
     return conversation;
   }
 
+  public getXPostByTwitterPostId(twitterPostId: string): Promise<XPost> {
+    return this.prisma.xPost.findFirst({ where: { postId: twitterPostId } });
+  }
 
   /**
-   * Sends a queued post in database, that has not been puclished to twitter yet.
+   * Sends a queued post in database, that has not been puslished to twitter yet.
    * In case the original post text is too long, the post is split into sub-tweets and
    * therefore also into sub-posts on our end.
    */
-  public async sendPendingXPosts(targetPostType: XPostType) {
+  public async sendPendingXPosts() {
     // Make sure we haven't published too recently
     const mostRecentlyPublishedPost = await this.prisma.xPost.findFirst({
       where: {
-        type: targetPostType,
+        publishRequestAt: { not: null },
         AND: [
           { publishedAt: { not: null } },
           // TODO: replace code below with a "publish not before date" field in database, to be more generic
@@ -70,7 +75,7 @@ export class XPostsService {
     // Find a tweet that we can send.
     const postToSend = await this.prisma.xPost.findFirst({
       where: {
-        type: targetPostType,
+        publishRequestAt: { not: null },
         publishedAt: null
       }
     });
@@ -79,7 +84,7 @@ export class XPostsService {
     if (!postToSend)
       return;
 
-    this.logger.log(`Sending tweet of type ${targetPostType} for queued db posted post id ${postToSend.id}`);
+    this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
     const createdTweets = await this.twitter.publishTweet(postToSend.text, postToSend.parentPostId);
 
     // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
@@ -100,14 +105,13 @@ export class XPostsService {
       for (var tweet of createdTweets.slice(1)) {
         await this.prisma.xPost.create({
           data: {
-            type: postToSend.type,
             publishedAt: new Date(),
             authorId: postToSend.authorId,
             text: tweet.text,
             postId: tweet.postId,
             parentPostId: parentPostId,
             rootPostId: rootTweet.postId,
-            twitterAccountUserId: postToSend.twitterAccountUserId
+            publisherAccountUserId: postToSend.publisherAccountUserId
           }
         });
 
@@ -121,5 +125,40 @@ export class XPostsService {
       where: { id: xPost.id },
       data: { wasReplyHandled: true }
     });
+  }
+
+  public async fetchAndSaveXPosts(fetcher: () => Promise<TweetV2[]>): Promise<XPost[]> {
+    const posts = await fetcher();
+
+    if (posts) {
+      this.logger.log(`Got ${posts.length} posts from twitter api`);
+
+      // Store every post that we don't have yet
+      const newPosts: XPost[] = [];
+      for (var post of posts) {
+        const existingPost = await this.getXPostByTwitterPostId(post.id);
+        if (!existingPost) {
+          const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
+
+          // Save post to database
+          const dbPost = await this.prisma.xPost.create({
+            data: {
+              publishRequestAt: new Date(),
+              text: post.text,
+              authorId: post.author_id,
+              postId: post.id,
+              publishedAt: post.created_at,
+              parentPostId: parentXPostId ? parentXPostId : null,
+              rootPostId: parentXPostId ? post.conversation_id : post.id
+            }
+          });
+          newPosts.push(dbPost);
+        }
+      }
+
+      return newPosts;
+    }
+
+    return null;
   }
 }

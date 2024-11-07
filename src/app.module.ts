@@ -1,21 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { BootstrapModule } from './bootstrap/bootstrap.module';
-import { BotModule } from './bot/bot.module';
-import { CryptoNewsModule } from './crypto-news/crypto-news.module';
+import { AirdropContestModule } from './bot/airdrop-contest/airdrop-contest.module';
 import { LangchainModule } from './langchain/langchain.module';
+import { OperationHistoryModule } from './operation-history/operation-history.module';
 import { TwitterModule } from './twitter/twitter.module';
+import { XaccountsModule } from './xaccounts/xaccounts.module';
 import { XPostsModule } from './xposts/xposts.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     BootstrapModule,
-    BotModule,
+    AirdropContestModule,
     TwitterModule,
-    CryptoNewsModule,
     LangchainModule,
-    XPostsModule
+    XPostsModule,
+    OperationHistoryModule,
+    XaccountsModule
   ]
 })
 export class AppModule { }

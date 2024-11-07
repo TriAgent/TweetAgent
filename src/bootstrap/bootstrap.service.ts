@@ -10,7 +10,7 @@ export class BootstrapService implements OnApplicationBootstrap {
 
   constructor(
     private bot: BotService,
-    private twitter: TwitterAuthService
+    private twitterAuth: TwitterAuthService
   ) { }
 
   onApplicationBootstrap() {
@@ -25,11 +25,11 @@ export class BootstrapService implements OnApplicationBootstrap {
 
     let argv = await options({
       'twitter:auth': { type: 'boolean' },
-      'bot:run': { type: 'boolean' }
+      'bot:run': { type: 'boolean' },
     }).help().argv;
 
     if (argv["twitter:auth"])
-      void this.twitter.startUserAuth();
+      void this.twitterAuth.startUserAuth();
     else if (argv["bot:run"]) {
       void this.bot.run();
     }

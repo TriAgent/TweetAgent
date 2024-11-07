@@ -3,13 +3,13 @@ import { StructuredTool } from "@langchain/core/tools";
 import { XPost } from "@prisma/client";
 import { langchain } from "src/services";
 import { z } from "zod";
-import { TweetTrait } from "../model/tweet-trait";
-import { replierStateAnnotation } from "../x-replier.service";
+import { TweetTrait } from "./model/tweet-trait";
+import { replierStateAnnotation } from "./x-news-summary-replier.service";
 
 /**
  * Determines tweet traits and stores traits in the global state
  */
-export const classifyReplyAgent = (tools: StructuredTool[], reply: XPost) => {
+export const classifyPostAgent = (tools: StructuredTool[], reply: XPost) => {
   return async (state: typeof replierStateAnnotation.State) => {
     const traitSchema = z.object({
       traits: z

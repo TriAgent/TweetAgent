@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { BotModule } from 'src/bot/bot.module';
-import { CryptoNewsModule } from 'src/crypto-news/crypto-news.module';
 import { TwitterModule } from 'src/twitter/twitter.module';
 import { BootstrapService } from './bootstrap.service';
 
@@ -10,8 +9,7 @@ import { BootstrapService } from './bootstrap.service';
   ],
   imports: [
     TwitterModule,
-    BotModule,
-    CryptoNewsModule
+    BotModule
   ],
   exports: [
     BootstrapService

@@ -1,21 +1,42 @@
 import { Injectable } from "@nestjs/common";
-import { CryptoNewsService } from "src/crypto-news/crypto-news.service";
-import { XReplierService } from "./x-replier/x-replier.service";
-import { XSummaryWriterService } from "./x-summary-writer/x-summary-writer.service";
+import { runEverySeconds } from "src/utils/run-every-seconds";
+import { BotFeaturesService } from "./features.service";
+import { XPostFetcherService } from "./features/x-posts-fetcher/x-post-fetcher.service";
+import { XPostsReplierService } from "./features/x-posts-replier/x-posts-replier.service";
+import { XPostSenderService } from "./features/x-posts-sender/x-post-sender.service";
 
 @Injectable()
 export class BotService {
+
   constructor(
-    private xSummaryWriter: XSummaryWriterService,
-    private xReplier: XReplierService,
-    private news: CryptoNewsService
-  ) { }
+    xPostsFetcher: XPostFetcherService,
+    xPostsSender: XPostSenderService,
+    xPostsReplier: XPostsReplierService,
+    private featuresService: BotFeaturesService
+  ) {
+    featuresService.registerFeatures([
+      xPostsFetcher, // Fetches and caches X Posts
+      xPostsReplier, // Handle unanswered third party posts and generate replies when possible.
+      xPostsSender, // Send our pending posts/replies to X
+    ]);
+  }
 
+  /**
+   * Root entry point for our bot.
+   */
   public run() {
-    // Launch the news service
-    this.news.run();
+    runEverySeconds(() => this.executeFeatures(), 5);
+  }
 
-    void this.xSummaryWriter.run();
-    void this.xReplier.run();
+  /**
+   * Sequencially executes recurring execution methods of bot features.
+   */
+  private async executeFeatures() {
+    for (const feature of this.featuresService.getFeatures()) {
+      if (feature.canExecuteNow()) {
+        await feature.scheduledExecution();
+        feature.updateLastExecutionTime();
+      }
+    }
   }
 }

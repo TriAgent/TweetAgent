@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Moment } from "moment";
 import { splitStringAtWord } from "src/utils/strings";
-import { SendTweetV2Params, TweetV2 } from "twitter-api-v2";
+import { ApiResponseError, SendTweetV2Params, TweetV2, UserV2 } from "twitter-api-v2";
 import { TwitterAuthService } from "./twitter-auth.service";
 
 @Injectable()
@@ -18,25 +18,16 @@ export class TwitterService {
   public async fetchAuthorsPosts(accounts: string[], notBefore: Moment): Promise<TweetV2[]> {
     const client = await this.auth.getAuthorizedClientForBot();
 
-    // Only retrieve posts from some target accounts
+    // Only retrieve posts from the target accounts
     const query = accounts.map(u => `from:${u}`).join(" OR ");
 
-    // Fetch API
     try {
       const pagination = await client.v2.search({
         query,
         sort_order: "recency",
         max_results: 10,
         start_time: notBefore.toISOString(),
-        'tweet.fields': 'created_at,author_id,text',
-        //  /** ISO date string */
-        //  end_time?: string;
-        //  /** ISO date string */
-        //  start_time?: string;
-        //  max_results?: number;
-        //  since_id?: string;
-        //  until_id?: string;
-        //  next_token?: string;
+        'tweet.fields': 'created_at,author_id,text', // public_metrics to get like/rt counts
       });
 
       return pagination?.tweets;
@@ -44,6 +35,32 @@ export class TwitterService {
     catch (e) {
       this.logger.error(`Fetch posts error`);
       this.logger.error(e);
+      return null;
+    }
+  }
+
+  public async fetchSelfMentions(notBefore: Moment): Promise<TweetV2[]> {
+    const client = await this.auth.getAuthorizedClientForBot();
+    const botAccount = await this.auth.getAuthenticatedBotAccount();
+
+    try {
+      const pagination = await client.v2.userMentionTimeline(botAccount.userId, {
+        //sort_order: "recency",
+        max_results: 5,
+        start_time: notBefore.toISOString(),
+        'tweet.fields': 'created_at,author_id,text'
+      });
+
+      return pagination?.tweets;
+    }
+    catch (e) {
+      this.logger.error(`Fetch mentions error`);
+      this.logger.error(String(e));
+      console.log(e)
+
+      if (e instanceof ApiResponseError)
+        this.logger.error(e.errors);
+
       return null;
     }
   }
@@ -92,16 +109,29 @@ export class TwitterService {
     }
   }
 
-  public async fetchRepliesToSelf(notBefore: Moment): Promise<TweetV2[]> {
+  public async fetchPostsMentionningOurAccount(notBefore: Moment): Promise<TweetV2[]> {
     const client = await this.auth.getAuthorizedClientForBot();
     const botAuth = await this.auth.getAuthenticatedBotAccount();
 
     const replies = await client.v2.search(`to: ${botAuth.userId}`, {
       //sort_order: "relevancy",
       start_time: notBefore.toISOString(),
-      'tweet.fields': 'created_at,id,author_id,text,conversation_id,referenced_tweets'
+      'tweet.fields': 'created_at,id,author_id,text,conversation_id,referenced_tweets,public_metrics'
     });
 
     return replies?.tweets;
+  }
+
+  public async fetchAccountByUserName(userScreenName: string): Promise<UserV2> {
+    const client = await this.auth.getAuthorizedClientForBot();
+
+    const result = await client.v2.userByUsername(userScreenName);
+    if (result.errors) {
+      this.logger.error("fetchAccountByUserName");
+      this.logger.error(result.errors);
+      return null;
+    }
+
+    return result.data;
   }
 }

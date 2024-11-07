@@ -1,4 +1,3 @@
-import { BotConfig } from "src/config/bot-config";
 import { forbiddenBotWords } from "./fobidden-keywords";
 
 /**
@@ -13,11 +12,4 @@ export const forbiddenWordsPromptChunk = () => {
 
 export const tweetCharactersSizeLimitationPromptChunk = () => {
   return `Use less than 280 characters in your answer.`;
-}
-
-/**
- * Tells the bot what kind of writing style and personality it should use while producing content.
- */
-export const botPersonalityPromptChunk = () => {
-  return BotConfig.Generation.Personality;
 }
