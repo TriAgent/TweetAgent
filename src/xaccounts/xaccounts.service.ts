@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { XAccount } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterService } from 'src/twitter/twitter.service';
+import { UserV2 } from 'twitter-api-v2';
 
 @Injectable()
 export class XAccountsService {
@@ -16,6 +17,23 @@ export class XAccountsService {
     return this.prisma.xAccount.findUnique({
       where: { userId }
     });
+  }
+
+  /**
+   * Returns the existing XAccount if the user id is known in database.
+   * Otherwise, tries to fetch the user from X API, then saves it.
+   */
+  public async ensureXAccount(userId: string): Promise<XAccount> {
+    let xAccount = await this.getXAccountFromUserId(userId);
+    if (!xAccount) {
+      const user = await this.twitter.fetchAccountByUserId(userId);
+      if (!user)
+        throw new Error(`No X user found with user ID ${userId}`);
+
+      xAccount = await this.createXAccountFromXUser(user);
+    }
+
+    return xAccount;
   }
 
   /**
@@ -36,13 +54,7 @@ export class XAccountsService {
         }
 
         // Save as new XAccount in DB
-        account = await this.prisma.xAccount.create({
-          data: {
-            userId: xUser.id,
-            userName: xUser.name,
-            userScreenName: xUser.username
-          }
-        });
+        account = await this.createXAccountFromXUser(xUser);
       }
 
       if (account)
@@ -50,6 +62,16 @@ export class XAccountsService {
     }
 
     return accounts;
+  }
+
+  public createXAccountFromXUser(xUser: UserV2): Promise<XAccount> {
+    return this.prisma.xAccount.create({
+      data: {
+        userId: xUser.id,
+        userName: xUser.name,
+        userScreenName: xUser.username
+      }
+    });
   }
 
   public getXUserIdFromScreenName(userScreenName: string): Promise<XAccount> {

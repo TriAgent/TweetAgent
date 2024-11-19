@@ -85,7 +85,7 @@ export class XPostsService {
       return;
 
     this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
-    const createdTweets = await this.twitter.publishTweet(postToSend.text, postToSend.parentPostId);
+    const createdTweets = await this.twitter.publishTweet(postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
 
     // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
     if (createdTweets && createdTweets.length > 0) {

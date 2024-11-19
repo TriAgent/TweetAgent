@@ -26,7 +26,9 @@ export const produceAggregatedReplyAgent = (replyAnalysisResults: XPostReplyAnal
 
     const { structuredResponse } = await langchain().fullyInvoke(
       // Initial command
-      prompt,
+      [
+        ["system", SYSTEM_TEMPLATE]
+      ],
       // Input values
       {
         partialReplies: replyAnalysisResults.map(rar => rar.reply).filter(r => !!r)

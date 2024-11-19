@@ -1,4 +1,3 @@
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StructuredTool } from "@langchain/core/tools";
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
@@ -29,13 +28,11 @@ export const extractAddressAgent = (logger: Logger, post: XPost) => {
       {tweetContent}
     `;
 
-    const prompt = ChatPromptTemplate.fromMessages<{ authorId: string, tweetContent: string }>([
-      ["system", SYSTEM_TEMPLATE]
-    ]);
-
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse } = await langchain().fullyInvoke(
-      prompt,
+      [
+        ["system", SYSTEM_TEMPLATE]
+      ],
       { authorId: post.authorId, tweetContent: post.text },
       tools,
       structuredOutput

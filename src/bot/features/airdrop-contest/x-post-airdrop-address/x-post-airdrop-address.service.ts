@@ -26,7 +26,6 @@ export class XPostAirdropAddressService extends BotFeature {
     // Writes a reply part only if an address was handled.
     const graph = new StateGraph(airdropAddressStateAnnotation)
       .addNode("ExtractAddress", extractAddressAgent(this.logger, post))
-      .addEdge(START, END)
       .addEdge(START, "ExtractAddress")
       .addEdge("ExtractAddress", END)
 

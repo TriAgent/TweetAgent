@@ -1,7 +1,8 @@
 import { ToolCall } from '@langchain/core/dist/messages/tool';
 import { InputValues } from '@langchain/core/dist/utils/types';
-import { AIMessage, BaseMessage, ToolMessage } from '@langchain/core/messages';
+import { AIMessage, BaseMessage, BaseMessageLike, ToolMessage } from '@langchain/core/messages';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { RunnableLike, RunnableSequence } from '@langchain/core/runnables';
 import { StructuredTool } from '@langchain/core/tools';
 import { ChatOpenAI } from '@langchain/openai';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
@@ -12,7 +13,11 @@ import { StructureToolOrBindToolsInput, zodSchemaToOpenAICompatibleTool } from '
 
 const StructuredOutputToolName = "structured_output";
 
-type FullInvocationOutput<OutputSchema extends ZodType> = { responseMessage: BaseMessage, stringResponse?: string, structuredResponse?: zodInfer<OutputSchema> };
+type FullInvocationOutput<OutputSchema extends ZodType> = {
+  responseMessage: BaseMessage;
+  stringResponse?: string;
+  structuredResponse?: zodInfer<OutputSchema>
+}
 
 @Injectable()
 export class LangchainService implements OnModuleInit {
@@ -38,9 +43,12 @@ export class LangchainService implements OnModuleInit {
   /**
    * Invokes a runnable (eg: model or piped message template) and subsequent tool calls until
    * all tool calls have been fulfilled.
+   * 
+   * @param invocationParams JSON or string. JSON preferred, string mostly when using vector stores because using {} creates many issues (text.replace is not a function, $.input is invalid...). "" solves this unclear problem
+   * @param runnablesBefore Prepended to the runnable chain before adding prompt and model. For example, to pass a vector store.
    */
-  public async fullyInvoke<RunInput extends InputValues = any, OutputSchema extends ZodType = any>(prompt: ChatPromptTemplate<RunInput>, invocationParams: RunInput, tools: StructuredTool[], structuredOutput?: OutputSchema): Promise<FullInvocationOutput<OutputSchema>>;
-  public async fullyInvoke<RunInput extends InputValues = any, OutputSchema extends ZodType = any>(prompt: ChatPromptTemplate<RunInput>, invocationParams: RunInput, tools: StructuredTool[] = [], structuredOutput?: OutputSchema): Promise<FullInvocationOutput<any>> {
+  public async fullyInvoke<RunInput extends InputValues = any, OutputSchema extends ZodType = any>(messages: BaseMessageLike[], invocationParams: RunInput | string, tools: StructuredTool[], structuredOutput?: OutputSchema, runnablesBefore?: RunnableLike[]): Promise<FullInvocationOutput<OutputSchema>>;
+  public async fullyInvoke<RunInput extends InputValues = any, OutputSchema extends ZodType = any>(messages: BaseMessageLike[], invocationParams: RunInput | string, tools: StructuredTool[] = [], structuredOutput?: OutputSchema, runnablesBefore: RunnableLike[] = []): Promise<FullInvocationOutput<any>> {
     const allTools: StructureToolOrBindToolsInput[] = tools; // can be an empty array
 
     // If the output is structured, add it as a tool, this is the recommended way to mix tools and structured output.
@@ -49,25 +57,39 @@ export class LangchainService implements OnModuleInit {
 
     const model = this.getModel().bindTools(allTools);
 
-    const messageHistory: BaseMessage[] = await prompt.formatMessages(invocationParams);
-    let responseMessage: AIMessage;
-    let structuredResponse: zodInfer<OutputSchema>;
-    while (true) {
-      responseMessage = await model.invoke(messageHistory); // TODO: not always an AIMessage
+    try {
+      const messageHistory = [...messages];
+      //const messageHistory: BaseMessage[] = await prompt.formatMessages(invocationParams);
+      let responseMessage: AIMessage;
+      let structuredResponse: zodInfer<OutputSchema>; // zod type to simple typescript fields
+      while (true) {
+        const chain = RunnableSequence.from([
+          ...runnablesBefore,
+          ChatPromptTemplate.fromMessages(messageHistory),
+          model,
+        ] as any); // dirty as any because of headache with from() typing (first input type etc)
 
-      // Save this preliminary/final message to history
-      messageHistory.push(responseMessage);
+        responseMessage = await chain.invoke(invocationParams); // NOTE: using "" instead of "" to avoid text.replace is not a function when using vector stores // TODO: not always an AIMessage
 
-      const { executedToolsCount, structuredOutputToolCall, toolResponses } = await this.executeToolCalls(allTools, responseMessage.tool_calls);
+        // Save this preliminary/final message to history
+        messageHistory.push(responseMessage);
 
-      if (executedToolsCount === 0)
-        break;
+        const { executedToolsCount, structuredOutputToolCall, toolResponses } = await this.executeToolCalls(allTools, responseMessage.tool_calls);
 
-      structuredResponse = structuredOutputToolCall?.args;
-      messageHistory.push(...toolResponses);
+        if (executedToolsCount === 0)
+          break;
+
+        structuredResponse = structuredOutputToolCall?.args;
+        messageHistory.push(...toolResponses);
+      }
+
+      return { responseMessage, structuredResponse }
     }
-
-    return { responseMessage, structuredResponse }
+    catch (e) {
+      console.error("fullyInvoke error", e);
+      debugger;
+      return { responseMessage: undefined };
+    }
   }
 
   /**

@@ -1,8 +1,7 @@
 AIRDROPS:
 - regularly RT contest posts with custom intro
-- really map X users to airdrop addresses (new DB table)
 - airdrop tokens to winner posts / base management / wallet management
-
+ß
 HASHTAGS:
   - agent to extract keywords from bot posts, so we can add # (hashtag) in front of some of them
   - extract news post hashtags and provide them as metadata to post loader when building summary. Writer agent might use some of them in the summary post. 

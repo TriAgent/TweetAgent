@@ -27,15 +27,11 @@ model XAccount {
   userName       String // X user name eg: Proctar Elastos
   userScreenName String // X user name eg: proctar2626
 
+  // Specific to: airdrop contest
+  airdropAddress String? // Blockchain address where to airdrop tokens if this user wins a contest competition
+
   updatedAt DateTime @default(now())
 }
-
-// enum XPostType {
-//   ThirdPartyNews 
-//   BotSummary // Post created by our bot to summarize recent news
-//   BotReply // Post created by our bot as a reply to other users
-//   UserReply // Post created by other users as a reply to out bot posts, for example as reply to summary posts.
-// }
 
 // Post retrieved from X. 
 // Can be from various sources, for example:
@@ -60,24 +56,27 @@ model XPost {
   postId       String? // ID of the post of X
   parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
   rootPostId   String? // Parent post (id on X) - root tweet - usually, the tweet created by our bot - same as post id if root
+  quotedPostId String? // Post (id on X) that we quote with this post (RT with message).
   authorId     String // X user id
 
-  // News summary service specifics
+  // Specific to: news summary
   isRealNews     Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
   summarizedBy   XPost?   @relation(name: "SourcePosts", fields: [summarizedById], references: [id])
   summarizedById String?
 
-  // Bot summaries specifics
+  // Specific to: bot summaries
   summarySourcePosts XPost[] @relation(name: "SourcePosts") // source posts used to produce the summary
 
-  // User replies to our bot specifics
+  // Specific to: User replies to our bot
   wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
 
-  // Specific to our published posts
+  // Specific to: our bot's published posts
   account                XPublisherAccount? @relation(fields: [publisherAccountUserId], references: [userId]) // Bot account used to send the tweet
   publisherAccountUserId String?
 
-  // ""
+  // Specific to: airdrop contest
+  worthForAirdropContest    Boolean? // Whether this post is deemed worth to join the airdrop contest. 
+  quotedForAirdropContestAt DateTime? // If this post got elected to be RT/quoted by our account, that's the date at which the post was created/scheduled
 }
 
 enum OperationHistoryType {

@@ -45,37 +45,19 @@ export class TwitterService {
     }
   }
 
-  // public async fetchSelfMentions(notBefore: Moment): Promise<TweetV2[]> {
-  //   const client = await this.auth.getAuthorizedClientForBot();
-  //   const botAccount = await this.auth.getAuthenticatedBotAccount();
-
-  //   try {
-  //     const pagination = await client.v2.userMentionTimeline(botAccount.userId, {
-  //       //sort_order: "recency",
-  //       max_results: 5,
-  //       start_time: notBefore.toISOString(),
-  //       'tweet.fields': 'created_at,author_id,text'
-  //     });
-
-  //     return pagination?.tweets;
-  //   }
-  //   catch (e) {
-  //     this.logger.error(`Fetch mentions error`);
-  //     this.logger.error(String(e));
-  //     console.log(e)
-
-  //     if (e instanceof ApiResponseError)
-  //       this.logger.error(e.errors);
-
-  //     return null;
-  //   }
-  // }
+  /**
+   * Publishes a quote to an existing tweet (RT with comment).
+   * This throws an error in case the content cannot fit in 
+   */
+  public publishQuote(tweetContent: string, quotedPostId: string): Promise<{ postId: string, text: string }[]> {
+    return this.publishTweet(tweetContent, undefined, quotedPostId);
+  }
 
   /**
    * Sends the given text as a tweet to the current bot X account.
    * Returns the created post ids (in conversation order)
    */
-  public async publishTweet(tweetContent: string, inReplyToTweetId?: string): Promise<{ postId: string, text: string }[]> {
+  public async publishTweet(tweetContent: string, inReplyToTweetId?: string, quoteTweetId?: string): Promise<{ postId: string, text: string }[]> {
     const client = await this.auth.getAuthorizedClientForBot();
 
     // Split content if larger than 280 chars
@@ -97,6 +79,10 @@ export class TwitterService {
         in_reply_to_tweet_id: inReplyToTweetId
       }
     }
+
+    // Quote an existing tweet (RT with message)
+    if (quoteTweetId)
+      subTweets[0].quote_tweet_id = quoteTweetId;
 
     console.log("subTweets", subTweets)
 
@@ -138,6 +124,19 @@ export class TwitterService {
     }
   }
 
+  public async fetchAccountByUserId(userId: string): Promise<UserV2> {
+    const client = await this.auth.getAuthorizedClientForBot();
+
+    const result = await client.v2.user(userId);
+    if (result.errors) {
+      this.logger.error("fetchAccountByUserId");
+      this.logger.error(result.errors);
+      return null;
+    }
+
+    return result.data;
+  }
+
   public async fetchAccountByUserName(userScreenName: string): Promise<UserV2> {
     const client = await this.auth.getAuthorizedClientForBot();
 
@@ -162,4 +161,30 @@ export class TwitterService {
 
     return null;
   }
+
+  // public async fetchSelfMentions(notBefore: Moment): Promise<TweetV2[]> {
+  //   const client = await this.auth.getAuthorizedClientForBot();
+  //   const botAccount = await this.auth.getAuthenticatedBotAccount();
+
+  //   try {
+  //     const pagination = await client.v2.userMentionTimeline(botAccount.userId, {
+  //       //sort_order: "recency",
+  //       max_results: 5,
+  //       start_time: notBefore.toISOString(),
+  //       'tweet.fields': 'created_at,author_id,text'
+  //     });
+
+  //     return pagination?.tweets;
+  //   }
+  //   catch (e) {
+  //     this.logger.error(`Fetch mentions error`);
+  //     this.logger.error(String(e));
+  //     console.log(e)
+
+  //     if (e instanceof ApiResponseError)
+  //       this.logger.error(e.errors);
+
+  //     return null;
+  //   }
+  // }
 }

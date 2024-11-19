@@ -1,4 +1,3 @@
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { MessagesAnnotation } from "@langchain/langgraph";
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
@@ -14,13 +13,11 @@ export const categorizeNewsAgent = (logger: Logger, post: XPost) => {
       {tweetContent}
     `;
 
-    const prompt = ChatPromptTemplate.fromMessages<{ tweetContent: string }>([
-      ["system", SYSTEM_TEMPLATE]
-    ]);
-
     const { responseMessage } = await langchain().fullyInvoke(
       // Initial prompt message
-      prompt,
+      [
+        ["system", SYSTEM_TEMPLATE]
+      ],
       // Invocation params
       {
         tweetContent: post.text

@@ -25,12 +25,14 @@ export const studyForContestAgent = (logger: Logger, post: XPost) => {
     `;
 
     const prompt = ChatPromptTemplate.fromMessages<{ tweetContent: string }>([
-      ["system", SYSTEM_TEMPLATE]
+
     ]);
 
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse } = await langchain().fullyInvoke(
-      prompt,
+      [
+        ["system", SYSTEM_TEMPLATE]
+      ],
       { tweetContent: post.text },
       [],
       structuredOutput
