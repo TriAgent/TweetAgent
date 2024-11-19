@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import * as moment from "Moment";
 import { Moment } from "moment";
 import { splitStringAtWord } from "src/utils/strings";
 import { ApiResponseError, SendTweetV2Params, TweetV2, UserV2 } from "twitter-api-v2";
@@ -18,6 +19,13 @@ export class TwitterService {
   public async fetchAuthorsPosts(accounts: string[], notBefore: Moment): Promise<TweetV2[]> {
     const client = await this.auth.getAuthorizedClientForBot();
 
+    // X API limitation: make sure start time is not older than a week ago
+    const aWeekAgo = moment().subtract(7, "days");
+    if (notBefore.isBefore(aWeekAgo)) {
+      notBefore = aWeekAgo;
+      this.logger.warn(`Not before date ${notBefore} is too old, changed to ${aWeekAgo}`);
+    }
+
     // Only retrieve posts from the target accounts
     const query = accounts.map(u => `from:${u}`).join(" OR ");
 
@@ -33,37 +41,35 @@ export class TwitterService {
       return pagination?.tweets;
     }
     catch (e) {
-      this.logger.error(`Fetch posts error`);
-      this.logger.error(e);
-      return null;
+      return this.handleTwitterApiError("Fetch authors posts", e);
     }
   }
 
-  public async fetchSelfMentions(notBefore: Moment): Promise<TweetV2[]> {
-    const client = await this.auth.getAuthorizedClientForBot();
-    const botAccount = await this.auth.getAuthenticatedBotAccount();
+  // public async fetchSelfMentions(notBefore: Moment): Promise<TweetV2[]> {
+  //   const client = await this.auth.getAuthorizedClientForBot();
+  //   const botAccount = await this.auth.getAuthenticatedBotAccount();
 
-    try {
-      const pagination = await client.v2.userMentionTimeline(botAccount.userId, {
-        //sort_order: "recency",
-        max_results: 5,
-        start_time: notBefore.toISOString(),
-        'tweet.fields': 'created_at,author_id,text'
-      });
+  //   try {
+  //     const pagination = await client.v2.userMentionTimeline(botAccount.userId, {
+  //       //sort_order: "recency",
+  //       max_results: 5,
+  //       start_time: notBefore.toISOString(),
+  //       'tweet.fields': 'created_at,author_id,text'
+  //     });
 
-      return pagination?.tweets;
-    }
-    catch (e) {
-      this.logger.error(`Fetch mentions error`);
-      this.logger.error(String(e));
-      console.log(e)
+  //     return pagination?.tweets;
+  //   }
+  //   catch (e) {
+  //     this.logger.error(`Fetch mentions error`);
+  //     this.logger.error(String(e));
+  //     console.log(e)
 
-      if (e instanceof ApiResponseError)
-        this.logger.error(e.errors);
+  //     if (e instanceof ApiResponseError)
+  //       this.logger.error(e.errors);
 
-      return null;
-    }
-  }
+  //     return null;
+  //   }
+  // }
 
   /**
    * Sends the given text as a tweet to the current bot X account.
@@ -103,9 +109,7 @@ export class TwitterService {
       return createdTweets?.map(t => ({ postId: t.data.id, text: t.data.text }));
     }
     catch (e) {
-      this.logger.error(`Publish tweet error`);
-      this.logger.error(e);
-      return null;
+      return this.handleTwitterApiError("Publish tweet", e);
     }
   }
 
@@ -113,13 +117,25 @@ export class TwitterService {
     const client = await this.auth.getAuthorizedClientForBot();
     const botAuth = await this.auth.getAuthenticatedBotAccount();
 
-    const replies = await client.v2.search(`to: ${botAuth.userId}`, {
-      //sort_order: "relevancy",
-      start_time: notBefore.toISOString(),
-      'tweet.fields': 'created_at,id,author_id,text,conversation_id,referenced_tweets,public_metrics'
-    });
+    // X API limitation: make sure start time is not older than a week ago
+    const aWeekAgo = moment().subtract(7, "days");
+    if (notBefore.isBefore(aWeekAgo)) {
+      notBefore = aWeekAgo;
+      this.logger.warn(`Not before date ${notBefore} is too old, changed to ${aWeekAgo}`);
+    }
 
-    return replies?.tweets;
+    try {
+      const replies = await client.v2.search(`to: ${botAuth.userId}`, {
+        //sort_order: "relevancy",
+        start_time: notBefore.toISOString(),
+        'tweet.fields': 'created_at,id,author_id,text,conversation_id,referenced_tweets,public_metrics'
+      });
+
+      return replies?.tweets;
+    }
+    catch (e) {
+      return this.handleTwitterApiError("Fetch mentionning posts", e);
+    }
   }
 
   public async fetchAccountByUserName(userScreenName: string): Promise<UserV2> {
@@ -133,5 +149,17 @@ export class TwitterService {
     }
 
     return result.data;
+  }
+
+  private handleTwitterApiError(context: string, e: Error) {
+    this.logger.error(`${context} error`);
+    this.logger.error(e);
+
+    if (e instanceof ApiResponseError) {
+      e.errors && this.logger.error(e.errors);
+      e.data && this.logger.error(e.data);
+    }
+
+    return null;
   }
 }

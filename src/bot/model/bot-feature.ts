@@ -1,5 +1,5 @@
 import { XPost } from "@prisma/client";
-import { StudiedPost } from "./studied-post";
+import { XPostReplyAnalysisResult } from "./x-post-reply-analysis-result";
 
 export abstract class BotFeature {
   private lastExecutionTime: number = 0;
@@ -28,12 +28,15 @@ export abstract class BotFeature {
    * Decide to reply to the given post or not on X. If so, return a generated reply for the replier to
    * merge it with other potential features replies.
    */
-  studyReplyToXPost?(post: XPost): Promise<StudiedPost>;
+  studyReplyToXPost?(post: XPost): Promise<XPostReplyAnalysisResult>;
 
   /**
    * Tells if at least runLoopMinIntervalSec seconds have elapsed since the last execution.
    */
   public canExecuteNow(): boolean {
+    if (!this.runLoopMinIntervalSec || !this.scheduledExecution)
+      return false;
+
     const currentTime = Date.now();
     return (currentTime - this.lastExecutionTime) >= this.runLoopMinIntervalSec * 1000;
   }

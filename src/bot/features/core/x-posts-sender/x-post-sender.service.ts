@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { BotFeature } from 'src/bot/model/bot-feature';
 import { XPostsService } from 'src/xposts/xposts.service';
-import { BotFeature } from '../../model/bot-feature';
 
 @Injectable()
 export class XPostSenderService extends BotFeature {

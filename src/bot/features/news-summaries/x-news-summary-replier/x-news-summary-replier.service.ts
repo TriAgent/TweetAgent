@@ -1,69 +1,63 @@
-import { Annotation, BaseChannel, END, START, StateGraph } from "@langchain/langgraph";
-import { AnnotationRoot } from "@langchain/langgraph/dist/graph";
+import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { Injectable, Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
-import { uniq } from "lodash";
 import { BotFeature } from "src/bot/model/bot-feature";
-import { StudiedPost } from "src/bot/model/studied-post";
-import { LangchainService } from "src/langchain/langchain.service";
+import { XPostReplyAnalysisResult } from "src/bot/model/x-post-reply-analysis-result";
+import { BotConfig } from "src/config/bot-config";
 import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
-import { TwitterService } from "src/twitter/twitter.service";
 import { XPostsService } from "src/xposts/xposts.service";
-import { replyAgent } from "./agents/reply.agent";
 import { classifyPostAgent } from "./classify-post.agent";
 import { ReplierNode } from "./model/replier-node";
-import { TweetTrait } from "./model/tweet-trait";
 import { postReplyRouter } from "./post-reply.router";
+import { replyAgent } from "./reply.agent";
 
 const ProduceRepliesCheckDelaySec = 60; // 1 minute - interval between loops that check if a reply has to be produced
 
-type ReplierStateAnnotationSchema = {
-  tweetTraits: BaseChannel<TweetTrait[]>,
-  tweetReply: BaseChannel<string>
-}
-
-export let replierStateAnnotation: AnnotationRoot<ReplierStateAnnotationSchema>;
+export let replierStateAnnotation = Annotation.Root({
+  tweetTraits: Annotation<string[]>,
+  tweetReply: Annotation<string>
+});
 
 /**
  * This feature generates replies to X users that posted in reply to our news summary posts.
  */
 @Injectable()
-export class NewsSummaryReplierService extends BotFeature {
+export class XNewsSummaryReplierService extends BotFeature {
   private logger = new Logger("NewsSummaryReplier");
 
   constructor(
     private prisma: PrismaService,
-    private twitter: TwitterService,
     private twitterAuth: TwitterAuthService,
-    private langchain: LangchainService,
     private xPosts: XPostsService
   ) {
     super(ProduceRepliesCheckDelaySec);
+  }
+
+  public canExecuteNow(): boolean {
+    // Only run the news summarizer if enabled in .env
+    return BotConfig.NewsSummaryBot.IsActive && super.canExecuteNow();
   }
 
   /**
    * Checks if some new replies have been sent to us as a reply to our news summaries,
    * and try to answer them.
    */
-  async studyReplyToXPost?(xPost: XPost): Promise<StudiedPost> {
-
+  async studyReplyToXPost?(xPost: XPost): Promise<XPostReplyAnalysisResult> {
     if (xPost) {
+      // Get conversation thread for this post. If not a conversation we started with a news post,
+      // don't reply here.
+      const conversation = await this.xPosts.getConversation(xPost.postId);
+      if (!conversation || conversation.length === 0)
+        return;
+
       this.logger.log("Building X reply for post:");
       this.logger.log(xPost);
 
-      const tools = [
-        // nothing yet
-      ];
+      const tools = [];
       const _classifyReplyAgent = classifyPostAgent(tools, xPost);
       const _shouldReplyRouter = postReplyRouter(tools, xPost);
       const _replyAgent = replyAgent(tools, xPost);
-
-      replierStateAnnotation = Annotation.Root<ReplierStateAnnotationSchema>({
-        // TODO: something wrong with the reducer, should not need to use uniq() but apparently traits are duplicated many times (after each agent call?)
-        tweetTraits: Annotation<TweetTrait[]>({ reducer: (a, b) => uniq([...a, ...b]), default: () => [] }),
-        tweetReply: Annotation<string>({ reducer: (a, b) => b, default: () => null, }),
-      });
 
       const graph = new StateGraph(replierStateAnnotation)
         .addNode(ReplierNode.Classify, _classifyReplyAgent)
@@ -76,13 +70,12 @@ export class NewsSummaryReplierService extends BotFeature {
         .addEdge(ReplierNode.Reply, END) // After replying, end
 
       const app = graph.compile();
-
-      // // Invoke tools targeted by the graph
       const result: typeof replierStateAnnotation.State = await app.invoke({});
-      // await this.langchain.executeAllToolCalls(tools, result);
 
       this.logger.log("Reply generation result:");
       this.logger.log(result);
+
+      return; // TMP DEV
 
       if (result.tweetReply) {
         const botAccount = await this.twitterAuth.getAuthenticatedBotAccount();
@@ -105,8 +98,6 @@ export class NewsSummaryReplierService extends BotFeature {
       await this.xPosts.markAsReplied(xPost);
     }
 
-    return {
-      sourcePost: xPost
-    }
+    return {}
   }
 }

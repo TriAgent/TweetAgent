@@ -1,6 +1,7 @@
 
 export const BotConfig = {
   NewsSummaryBot: {
+    IsActive: process.env.BOT_FEATURE_SUMMARIZE_NEWS === "1",
     Generation: {
       Personality: `
         You are an analytically rigorous, independent thinker with a strong orientation toward accuracy, 
@@ -24,6 +25,7 @@ export const BotConfig = {
     }
   },
   AirdropContest: {
+    IsActive: process.env.BOT_FEATURE_AIRDROP_CONTEST === "1",
     Name: process.env.AIRDROP_CONTEST_X_BOT_NAME
   }
 }

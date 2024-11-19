@@ -5,6 +5,7 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { Injectable, Logger } from '@nestjs/common';
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { BotFeature } from "src/bot/model/bot-feature";
+import { BotConfig } from "src/config/bot-config";
 import { LangchainService } from "src/langchain/langchain.service";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
@@ -12,7 +13,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { TwitterService } from "src/twitter/twitter.service";
 import { XPostsService } from "src/xposts/xposts.service";
-import { botPersonalityPromptChunk } from "../../model/prompt-parts/news-summary";
+import { botPersonalityPromptChunk } from "../../../model/prompt-parts/news-summary";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
 
 /**
@@ -20,15 +21,15 @@ import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
  * [langchain] only for web results: make a summary of the web search result to make the stored content smaller
 */
 
-const PostXSummaryDelayMs = 1 * 60 * 60 * 1000; // 1 hour
-const MinTimeBetweenXPosts = PostXSummaryDelayMs; // Used by retries when posts have failed to publish. Not more frequently than this delay for posts.
+const PostXSummaryDelaySec = 1 * 60 * 60; // 1 hour
+//const MinTimeBetweenXPosts = PostXSummaryDelaySec; // Used by retries when posts have failed to publish. Not more frequently than this delay for posts.
 
 /**
  * This service uses recent X news posts we have in database to produce summaries from time to time.
  * Summaries are posted on X.
  */
 @Injectable()
-export class XSummaryWriterService extends BotFeature {
+export class XNewsSummaryWriterService extends BotFeature {
   private logger = new Logger("XSummaryWriter");
 
   constructor(
@@ -38,12 +39,16 @@ export class XSummaryWriterService extends BotFeature {
     private langchain: LangchainService,
     private xPosts: XPostsService
   ) {
-    super();
+    super(PostXSummaryDelaySec);
+  }
+
+  public canExecuteNow(): boolean {
+    // Only run the news summarizer if enabled in .env
+    return BotConfig.NewsSummaryBot.IsActive && super.canExecuteNow();
   }
 
   public scheduledExecution() {
-
-    this.createRecentTweetsSummary();
+    return this.createRecentTweetsSummary();
   }
 
   public async createRecentTweetsSummary() {
@@ -101,11 +106,6 @@ export class XSummaryWriterService extends BotFeature {
         await this.createNewsSummaryForX(tweetSummary, docs);
       }
     }
-
-    // Rearm
-    setTimeout(() => {
-      this.createRecentTweetsSummary();
-    }, PostXSummaryDelayMs);
   }
 
   /**
@@ -125,7 +125,7 @@ export class XSummaryWriterService extends BotFeature {
       }
     });
 
-    // Mark source posts as used
+    // Mark source posts as used/summarized
     await this.prisma.xPost.updateMany({
       where: { id: { in: docs.map(d => d.metadata.id) } },
       data: { summarizedById: dbPost.id }

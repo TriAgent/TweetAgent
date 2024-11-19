@@ -72,7 +72,7 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
       `Write the tweet reply. You are mainly replying to the most recent 
        tweet above. Do not @ the user ID in the reply.`]);
 
-    console.log("messages", messages)
+    //console.log("messages", messages)
 
     const prompt = ChatPromptTemplate.fromMessages(messages);
 

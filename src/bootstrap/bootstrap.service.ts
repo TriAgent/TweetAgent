@@ -33,5 +33,8 @@ export class BootstrapService implements OnApplicationBootstrap {
     else if (argv["bot:run"]) {
       void this.bot.run();
     }
+    else {
+      this.logger.warn(`No run command was passed, nothing might happen`);
+    }
   }
 }

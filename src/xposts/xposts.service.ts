@@ -140,10 +140,11 @@ export class XPostsService {
         if (!existingPost) {
           const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
 
+          console.log("post.referenced_tweets", post.referenced_tweets)
+
           // Save post to database
           const dbPost = await this.prisma.xPost.create({
             data: {
-              publishRequestAt: new Date(),
               text: post.text,
               authorId: post.author_id,
               postId: post.id,

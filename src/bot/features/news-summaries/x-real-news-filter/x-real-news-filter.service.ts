@@ -1,38 +1,34 @@
-import { BaseMessage } from "@langchain/core/messages";
 import { END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
 import { Injectable, Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
 import * as moment from "moment";
+import { BotFeature } from "src/bot/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
 import { LangchainService } from "src/langchain/langchain.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { TwitterService } from "src/twitter/twitter.service";
-import { runEverySeconds } from "src/utils/run-every-seconds";
 import { XAccountsService } from "src/xaccounts/xaccounts.service";
-import { XPostsService } from "src/xposts/xposts.service";
-import { categorizeNewsAgent } from "./agents/categorize-news.agent";
-import { categorizeNewsTool } from "./tools/categorize-news.tool";
+import { categorizeNewsAgent } from "./categorize-news.agent";
 
 /**
  * This service categorizes posts as real news or not
  */
 @Injectable()
-export class XNewsPostsService {
-  private logger = new Logger("XNewsPosts");
+export class XRealNewsFilterService extends BotFeature {
+  private logger = new Logger("XRealNewsFilter");
 
   constructor(
     private prisma: PrismaService,
-    private twitter: TwitterService,
-    private xPosts: XPostsService,
     private xAccounts: XAccountsService,
     private langchain: LangchainService
-  ) { }
-
-  public run() {
-    runEverySeconds(this.categorizeTweetsAsRealNews, 10);
+  ) {
+    super(10);
   }
 
-  private async categorizeTweetsAsRealNews() {
+  public scheduledExecution() {
+    return this.categorizeFollowedNewsAccountsTweetsAsRealNews();
+  }
+
+  private async categorizeFollowedNewsAccountsTweetsAsRealNews() {
     // Retrieve user ids of accounts we are following for their news
     const targetAuthorAccounts = await this.xAccounts.getXAccountsFromScreenNames(BotConfig.NewsSummaryBot.News.XSourceAccounts)
     const targetAuthorIds = targetAuthorAccounts.map(a => a.userId);
@@ -60,18 +56,13 @@ export class XNewsPostsService {
    * or not relevant content.
    */
   private async categorizeAsRealNews(post: XPost) {
-    const tools = [
-      categorizeNewsTool(this.logger, this.prisma, post) // ability to update a DB post with "isRealNews" info
-    ];
-    const mainAgent = categorizeNewsAgent(tools, post);
+    const graph = new StateGraph(MessagesAnnotation)
+      .addNode("agent", categorizeNewsAgent(this.logger, post))
+      .addEdge(START, "agent")
+      .addEdge("agent", END);
 
-    const graph = new StateGraph(MessagesAnnotation).addNode("agent", mainAgent);
-    graph.addEdge(START, "agent").addEdge("agent", END);
     const app = graph.compile();
-
-    // Invoke tools targeted by the graph
-    const result: { messages: BaseMessage[] } = await app.invoke({});
-    await this.langchain.executeAllToolCalls(tools, result);
+    await app.invoke({});
   }
 }
 
