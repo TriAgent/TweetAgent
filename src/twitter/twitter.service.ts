@@ -154,6 +154,15 @@ export class TwitterService {
     return conversation;
   }
 
+  public async fetchSinglePost(postId: string): Promise<TweetV2> {
+    const client = await this.auth.getAuthorizedClientForBot();
+    const result = await client.v2.singleTweet(postId, {
+      'tweet.fields': TweetFields
+    });
+
+    return result?.data;
+  }
+
   public async fetchAccountByUserId(userId: string): Promise<UserV2> {
     const client = await this.auth.getAuthorizedClientForBot();
 

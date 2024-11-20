@@ -25,7 +25,12 @@ export const BotConfig = {
     }
   },
   AirdropContest: {
-    IsActive: process.env.BOT_FEATURE_AIRDROP_CONTEST === "1"
+    IsActive: process.env.BOT_FEATURE_AIRDROP_CONTEST === "1",
+    MinHoursBetweenAirdrops: 24,
+    AirdroppedTokenName: "USDT",
+    AirdroppedTokenChain: "base", // TODO: improve that a lot: chain id, chain type etc
+    TokenAmountPerAirdrop: 100, // eg: 100 usdt every 24h, total, dispatched between all winning posts
+    DaysBeforeStatCollection: 7, // Number of days to wait before making a post eligible for airdrop.
   },
   X: {
     PublishPosts: process.env.PUBLISH_X_POSTS === "1"

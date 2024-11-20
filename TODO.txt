@@ -1,11 +1,5 @@
 AIRDROPS:
-- make contest posts work for both cases:
-  - if we are mentioned in the post
-  - or if we are mentioned in a reply to a parent post 
-  - todo:
-    - generic mention fetcher -> fetch all conversation posts -> contest reply handler -> dismiss non root posts, study only root -> check if bot username in any of the conversation posts written by the root post author -> study root post for contest
-- Make sure the mentioning author is the same as the elected post author, otherwise dismiss
-
+- reply to the mentioning post, telling it is eligible for airdrop (TBD: when mentioned or when quoted?)
 - restore test X accounts, test mechanism (mentions, post, airdrop address)
 - collect quoted posts stats
 - airdrop tokens to winner posts / base management / wallet management

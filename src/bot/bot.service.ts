@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { runEverySeconds } from "src/utils/run-every-seconds";
 import { BotFeaturesService } from "./features.service";
+import { AirdropSenderService } from "./features/airdrop-contest/airdrop-sender/airdrop-sender-service";
+import { AirdropSnapshotService } from "./features/airdrop-contest/airdrop-snapshot/airdrop-snapshot-service";
 import { XPostAirdropAddressService } from "./features/airdrop-contest/x-post-airdrop-address/x-post-airdrop-address.service";
 import { XPostContestHandlerService } from "./features/airdrop-contest/x-post-contest-handler/x-post-contest-handler.service";
 import { XPostContestReposterService } from "./features/airdrop-contest/x-post-contest-reposter/x-post-contest-reposter.service";
@@ -24,7 +26,9 @@ export class BotService {
     xRealNewsFilter: XRealNewsFilterService,
     xPostContestHandler: XPostContestHandlerService,
     xPostContestReposter: XPostContestReposterService,
-    xPostAirdropAddress: XPostAirdropAddressService
+    xPostAirdropAddress: XPostAirdropAddressService,
+    airdropSnapshot: AirdropSnapshotService,
+    airdropSender: AirdropSenderService
   ) {
     featuresService.registerFeatures([
       xPostsFetcher, // Fetches and caches X Posts
@@ -36,6 +40,8 @@ export class BotService {
       xPostContestHandler, // Classifies upcoming X posts as eligible for the airdrop contest or not
       xPostContestReposter, // RTs user posts from time to time, for the airdrop contest
       xPostAirdropAddress, // Collects user airdrop addresses from X posts and acknowledges with a reply when successfully handled
+      airdropSnapshot, // Elects best posts and dispatches airdrop tokens to authors
+      airdropSender, // Sends airdrop tokens on chain
     ]);
   }
 

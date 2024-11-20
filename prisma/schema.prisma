@@ -31,6 +31,9 @@ model XAccount {
   airdropAddress String? // Blockchain address where to airdrop tokens if this user wins a contest competition
 
   updatedAt DateTime @default(now())
+
+  PostContestAirdrop PostContestAirdrop[]
+  XPost              XPost[]
 }
 
 // Post retrieved from X. 
@@ -57,7 +60,10 @@ model XPost {
   parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
   rootPostId   String? // Parent post (id on X) - root tweet - usually, the tweet created by our bot - same as post id if root
   quotedPostId String? // Post (id on X) that we quote with this post (RT with message).
-  authorId     String // X user id
+  //authorId     String // X user id
+
+  xAccount       XAccount @relation(fields: [xAccountUserId], references: [userId])
+  xAccountUserId String
 
   // Specific to: news summary
   isRealNews     Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
@@ -71,7 +77,7 @@ model XPost {
   wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
 
   // Specific to: our bot's published posts
-  account                XPublisherAccount? @relation(fields: [publisherAccountUserId], references: [userId]) // Bot account used to send the tweet
+  botAccount             XPublisherAccount? @relation(fields: [publisherAccountUserId], references: [userId]) // Bot account used to send the tweet
   publisherAccountUserId String?
 
   // Specific to: airdrop contest
@@ -80,6 +86,8 @@ model XPost {
   contestQuotedPost         XPost?    @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
   contestQuotedByPost       XPost?    @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
   contestQuotedPostId       String?   @unique
+
+  PostContestAirdrop PostContestAirdrop[]
 }
 
 enum OperationHistoryType {
@@ -99,4 +107,47 @@ model WebPage {
   id          String    @unique @default(uuid())
   createdAt   DateTime  @default(now()) // Entry creation date
   contentDate DateTime? // If known, date at which the web page was written/published
+}
+
+// One entry every time we make a snapshot of the best recent posts and dispatch airdrop tokens to holders
+model ContestAirdrop {
+  id        String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  totalTokenAmount Decimal // Total number of tokens distributed (human readable format)
+  token            String // eg: USDT
+  chain            String // eg: base
+
+  PostContestAirdrop PostContestAirdrop[]
+}
+
+// One entry per receiving post per airdrop
+model PostContestAirdrop {
+  id        String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  airdrop          ContestAirdrop @relation(fields: [contestAirdropId], references: [id])
+  contestAirdropId String
+
+  winningXAccount       XAccount @relation(fields: [winningXAccountUserId], references: [userId])
+  winningXAccountUserId String
+
+  airdropAddress String // Blockchain address used for the airdrop
+  tokenAmount    Decimal // Same token as in the ContestAirdrop entry, human readable amount
+
+  quotePost   XPost  @relation(fields: [quotePostId], references: [id]) // Our quoted Post that RTed user's post
+  quotePostId String
+
+  transactionId String? // Chain transaction ID
+  transferedAt  DateTime? // Date at which the chain token transfer has been completed
+
+  // Post stats at the time of snapshot
+  commentCount    Int
+  likeCount       Int
+  rtCount         Int
+  impressionCount Int
+
+  weight Float // Weight of this post among other posts of the same airdrop (total 1.0)
+
+  @@unique([contestAirdropId, quotePostId])
 }

@@ -39,7 +39,8 @@ export class XPostContestReposterService extends BotFeature {
     const mostRecentContestQuote = await this.prisma.xPost.findFirst({
       where: {
         contestQuotedPost: { isNot: null }
-      }
+      },
+      orderBy: { createdAt: "desc" }
     });
 
     if (mostRecentContestQuote && moment().diff(mostRecentContestQuote.createdAt, "minutes") < 60)

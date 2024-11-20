@@ -7,6 +7,7 @@ import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { TweetV2 } from 'twitter-api-v2';
 import { ConversationTree } from './model/conversation-tree';
+import { PostStats } from './model/post-stats';
 
 /**
  * Service that provides generic features for X (twitter) posts management.
@@ -157,6 +158,10 @@ export class XPostsService {
     });
   }
 
+  /**
+   * Fetches every post not yet in database from twitter api, and saves it to database.
+   * API is not called for posts we already know.
+   */
   public async fetchAndSaveXPosts(fetcher: () => Promise<TweetV2[]>): Promise<XPost[]> {
     const posts = await fetcher();
 
@@ -169,8 +174,6 @@ export class XPostsService {
         const existingPost = await this.getXPostByTwitterPostId(post.id);
         if (!existingPost) {
           const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
-
-          // console.log("post.referenced_tweets", post.referenced_tweets)
 
           // Save post to database
           const dbPost = await this.prisma.xPost.create({
@@ -191,5 +194,16 @@ export class XPostsService {
     }
 
     return null;
+  }
+
+  public async getLatestPostStats(postId: string): Promise<PostStats> {
+    const postLatest = await this.twitter.fetchSinglePost(postId);
+
+    return {
+      impressionCount: postLatest.public_metrics.impression_count,
+      likeCount: postLatest.public_metrics.like_count,
+      rtCount: postLatest.public_metrics.quote_count + postLatest.public_metrics.retweet_count,
+      commentCount: postLatest.public_metrics.reply_count
+    }
   }
 }
