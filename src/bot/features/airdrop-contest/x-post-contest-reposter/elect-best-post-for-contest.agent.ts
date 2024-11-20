@@ -1,4 +1,3 @@
-import { StructuredTool } from "@langchain/core/tools";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Logger } from "@nestjs/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
@@ -13,8 +12,6 @@ import { contestReposterStateAnnotation } from "./x-post-contest-reposter.servic
  */
 export const electBestPostForContestAgent = (logger: Logger) => {
   return async (state: typeof contestReposterStateAnnotation.State) => {
-    const tools: StructuredTool[] = [];
-
     const loader = new PendingContestPostLoader();
     const docs = await loader.load();
 
@@ -22,10 +19,6 @@ export const electBestPostForContestAgent = (logger: Logger) => {
       logger.log("Not enough eligible contest X posts available to create a contest post RT");
       return state;
     }
-
-    const structuredOutput = z.object({
-      selectedPostId: z.string().describe("The selected post ID")
-    });
 
     const REQUEST_TEMPLATE = `
       Below is a list of several posts from twitter. Select the one that has the best chances to become 
@@ -41,22 +34,20 @@ export const electBestPostForContestAgent = (logger: Logger) => {
     const vectorStoreRetriever = vectorStore.asRetriever();
 
     // Invoke command, execute all tools, and get structured json response.
-    const { structuredResponse } = await langchain().fullyInvoke(
-      [
+    const { structuredResponse } = await langchain().fullyInvoke({
+      messages: [
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
         ["system", REQUEST_TEMPLATE]
       ],
-      "",
-      tools,
-      structuredOutput,
-      // To run before piping the prompt
-      [
-        {
-          posts: vectorStoreRetriever//.pipe(formatDocumentsAsString),
-        }
-      ]
-    );
+      invocationParams: "",
+      structuredOutput: z.object({
+        selectedPostId: z.string().describe("The selected post ID")
+      }),
+      runnablesBefore: [{
+        posts: vectorStoreRetriever
+      }]
+    });
 
     if (structuredResponse.selectedPostId)
       state.electedPost = docs.find(d => d.metadata.postId === structuredResponse.selectedPostId).metadata.post;

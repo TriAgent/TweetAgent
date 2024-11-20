@@ -30,7 +30,7 @@ export class XPostFetcherService extends BotFeature {
     // Fetch posts from some targeted accounts
     await this.fetchLatestTargetAccountPosts();
 
-    // Fetch posts we are mentionned in
+    // Fetch posts we are mentioned in
     await this.fetchLatestMentionPosts();
   }
 
@@ -60,15 +60,22 @@ export class XPostFetcherService extends BotFeature {
     if (moment().diff(latestFetchDate, "seconds") < FetchXMentionPostsDelaySec)
       return;
 
+    // Fetch recent posts, not earlier than last time we checked
     const posts = await this.xPosts.fetchAndSaveXPosts(() => {
-      // Fetch recent posts, not earlier than last time we checked
-      this.logger.log(`Fetching recent X posts we are mentionned in, not earlier than ${latestFetchDate}`);
-      return this.twitter.fetchPostsMentionningOurAccount(moment(latestFetchDate));
+      this.logger.log(`Fetching recent X posts we are mentioned in, not earlier than ${latestFetchDate}`);
+      return this.twitter.fetchPostsMentioningOurAccount(moment(latestFetchDate));
     });
 
-    if (posts != null) {
-      console.log("new mention posts", posts)
+    // For each post we get mentioned in, fetch and save the whole conversation before it (parent posts).
+    // This is needed for example by the contest service to study the root post vs the mentioned post (possibly in replies).
+    for (const post of posts) {
+      await this.xPosts.fetchAndSaveXPosts(() => {
+        this.logger.log(`Fetching conversation for mentioned post`);
+        return this.twitter.fetchParentPosts(post.postId);
+      });
+    }
 
+    if (posts != null) {
       // Remember last fetch time
       await this.operations.saveRecentOperation(OperationHistoryType.FetchPostsWeAreMentionnedIn);
     }

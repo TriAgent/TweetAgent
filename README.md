@@ -45,10 +45,19 @@ Acts as an automatic editor, retweeting good content provided by others. Third p
 - **The bot runs permanently**, it’s not a one time or on demand contest script. It airdrops 1K tokens per day, no matter how many users interact with it.
 - In order to decide if a user post is **targeted for the contest, AI classifies** it with a criteria such as “Do you think this post is mentioning your (bot) name in order to join the contest? or for another reason?”
 
+### How contest posts are found
+
+- The generic mention post fetcher fetches posts we are mentioned in
+- For each post found, we fetch all conversation posts (parent X posts)
+- The post handler feature asks the contest reply handler feature to handle all posts of the conversation, one by one
+- The contest handler dismisses non root posts, it focuses only on root post -> 
+- It checks if bot username in any of the conversation posts written by the root post author (this means someone is trying to ping us to check the root post).
+- If so, it studies the root post for contest.
+
 # Bot features
 
 ## x-posts-fetcher
-- Gathers X posts from target accounts, or posts we are mentionned in.
+- Gathers X posts from target accounts, or posts we are mentioned in.
 - Those posts are later used by several features: could be for post contest, to gather airdrop address, to summarize news, or for anything else.
 
 ## x-posts-handler

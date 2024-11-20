@@ -13,6 +13,14 @@ import { StructureToolOrBindToolsInput, zodSchemaToOpenAICompatibleTool } from '
 
 const StructuredOutputToolName = "structured_output";
 
+export type FullInvocationInput<RunInput extends InputValues = any, OutputSchema extends ZodType = any> = {
+  messages: BaseMessageLike[];
+  invocationParams?: RunInput | string;
+  tools?: StructuredTool[];
+  structuredOutput?: OutputSchema;
+  runnablesBefore?: RunnableLike[]
+}
+
 type FullInvocationOutput<OutputSchema extends ZodType> = {
   responseMessage: BaseMessage;
   stringResponse?: string;
@@ -47,8 +55,16 @@ export class LangchainService implements OnModuleInit {
    * @param invocationParams JSON or string. JSON preferred, string mostly when using vector stores because using {} creates many issues (text.replace is not a function, $.input is invalid...). "" solves this unclear problem
    * @param runnablesBefore Prepended to the runnable chain before adding prompt and model. For example, to pass a vector store.
    */
-  public async fullyInvoke<RunInput extends InputValues = any, OutputSchema extends ZodType = any>(messages: BaseMessageLike[], invocationParams: RunInput | string, tools: StructuredTool[], structuredOutput?: OutputSchema, runnablesBefore?: RunnableLike[]): Promise<FullInvocationOutput<OutputSchema>>;
-  public async fullyInvoke<RunInput extends InputValues = any, OutputSchema extends ZodType = any>(messages: BaseMessageLike[], invocationParams: RunInput | string, tools: StructuredTool[] = [], structuredOutput?: OutputSchema, runnablesBefore: RunnableLike[] = []): Promise<FullInvocationOutput<any>> {
+  public async fullyInvoke<RunInput extends InputValues = any, OutputSchema extends ZodType = any>(inputs: FullInvocationInput<RunInput, OutputSchema>): Promise<FullInvocationOutput<OutputSchema>> {
+    const defaultInputs: FullInvocationInput<RunInput, OutputSchema> = {
+      messages: [],
+      tools: [],
+      structuredOutput: undefined,
+      runnablesBefore: [],
+      invocationParams: {} as RunInput
+    };
+    const { tools, structuredOutput, messages, runnablesBefore, invocationParams } = { ...defaultInputs, ...inputs };
+
     const allTools: StructureToolOrBindToolsInput[] = tools; // can be an empty array
 
     // If the output is structured, add it as a tool, this is the recommended way to mix tools and structured output.

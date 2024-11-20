@@ -5,6 +5,8 @@ import { splitStringAtWord } from "src/utils/strings";
 import { ApiResponseError, SendTweetV2Params, TweetV2, UserV2 } from "twitter-api-v2";
 import { TwitterAuthService } from "./twitter-auth.service";
 
+const TweetFields = `created_at,id,author_id,conversation_id,text,referenced_tweets,public_metrics`; // public_metrics to get like/rt counts
+
 @Injectable()
 export class TwitterService {
   private logger = new Logger(TwitterService.name);
@@ -35,13 +37,38 @@ export class TwitterService {
         sort_order: "recency",
         max_results: 10,
         start_time: notBefore.toISOString(),
-        'tweet.fields': 'created_at,author_id,text', // public_metrics to get like/rt counts
+        'tweet.fields': TweetFields,
       });
 
       return pagination?.tweets;
     }
     catch (e) {
       return this.handleTwitterApiError("Fetch authors posts", e);
+    }
+  }
+
+  public async fetchPostsMentioningOurAccount(notBefore: Moment): Promise<TweetV2[]> {
+    const client = await this.auth.getAuthorizedClientForBot();
+    const botAuth = await this.auth.getAuthenticatedBotAccount();
+
+    // X API limitation: make sure start time is not older than a week ago
+    const aWeekAgo = moment().subtract(7, "days");
+    if (notBefore.isBefore(aWeekAgo)) {
+      notBefore = aWeekAgo;
+      this.logger.warn(`Not before date ${notBefore} is too old, changed to ${aWeekAgo}`);
+    }
+
+    try {
+      const replies = await client.v2.search(`@${botAuth.userScreenName}`, {
+        //sort_order: "relevancy",
+        start_time: notBefore.toISOString(),
+        'tweet.fields': TweetFields
+      });
+
+      return replies?.tweets;
+    }
+    catch (e) {
+      return this.handleTwitterApiError("Fetch mentioning posts", e);
     }
   }
 
@@ -99,29 +126,32 @@ export class TwitterService {
     }
   }
 
-  public async fetchPostsMentionningOurAccount(notBefore: Moment): Promise<TweetV2[]> {
+  /**
+   * Iteratively fetches parent posts (beginning of conversation) from the given post.
+   */
+  public async fetchParentPosts(postId: string): Promise<TweetV2[]> {
     const client = await this.auth.getAuthorizedClientForBot();
-    const botAuth = await this.auth.getAuthenticatedBotAccount();
 
-    // X API limitation: make sure start time is not older than a week ago
-    const aWeekAgo = moment().subtract(7, "days");
-    if (notBefore.isBefore(aWeekAgo)) {
-      notBefore = aWeekAgo;
-      this.logger.warn(`Not before date ${notBefore} is too old, changed to ${aWeekAgo}`);
-    }
+    const conversation: any[] = [];
 
-    try {
-      const replies = await client.v2.search(`to: ${botAuth.userId}`, {
-        //sort_order: "relevancy",
-        start_time: notBefore.toISOString(),
-        'tweet.fields': 'created_at,id,author_id,text,conversation_id,referenced_tweets,public_metrics'
+    let currentTweetId = postId;
+
+    while (currentTweetId) {
+      const tweet = await client.v2.singleTweet(currentTweetId, {
+        expansions: ['referenced_tweets.id'],
+        'tweet.fields': TweetFields,
       });
 
-      return replies?.tweets;
+      conversation.unshift(tweet.data);
+
+      const referencedTweet = tweet.data.referenced_tweets?.find(
+        (ref) => ref.type === 'replied_to'
+      );
+
+      currentTweetId = referencedTweet ? referencedTweet.id : null;
     }
-    catch (e) {
-      return this.handleTwitterApiError("Fetch mentionning posts", e);
-    }
+
+    return conversation;
   }
 
   public async fetchAccountByUserId(userId: string): Promise<UserV2> {

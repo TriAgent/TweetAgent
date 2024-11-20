@@ -27,7 +27,7 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
 
     // Retrieve conversation
     // TODO: store in state for multiple agents to use it?
-    const conversation = await xPosts().getConversation(reply.postId);
+    const conversation = await xPosts().getParentConversation(reply.postId);
     if (!conversation)
       return state;
 

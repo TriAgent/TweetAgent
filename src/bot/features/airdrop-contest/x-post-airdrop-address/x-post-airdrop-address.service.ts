@@ -3,6 +3,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
 import { BotFeature } from "src/bot/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bot/model/x-post-reply-analysis-result";
+import { BotConfig } from "src/config/bot-config";
 import { extractAddressAgent } from "./extract-address.agent";
 
 export const airdropAddressStateAnnotation = Annotation.Root({
@@ -16,7 +17,11 @@ export class XPostAirdropAddressService extends BotFeature {
   private logger = new Logger("XPostAirdropAddress");
 
   constructor() {
-    super(5);
+    super(20);
+  }
+
+  public isEnabled(): boolean {
+    return BotConfig.AirdropContest.IsActive;
   }
 
   async studyReplyToXPost(post: XPost): Promise<XPostReplyAnalysisResult> {

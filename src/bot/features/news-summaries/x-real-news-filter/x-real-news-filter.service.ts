@@ -24,6 +24,10 @@ export class XRealNewsFilterService extends BotFeature {
     super(10);
   }
 
+  public isEnabled(): boolean {
+    return BotConfig.NewsSummaryBot.IsActive;
+  }
+
   public scheduledExecution() {
     return this.categorizeFollowedNewsAccountsTweetsAsRealNews();
   }

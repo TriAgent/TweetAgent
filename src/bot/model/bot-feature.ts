@@ -1,13 +1,19 @@
-import { XPost } from "@prisma/client";
+import { XPost, XPublisherAccount } from "@prisma/client";
+import { twitterAuth } from "src/services";
 import { XPostReplyAnalysisResult } from "./x-post-reply-analysis-result";
 
 export abstract class BotFeature {
   private lastExecutionTime: number = 0;
+  protected botAccount: XPublisherAccount; // Authenticated X account for publishing
 
   /**
    * @param runLoopMinIntervalSec In case there is a run loop implemented, how often should it be launched 
    */
   constructor(public runLoopMinIntervalSec?: number) { }
+
+  async initialize() {
+    this.botAccount = await twitterAuth().getAuthenticatedBotAccount();
+  }
 
   /**
    * Method regularly called by the scheduler so the feature can execute background operations.
@@ -31,10 +37,17 @@ export abstract class BotFeature {
   studyReplyToXPost?(post: XPost): Promise<XPostReplyAnalysisResult>;
 
   /**
+   * Tells if this feature can be used
+   */
+  public isEnabled(): boolean {
+    return true;
+  }
+
+  /**
    * Tells if at least runLoopMinIntervalSec seconds have elapsed since the last execution.
    */
   public canExecuteNow(): boolean {
-    if (!this.runLoopMinIntervalSec || !this.scheduledExecution)
+    if (!this.isEnabled() || !this.runLoopMinIntervalSec || !this.scheduledExecution)
       return false;
 
     const currentTime = Date.now();

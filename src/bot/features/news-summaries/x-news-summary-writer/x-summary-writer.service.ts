@@ -42,9 +42,8 @@ export class XNewsSummaryWriterService extends BotFeature {
     super(PostXSummaryDelaySec);
   }
 
-  public canExecuteNow(): boolean {
-    // Only run the news summarizer if enabled in .env
-    return BotConfig.NewsSummaryBot.IsActive && super.canExecuteNow();
+  public isEnabled(): boolean {
+    return BotConfig.NewsSummaryBot.IsActive;
   }
 
   public scheduledExecution() {
@@ -113,15 +112,13 @@ export class XNewsSummaryWriterService extends BotFeature {
    * Publishing will be queued and handled by another task.
    */
   private async createNewsSummaryForX(tweetContent: string, docs: SummaryDocument[]): Promise<void> {
-    const botAccount = await this.twitterAuth.getAuthenticatedBotAccount();
-
     // Create draft
     const dbPost = await this.prisma.xPost.create({
       data: {
         publishRequestAt: new Date(),
-        authorId: botAccount.userId,
+        authorId: this.botAccount.userId,
         text: tweetContent,
-        account: { connect: { userId: botAccount.userId } }
+        account: { connect: { userId: this.botAccount.userId } }
       }
     });
 

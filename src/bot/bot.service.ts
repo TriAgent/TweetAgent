@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { runEverySeconds } from "src/utils/run-every-seconds";
 import { BotFeaturesService } from "./features.service";
 import { XPostAirdropAddressService } from "./features/airdrop-contest/x-post-airdrop-address/x-post-airdrop-address.service";
+import { XPostContestHandlerService } from "./features/airdrop-contest/x-post-contest-handler/x-post-contest-handler.service";
 import { XPostContestReposterService } from "./features/airdrop-contest/x-post-contest-reposter/x-post-contest-reposter.service";
 import { XPostFetcherService } from "./features/core/x-posts-fetcher/x-post-fetcher.service";
 import { XPostsHandlerService } from "./features/core/x-posts-handler/x-posts-handler.service";
@@ -21,7 +22,7 @@ export class BotService {
     xNewsSummaryWriter: XNewsSummaryWriterService,
     xNewsSummaryReplier: XNewsSummaryReplierService,
     xRealNewsFilter: XRealNewsFilterService,
-    xPostContestHandler: XPostsHandlerService,
+    xPostContestHandler: XPostContestHandlerService,
     xPostContestReposter: XPostContestReposterService,
     xPostAirdropAddress: XPostAirdropAddressService
   ) {
@@ -41,11 +42,13 @@ export class BotService {
   /**
    * Root entry point for our bot.
    */
-  public run() {
+  public async run() {
     // Safety check
     for (const feature of this.featuresService.getFeatures()) {
       if (feature.runLoopMinIntervalSec === undefined && feature.scheduledExecution !== undefined)
         throw new Error(`Feature has an execution method but not loop interval configured!`);
+
+      await feature.initialize();
     }
 
     runEverySeconds(() => this.executeFeatures(), 5);

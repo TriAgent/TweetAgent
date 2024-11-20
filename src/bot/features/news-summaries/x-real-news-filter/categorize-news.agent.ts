@@ -13,20 +13,13 @@ export const categorizeNewsAgent = (logger: Logger, post: XPost) => {
       {tweetContent}
     `;
 
-    const { responseMessage } = await langchain().fullyInvoke(
-      // Initial prompt message
-      [
-        ["system", SYSTEM_TEMPLATE]
-      ],
-      // Invocation params
-      {
-        tweetContent: post.text
-      },
-      // Tools
-      [
+    const { responseMessage } = await langchain().fullyInvoke({
+      messages: [["system", SYSTEM_TEMPLATE]],
+      invocationParams: { tweetContent: post.text },
+      tools: [
         categorizeNewsTool(logger, post) // ability to update a DB post with "isRealNews" info
       ]
-    );
+    });
     return responseMessage;
   }
 };

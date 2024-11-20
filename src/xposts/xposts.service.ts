@@ -1,9 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { XPost } from '@prisma/client';
 import * as moment from 'moment';
+import { BotConfig } from 'src/config/bot-config';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { TweetV2 } from 'twitter-api-v2';
+import { ConversationTree } from './model/conversation-tree';
 
 /**
  * Service that provides generic features for X (twitter) posts management.
@@ -16,16 +19,17 @@ export class XPostsService {
 
   constructor(
     private prisma: PrismaService,
-    private twitter: TwitterService
+    private twitter: TwitterService,
+    private twitterAuth: TwitterAuthService
   ) { }
 
   /**
    * From a child post, retrieves all XPosts that belog to a conversation.
-   * A conversation is a list of ordered posts from the root post (no parent) to the current post id
+   * A conversation is a list of ordered posts from the root post (no parent) to the current post id.
    * 
    * @param childPostId Post ID on X.
    */
-  public async getConversation(childPostId: string): Promise<XPost[]> {
+  public async getParentConversation(childPostId: string): Promise<XPost[]> {
     const conversation: XPost[] = [];
 
     let currentPostId: string = childPostId;
@@ -44,6 +48,22 @@ export class XPostsService {
     }
 
     return conversation;
+  }
+
+  /**
+   * From the given root post, recursively retrieves child posts and their descendants.
+   */
+  public async getConversationTree(post: XPost) {
+    const tree = new ConversationTree(post);
+
+    // Get child posts
+    const childrenPosts = await this.prisma.xPost.findMany({ where: { parentPostId: post.postId } });
+
+    for (const child of childrenPosts) {
+      tree.children.push(await this.getConversationTree(child));
+    }
+
+    return tree;
   }
 
   public getXPostByTwitterPostId(twitterPostId: string): Promise<XPost> {
@@ -84,39 +104,49 @@ export class XPostsService {
     if (!postToSend)
       return;
 
-    this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
-    const createdTweets = await this.twitter.publishTweet(postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
+    if (BotConfig.X.PublishPosts) {
+      this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
+      const createdTweets = await this.twitter.publishTweet(postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
 
-    // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
-    if (createdTweets && createdTweets.length > 0) {
-      const rootTweet = createdTweets[0];
-      await this.prisma.xPost.update({
-        where: { id: postToSend.id },
-        data: {
-          text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
-          postId: rootTweet.postId,
-          rootPostId: postToSend.rootPostId || rootTweet.postId, // Self root if we are not writing a reply. Or use root defined at creation if this is a reply
-          publishedAt: new Date()
-        }
-      });
+      const botAccount = await this.twitterAuth.getAuthenticatedBotAccount();
 
-      // Create child xPosts if needed
-      let parentPostId = rootTweet.postId;
-      for (var tweet of createdTweets.slice(1)) {
-        await this.prisma.xPost.create({
+      // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
+      if (createdTweets && createdTweets.length > 0) {
+        const rootTweet = createdTweets[0];
+        await this.prisma.xPost.update({
+          where: { id: postToSend.id },
           data: {
+            text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
+            postId: rootTweet.postId,
+            rootPostId: postToSend.rootPostId || rootTweet.postId, // Self root if we are not writing a reply. Or use root defined at creation if this is a reply
             publishedAt: new Date(),
-            authorId: postToSend.authorId,
-            text: tweet.text,
-            postId: tweet.postId,
-            parentPostId: parentPostId,
-            rootPostId: rootTweet.postId,
-            publisherAccountUserId: postToSend.publisherAccountUserId
+            publisherAccountUserId: botAccount.userId,
+            wasReplyHandled: true // directly mark has handled post, as this is our own post
           }
         });
 
-        parentPostId = tweet.postId;
+        // Create child xPosts if needed
+        let parentPostId = rootTweet.postId;
+        for (var tweet of createdTweets.slice(1)) {
+          await this.prisma.xPost.create({
+            data: {
+              publishedAt: new Date(),
+              authorId: postToSend.authorId,
+              text: tweet.text,
+              postId: tweet.postId,
+              parentPostId: parentPostId,
+              rootPostId: rootTweet.postId,
+              publisherAccountUserId: botAccount.userId,
+              wasReplyHandled: true // directly mark has handled post, as this is our own post
+            }
+          });
+
+          parentPostId = tweet.postId;
+        }
       }
+    }
+    else {
+      this.logger.warn(`Not publishing pending X post, disabled by configuration`);
     }
   }
 
@@ -140,7 +170,7 @@ export class XPostsService {
         if (!existingPost) {
           const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
 
-          console.log("post.referenced_tweets", post.referenced_tweets)
+          // console.log("post.referenced_tweets", post.referenced_tweets)
 
           // Save post to database
           const dbPost = await this.prisma.xPost.create({

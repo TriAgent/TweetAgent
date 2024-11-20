@@ -25,7 +25,9 @@ export const BotConfig = {
     }
   },
   AirdropContest: {
-    IsActive: process.env.BOT_FEATURE_AIRDROP_CONTEST === "1",
-    Name: process.env.AIRDROP_CONTEST_X_BOT_NAME
+    IsActive: process.env.BOT_FEATURE_AIRDROP_CONTEST === "1"
+  },
+  X: {
+    PublishPosts: process.env.PUBLISH_X_POSTS === "1"
   }
 }

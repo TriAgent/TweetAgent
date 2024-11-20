@@ -61,11 +61,11 @@ model XPost {
 
   // Specific to: news summary
   isRealNews     Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
-  summarizedBy   XPost?   @relation(name: "SourcePosts", fields: [summarizedById], references: [id])
+  summarizedBy   XPost?   @relation(name: "SummaryPost", fields: [summarizedById], references: [id])
   summarizedById String?
 
   // Specific to: bot summaries
-  summarySourcePosts XPost[] @relation(name: "SourcePosts") // source posts used to produce the summary
+  summarySourcePosts XPost[] @relation(name: "SummaryPost") // source posts used to produce the summary
 
   // Specific to: User replies to our bot
   wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
@@ -77,6 +77,9 @@ model XPost {
   // Specific to: airdrop contest
   worthForAirdropContest    Boolean? // Whether this post is deemed worth to join the airdrop contest. 
   quotedForAirdropContestAt DateTime? // If this post got elected to be RT/quoted by our account, that's the date at which the post was created/scheduled
+  contestQuotedPost         XPost?    @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
+  contestQuotedByPost       XPost?    @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
+  contestQuotedPostId       String?   @unique
 }
 
 enum OperationHistoryType {

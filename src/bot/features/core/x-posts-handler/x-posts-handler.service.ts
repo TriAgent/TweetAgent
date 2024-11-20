@@ -6,6 +6,7 @@ import { XPostReplyAnalysisResult } from "src/bot/model/x-post-reply-analysis-re
 import { standardStringAnnotationReducer } from "src/langchain/utils";
 import { PrismaService } from "src/prisma/prisma.service";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
+import { XPostsService } from "src/xposts/xposts.service";
 import { produceAggregatedReplyAgent } from "./aggregated-reply.agent";
 
 type ReplyAggregatorStateAnnotationSchema = {
@@ -29,9 +30,10 @@ export class XPostsHandlerService extends BotFeature {
   constructor(
     private twitterAuth: TwitterAuthService,
     private prisma: PrismaService,
-    private featuresService: BotFeaturesService
+    private featuresService: BotFeaturesService,
+    private xPosts: XPostsService
   ) {
-    super(5);
+    super(20);
   }
 
   public async scheduledExecution() {
@@ -58,9 +60,9 @@ export class XPostsHandlerService extends BotFeature {
     // If any content to produce, schedule a new X post.
     const replyAnalysisResults: XPostReplyAnalysisResult[] = [];
     for (const feature of this.featuresService.getFeatures()) {
-      if (feature.studyReplyToXPost) {
+      if (feature.isEnabled() && feature.studyReplyToXPost) {
         const replyAnalysisResult = await feature.studyReplyToXPost(xPost);
-        if (replyAnalysisResult && replyAnalysisResult.reply) {
+        if (replyAnalysisResult?.reply) {
           replyAnalysisResults.push(replyAnalysisResult);
         }
       }
@@ -68,6 +70,9 @@ export class XPostsHandlerService extends BotFeature {
 
     if (replyAnalysisResults.length > 0)
       await this.produceAggregatedXReply(replyAnalysisResults);
+
+    // Mark as handled, we won't check this post any more
+    await this.xPosts.markAsReplied(xPost);
   }
 
   /**
