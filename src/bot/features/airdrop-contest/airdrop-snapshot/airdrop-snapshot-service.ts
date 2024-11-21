@@ -1,14 +1,21 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@prisma/client";
 import * as moment from "moment";
 import { BotFeature } from "src/bot/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
 import { PrismaService } from "src/prisma/prisma.service";
 import { PostStats } from "src/xposts/model/post-stats";
-import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { XPostsService } from "src/xposts/xposts.service";
 
 type PostInfo = {
-  post: XPostWithAccount;
+  post: XPost & {
+    contestQuotedPost: XPost & {
+      xAccount: XAccount;
+      contestMentioningPost: XPost & {
+        xAccount: XAccount
+      }
+    }
+  };
   stats: PostStats;
   score: number; // score based on stats, independant from other posts
   weight: number; // weight of this post's score relative to other posts scores (0-1)
@@ -51,13 +58,24 @@ export class AirdropSnapshotService extends BotFeature {
         contestQuotedPost: {
           worthForAirdropContest: true // took part in the airdrop contest
         },
-        PostContestAirdrop: { none: {} }, // Not yet in an airdrop
+        PostContestAirdrop: null, // Not yet in an airdrop
         AND: [
           { publishedAt: { gte: eligibleStartate.toDate() } },
           { publishedAt: { lt: eligibleEndDate.toDate() } }
         ]
       },
-      include: { xAccount: true }
+      include: {
+        contestQuotedPost: {
+          include: {
+            xAccount: true,
+            contestMentioningPost: {
+              include: {
+                xAccount: true
+              }
+            }
+          }
+        }
+      }
     });
 
     this.logger.log(`Starting to produce a new airdrop. Using ${eligiblePosts.length} posts. For posts published between ${eligibleStartate} and ${eligibleEndDate}.`);
@@ -87,7 +105,7 @@ export class AirdropSnapshotService extends BotFeature {
     // Compute weight and tokens for each airdropped post
     for (const postInfo of postsInfo) {
       postInfo.weight = scoreTotal > 0 ? postInfo.score / scoreTotal : 0;
-      postInfo.tokenAmount = BotConfig.AirdropContest.TokenAmountPerAirdrop / postInfo.weight;
+      postInfo.tokenAmount = BotConfig.AirdropContest.TokenAmountPerAirdrop * postInfo.weight;
     }
 
     // Create database entries
@@ -103,38 +121,67 @@ export class AirdropSnapshotService extends BotFeature {
     let distributedTokens = 0;
     let airdroppedPostCount = 0; // Number of posts that really got tokens (have address)
     for (const postInfo of postsInfo) {
-      // If user did not provide his airdrop address, we just don't distribute his tokens for this airdrop.
-      if (!postInfo.post.xAccount.airdropAddress) {
-        this.logger.warn(`No airdrop address provided for quoted post ${postInfo.post.contestQuotedPostId}, no airdrop tokens sent`);
+      // Address of the relevant contest post
+      const authorAirdropAddress = postInfo.post.contestQuotedPost.xAccount.airdropAddress;
+      // Address of the user that mentioned our bot to make us notice the quoted post
+      const mentionerAirdropAddress = postInfo.post.contestQuotedPost.contestMentioningPost?.xAccount.airdropAddress;
+
+      // If the mentioning user did not provide his airdrop address, we just don't distribute any token to him or to the quoted post owner.
+      if (!mentionerAirdropAddress) {
+        this.logger.warn(`No airdrop address (mentioning post) provided for quoted post ${postInfo.post.contestQuotedPostId}, no airdrop tokens sent`);
         continue;
       }
 
+      let tokensForAuthor: number, tokensForMentioner: number;
+      if (authorAirdropAddress) {
+        // Quoted post has an airdrop address? split between author and mentioner.
+        // NOTE: mentioner and author can be the same - in which case the same address receives 100% of tokens.
+        tokensForAuthor = Math.floor(postInfo.tokenAmount / 2);
+        tokensForMentioner = Math.floor(postInfo.tokenAmount / 2);
+      }
+      else {
+        // Only mentioner has an address
+        tokensForAuthor = 0;
+        tokensForMentioner = postInfo.tokenAmount;
+      }
+
       this.logger.log(`Post airdrop:`);
-      this.logger.log(`Content: ${postInfo.post.text}`);
+      this.logger.log(`Quote post content: ${postInfo.post.text}`);
       this.logger.log(`Stats: ${postInfo.tokenAmount} tokens for ${postInfo.stats.impressionCount} impressions, ${postInfo.stats.commentCount} comments, ${postInfo.stats.likeCount} likes and ${postInfo.stats.rtCount} RTs.`);
+      authorAirdropAddress && this.logger.log(`Author gets ${tokensForAuthor} tokens at ${authorAirdropAddress}`);
+      this.logger.log(`Mentioner gets ${tokensForMentioner} tokens at ${mentionerAirdropAddress}`);
 
-      await this.prisma.postContestAirdrop.create({
-        data: {
-          airdrop: { connect: { id: airdrop.id } },
-          quotePost: { connect: { id: postInfo.post.id } },
-          winningXAccount: { connect: { userId: postInfo.post.xAccountUserId } },
+      if (tokensForAuthor)
+        await this.createPostAirdrop(airdrop, postInfo, ContestAirdropTargetUser.Author, authorAirdropAddress, tokensForAuthor);
 
-          airdropAddress: postInfo.post.xAccount.airdropAddress,
-          tokenAmount: postInfo.tokenAmount,
-          weight: postInfo.weight,
+      if (tokensForMentioner)
+        await this.createPostAirdrop(airdrop, postInfo, ContestAirdropTargetUser.Mentioner, mentionerAirdropAddress, tokensForMentioner);
 
-          // Stats
-          impressionCount: postInfo.stats.impressionCount,
-          commentCount: postInfo.stats.commentCount,
-          likeCount: postInfo.stats.likeCount,
-          rtCount: postInfo.stats.rtCount
-        }
-      });
-
-      distributedTokens += postInfo.tokenAmount;
+      distributedTokens += tokensForAuthor + tokensForMentioner;
       airdroppedPostCount++;
     }
 
     this.logger.log(`Distributed ${distributedTokens} tokens for ${airdroppedPostCount} posts.`);
+  }
+
+  private async createPostAirdrop(airdrop: ContestAirdrop, postInfo: PostInfo, targetUser: ContestAirdropTargetUser, airdropAddress: string, tokenAmount: number) {
+    await this.prisma.postContestAirdrop.create({
+      data: {
+        airdrop: { connect: { id: airdrop.id } },
+        quotePost: { connect: { id: postInfo.post.id } },
+        winningXAccount: { connect: { userId: postInfo.post.xAccountUserId } },
+
+        targetUser,
+        airdropAddress,
+        tokenAmount: tokenAmount,
+        weight: postInfo.weight,
+
+        // Stats
+        impressionCount: postInfo.stats.impressionCount,
+        commentCount: postInfo.stats.commentCount,
+        likeCount: postInfo.stats.likeCount,
+        rtCount: postInfo.stats.rtCount
+      }
+    });
   }
 }

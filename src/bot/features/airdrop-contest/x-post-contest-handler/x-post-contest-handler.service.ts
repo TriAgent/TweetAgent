@@ -31,8 +31,8 @@ export class XPostContestHandlerService extends BotFeature {
   async studyReplyToXPost(post: XPost): Promise<XPostReplyAnalysisResult> {
     // Only study root posts. We look for mentions in all conversations that start from the root,
     // this is how we know we should study it.
-    if (post.parentPostId)
-      return null;
+    // if (post.parentPostId)
+    //   return null;
 
     this.logger.log("Studying reply to X post");
 

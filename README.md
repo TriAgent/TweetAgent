@@ -54,6 +54,12 @@ Acts as an automatic editor, retweeting good content provided by others. Third p
 - It checks if bot username in any of the conversation posts written by the root post author (this means someone is trying to ping us to check the root post).
 - If so, it studies the root post for contest.
 
+### Contest posts structure
+
+- The "contest post" is the interesting post that says something hot about crypto. Also called "quoted post".
+- The "quote post" is our bot post, that RTed a quoted post and added a comment about it.
+- The "mentioning post" is the post that mentions our bot name either inside the quoted post text, or in a reply or the quoted post. This is the post that makes us aware of the quoted post so we add it to the contest.
+
 # Bot features
 
 ## x-posts-fetcher

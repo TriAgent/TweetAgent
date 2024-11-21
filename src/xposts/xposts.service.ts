@@ -54,7 +54,7 @@ export class XPostsService {
   }
 
   /**
-   * From the given root post, recursively retrieves child posts and their descendants.
+   * From the given root post, recursively retrieves child posts and their descendants (database only).
    */
   public async getConversationTree(post: XPost) {
     const tree = new ConversationTree(post);

@@ -10,19 +10,39 @@ import { contestHandlerStateAnnotation } from "./x-post-contest-handler.service"
  */
 export const studyForContestAgent = (logger: Logger, post: XPost) => {
   return async (state: typeof contestHandlerStateAnnotation.State) => {
-    // Check if any child tweet mentions us.
-    const conversationTree = await xPosts().getConversationTree(post);
-
     const botAccount = await twitterAuth().getAuthenticatedBotAccount();
 
-    // Check if there are posts that mention us in the conversation tree.
-    const mentioningPosts = conversationTree.searchPosts(`@${botAccount.userScreenName}`);
-
-    // We are not mentioned, give up on this post, don't update the worth for contest field in post.
-    if (mentioningPosts.length === 0) {
-      logger.log(`Post conversation is not mentioning us. Not electing for contest.`);
+    // The current post should mention us (either root possibly for contest, 
+    // or a mention reply on the potential contest post), otherwise dismiss
+    if (post.text.indexOf(`@${botAccount.userScreenName}`) < 0)
       return state;
-    }
+
+    // Evaluate the conversation root (we already have all potential parent posts in DB, ensured by the fetcher feature )
+    const conversation = await xPosts().getParentConversation(post.postId);
+    const postEvaluatedForContest = conversation[0];
+
+    // Make sure the root has not been evaluated (worth) to true or false yet (should be null)
+    if (postEvaluatedForContest.worthForAirdropContest !== null)
+      return state;
+
+    // Make sure the root is not our own bot post
+    if (postEvaluatedForContest.xAccountUserId === botAccount.userId)
+      return state;
+
+    // Check if any child tweet mentions us.
+    // const conversationTree = await xPosts().getConversationTree(post);
+    // const mentioningPosts = conversationTree.searchPosts(`@${botAccount.userScreenName}`);
+
+    // // We are not mentioned, give up on this post, don't update the worth for contest field in post.
+    // if (mentioningPosts.length === 0) {
+    //   logger.log(`Post conversation is not mentioning us. Not electing for contest.`);
+    //   return state;
+    // }
+
+    // // Make sure to sort mentioning posts by oldest first, so we only consider the first mention as the right one, not late users.
+    // mentioningPosts.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    // const targetMentioningPost = mentioningPosts[0];
+    const targetMentioningPost = post;
 
     const SYSTEM_TEMPLATE = `
       Here is a twitter post from a third party user who mentioned us. 
@@ -36,7 +56,7 @@ export const studyForContestAgent = (logger: Logger, post: XPost) => {
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse } = await langchain().fullyInvoke({
       messages: [["system", SYSTEM_TEMPLATE]],
-      invocationParams: { tweetContent: post.text },
+      invocationParams: { tweetContent: postEvaluatedForContest.text },
       structuredOutput: z.object({
         isWorthForContest: z.boolean().describe("Whether the post is worth for the airdrop contest or not"),
         reason: z.string().describe("The reason why you think the post is worth for the airdrop contest or not")
@@ -48,10 +68,10 @@ export const studyForContestAgent = (logger: Logger, post: XPost) => {
     state.isWorthForContest = structuredResponse.isWorthForContest;
     if (state.isWorthForContest) {
       logger.log(`Post is eligible for airdrop contest:`);
-      logger.log(post);
+      logger.log(postEvaluatedForContest);
       logger.log(`Reason: ${structuredResponse.reason}`);
 
-      state.reply = `Good news, your post has joined the airdrop contest`;
+      state.reply = `Good news, the post has joined the airdrop contest`;
     }
     else {
       logger.log(`Post is NOT eligible for airdrop contest:`);
@@ -60,8 +80,11 @@ export const studyForContestAgent = (logger: Logger, post: XPost) => {
 
     // Save worth for contest info into post.
     await prisma().xPost.update({
-      where: { id: post.id },
-      data: { worthForAirdropContest: state.isWorthForContest }
+      where: { id: postEvaluatedForContest.id },
+      data: {
+        worthForAirdropContest: state.isWorthForContest,
+        contestMentioningPost: { connect: { id: targetMentioningPost.id } }
+      }
     });
 
     return state;

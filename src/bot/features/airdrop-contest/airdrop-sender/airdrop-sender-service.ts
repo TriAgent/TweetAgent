@@ -17,16 +17,16 @@ export class AirdropSenderService extends BotFeature {
   constructor(private prisma: PrismaService) {
     super(10);
 
-    const rpcUrl = 'https://base-rpc-url';
-    const privateKey = 'YOUR_PRIVATE_KEY';
-    const contractAddress = 'AIR_DROP_CONTRACT_ADDRESS';
-    const abi = [
-      'function airdrop(address[] calldata recipients, uint256[] calldata amounts) external'
-    ];
+    // const rpcUrl = 'https://base-rpc-url';
+    // const privateKey = 'YOUR_PRIVATE_KEY';
+    // const contractAddress = 'AIR_DROP_CONTRACT_ADDRESS';
+    // const abi = [
+    //   'function airdrop(address[] calldata recipients, uint256[] calldata amounts) external'
+    // ];
 
-    this.provider = new JsonRpcProvider(rpcUrl);
-    this.wallet = new Wallet(privateKey, this.provider);
-    this.airdropContract = new Contract(contractAddress, abi, this.wallet);
+    // this.provider = new JsonRpcProvider(rpcUrl);
+    // this.wallet = new Wallet(privateKey, this.provider);
+    // this.airdropContract = new Contract(contractAddress, abi, this.wallet);
   }
 
   public isEnabled(): boolean {

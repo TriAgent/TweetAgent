@@ -1,5 +1,4 @@
 AIRDROPS:
-- TBD: update if post author and/or mentioner get the airdrop
 - send airdrop tokens on chain (base management / wallet management)
 - reply to the mentioning post, telling it is eligible for airdrop (TBD: when mentioned or when quoted?)
 

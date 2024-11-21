@@ -80,14 +80,19 @@ model XPost {
   botAccount       XPublisherAccount? @relation(fields: [botAccountUserId], references: [userId]) // Bot account used to send the tweet
   botAccountUserId String?
 
-  // Specific to: airdrop contest
+  // Specific to: airdrop contest (quoted post)
   worthForAirdropContest    Boolean? // Whether this post is deemed worth to join the airdrop contest. 
   quotedForAirdropContestAt DateTime? // If this post got elected to be RT/quoted by our account, that's the date at which the post was created/scheduled
-  contestQuotedPost         XPost?    @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
-  contestQuotedByPost       XPost?    @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
-  contestQuotedPostId       String?   @unique
 
-  PostContestAirdrop PostContestAirdrop[]
+  // Specific to: airdrop contest (our bot quote post)
+  contestQuotedPost       XPost?  @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
+  contestQuotedPostId     String? @unique
+  contestQuotedByPost     XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
+  contestMentioningPost   XPost?  @relation(name: "ContestMentioningPost", fields: [contestMentioningPostId], references: [id]) // Post that mentioned this post (that is worthForAirdropContest) so this is how we detected it. Used to reward mentioning users about influencers posts in addition to their own content.
+  contestMentioningPostId String? @unique
+  ContestMentioningPost   XPost?  @relation(name: "ContestMentioningPost")
+
+  PostContestAirdrop PostContestAirdrop? // Potential airdrop this post got involved into. Only one airdrop possible.
 }
 
 enum OperationHistoryType {
@@ -124,6 +129,11 @@ model ContestAirdrop {
   PostContestAirdrop PostContestAirdrop[]
 }
 
+enum ContestAirdropTargetUser {
+  Author
+  Mentioner
+}
+
 // One entry per receiving post per airdrop
 model PostContestAirdrop {
   id        String   @unique @default(uuid())
@@ -139,7 +149,9 @@ model PostContestAirdrop {
   tokenAmount    Decimal // Same token as in the ContestAirdrop entry, human readable amount
 
   quotePost   XPost  @relation(fields: [quotePostId], references: [id]) // Our quoted Post that RTed user's post
-  quotePostId String
+  quotePostId String @unique
+
+  targetUser ContestAirdropTargetUser
 
   transactionId String? // Chain transaction ID
   transferedAt  DateTime? // Date at which the chain token transfer has been completed
@@ -152,5 +164,5 @@ model PostContestAirdrop {
 
   weight Float // Weight of this post among other posts of the same airdrop (total 1.0)
 
-  @@unique([contestAirdropId, quotePostId])
+  @@unique([contestAirdropId, quotePostId, targetUser])
 }
