@@ -142,6 +142,11 @@ export class TwitterService {
         'tweet.fields': TweetFields,
       });
 
+      if (!tweet.data) {
+        this.logger.warn(`Failed to retrieve tweet with ID ${currentTweetId}. Possibly deleted.`);
+        return null;
+      }
+
       conversation.unshift(tweet.data);
 
       const referencedTweet = tweet.data.referenced_tweets?.find(

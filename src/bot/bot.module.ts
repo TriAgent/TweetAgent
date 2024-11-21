@@ -7,6 +7,8 @@ import { XaccountsModule } from 'src/xaccounts/xaccounts.module';
 import { XPostsModule } from 'src/xposts/xposts.module';
 import { BotService } from './bot.service';
 import { BotFeaturesService } from './features.service';
+import { AirdropSenderService } from './features/airdrop-contest/airdrop-sender/airdrop-sender-service';
+import { AirdropSnapshotService } from './features/airdrop-contest/airdrop-snapshot/airdrop-snapshot-service';
 import { XPostAirdropAddressService } from './features/airdrop-contest/x-post-airdrop-address/x-post-airdrop-address.service';
 import { XPostContestHandlerService } from './features/airdrop-contest/x-post-contest-handler/x-post-contest-handler.service';
 import { XPostContestReposterService } from './features/airdrop-contest/x-post-contest-reposter/x-post-contest-reposter.service';
@@ -31,7 +33,9 @@ import { XRealNewsFilterService } from './features/news-summaries/x-real-news-fi
     XRealNewsFilterService,
     XPostContestHandlerService,
     XPostContestReposterService,
-    XPostAirdropAddressService
+    XPostAirdropAddressService,
+    AirdropSnapshotService,
+    AirdropSenderService
   ],
   exports: [
     BotService

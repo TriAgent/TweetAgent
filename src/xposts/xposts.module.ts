@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { TwitterModule } from 'src/twitter/twitter.module';
+import { XaccountsModule } from 'src/xaccounts/xaccounts.module';
 import { XPostsService } from './xposts.service';
 
 @Module({
@@ -12,7 +13,8 @@ import { XPostsService } from './xposts.service';
   ],
   imports: [
     PrismaModule,
-    TwitterModule
+    TwitterModule,
+    XaccountsModule
   ]
 })
 export class XPostsModule { }

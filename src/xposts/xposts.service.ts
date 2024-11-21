@@ -5,6 +5,7 @@ import { BotConfig } from 'src/config/bot-config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
 import { TwitterService } from 'src/twitter/twitter.service';
+import { XAccountsService } from 'src/xaccounts/xaccounts.service';
 import { TweetV2 } from 'twitter-api-v2';
 import { ConversationTree } from './model/conversation-tree';
 import { PostStats } from './model/post-stats';
@@ -21,7 +22,8 @@ export class XPostsService {
   constructor(
     private prisma: PrismaService,
     private twitter: TwitterService,
-    private twitterAuth: TwitterAuthService
+    private twitterAuth: TwitterAuthService,
+    private xAccounts: XAccountsService
   ) { }
 
   /**
@@ -109,7 +111,8 @@ export class XPostsService {
       this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
       const createdTweets = await this.twitter.publishTweet(postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
 
-      const botAccount = await this.twitterAuth.getAuthenticatedBotAccount();
+      const botAuthenticatedAccount = await this.twitterAuth.getAuthenticatedBotAccount();
+      const botXAccount = await this.xAccounts.ensureXAccount(botAuthenticatedAccount.userId);
 
       // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
       if (createdTweets && createdTweets.length > 0) {
@@ -121,7 +124,8 @@ export class XPostsService {
             postId: rootTweet.postId,
             rootPostId: postToSend.rootPostId || rootTweet.postId, // Self root if we are not writing a reply. Or use root defined at creation if this is a reply
             publishedAt: new Date(),
-            publisherAccountUserId: botAccount.userId,
+            xAccount: { connect: { userId: botXAccount.userId } },
+            botAccount: { connect: { userId: botAuthenticatedAccount.userId } },
             wasReplyHandled: true // directly mark has handled post, as this is our own post
           }
         });
@@ -132,12 +136,12 @@ export class XPostsService {
           await this.prisma.xPost.create({
             data: {
               publishedAt: new Date(),
-              authorId: postToSend.authorId,
+              xAccount: { connect: { userId: botXAccount.userId } },
+              botAccount: { connect: { userId: botAuthenticatedAccount.userId } },
               text: tweet.text,
               postId: tweet.postId,
               parentPostId: parentPostId,
               rootPostId: rootTweet.postId,
-              publisherAccountUserId: botAccount.userId,
               wasReplyHandled: true // directly mark has handled post, as this is our own post
             }
           });
@@ -175,11 +179,13 @@ export class XPostsService {
         if (!existingPost) {
           const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
 
+          const xAccount = await this.xAccounts.ensureXAccount(post.author_id);
+
           // Save post to database
           const dbPost = await this.prisma.xPost.create({
             data: {
               text: post.text,
-              authorId: post.author_id,
+              xAccount: { connect: { userId: xAccount.userId } },
               postId: post.id,
               publishedAt: post.created_at,
               parentPostId: parentXPostId ? parentXPostId : null,

@@ -116,9 +116,9 @@ export class XNewsSummaryWriterService extends BotFeature {
     const dbPost = await this.prisma.xPost.create({
       data: {
         publishRequestAt: new Date(),
-        authorId: this.botAccount.userId,
         text: tweetContent,
-        account: { connect: { userId: this.botAccount.userId } }
+        xAccount: { connect: { userId: this.botAccount.userId } },
+        botAccount: { connect: { userId: this.botAccount.userId } }
       }
     });
 

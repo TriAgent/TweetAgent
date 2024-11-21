@@ -61,10 +61,10 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
     ];
 
     for (var post of conversation) {
-      if (post.authorId === botAccount.userId)
+      if (post.xAccountUserId === botAccount.userId)
         messages.push(["human", `[we wrote:] ${post.text}`])
       else
-        messages.push(["human", `[twitter user ${post.authorId} wrote:] ${post.text}`])
+        messages.push(["human", `[twitter user ${post.xAccountUserId} wrote:] ${post.text}`])
     }
 
     // Action request

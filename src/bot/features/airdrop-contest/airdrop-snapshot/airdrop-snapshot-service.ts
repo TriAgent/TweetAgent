@@ -1,18 +1,18 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { XPost } from "@prisma/client";
 import * as moment from "moment";
 import { BotFeature } from "src/bot/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
 import { PrismaService } from "src/prisma/prisma.service";
 import { PostStats } from "src/xposts/model/post-stats";
+import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { XPostsService } from "src/xposts/xposts.service";
 
 type PostInfo = {
-  post: XPost;
+  post: XPostWithAccount;
   stats: PostStats;
   score: number; // score based on stats, independant from other posts
   weight: number; // weight of this post's score relative to other posts scores (0-1)
-  tokens: number; // number of tokens related to weight
+  tokenAmount: number; // number of tokens related to weight
 }
 
 /**
@@ -47,17 +47,20 @@ export class AirdropSnapshotService extends BotFeature {
     const eligibleStartate = eligibleEndDate.clone().subtract(BotConfig.AirdropContest.MinHoursBetweenAirdrops, "hours");
     const eligiblePosts = await this.prisma.xPost.findMany({
       where: {
-        publisherAccountUserId: { not: null }, // Published by us
+        botAccountUserId: { not: null }, // Published by us
         contestQuotedPost: {
           worthForAirdropContest: true // took part in the airdrop contest
         },
-        ContestAirdropPost: { none: {} }, // Not yet in an airdrop
+        PostContestAirdrop: { none: {} }, // Not yet in an airdrop
         AND: [
           { publishedAt: { gte: eligibleStartate.toDate() } },
           { publishedAt: { lt: eligibleEndDate.toDate() } }
         ]
-      }
+      },
+      include: { xAccount: true }
     });
+
+    this.logger.log(`Starting to produce a new airdrop. Using ${eligiblePosts.length} posts. For posts published between ${eligibleStartate} and ${eligibleEndDate}.`);
 
     // Gather stats for all eligible posts (force fetch twitter api)
     const postsInfo: PostInfo[] = [];
@@ -65,7 +68,7 @@ export class AirdropSnapshotService extends BotFeature {
       const stats = await this.xPosts.getLatestPostStats(eligiblePost.postId);
       postsInfo.push({
         post: eligiblePost,
-        stats, weight: 0, score: 0, tokens: 0
+        stats, weight: 0, score: 0, tokenAmount: 0
       });
     }
 
@@ -84,7 +87,7 @@ export class AirdropSnapshotService extends BotFeature {
     // Compute weight and tokens for each airdropped post
     for (const postInfo of postsInfo) {
       postInfo.weight = scoreTotal > 0 ? postInfo.score / scoreTotal : 0;
-      postInfo.tokens = BotConfig.AirdropContest.TokenAmountPerAirdrop / postInfo.weight;
+      postInfo.tokenAmount = BotConfig.AirdropContest.TokenAmountPerAirdrop / postInfo.weight;
     }
 
     // Create database entries
@@ -93,26 +96,45 @@ export class AirdropSnapshotService extends BotFeature {
         totalTokenAmount: BotConfig.AirdropContest.TokenAmountPerAirdrop,
         token: BotConfig.AirdropContest.AirdroppedTokenName,
         chain: BotConfig.AirdropContest.AirdroppedTokenChain,
+        evaluatedPostsCount: eligiblePosts.length
       }
     });
 
+    let distributedTokens = 0;
+    let airdroppedPostCount = 0; // Number of posts that really got tokens (have address)
     for (const postInfo of postsInfo) {
-      const postAirdrop = await this.prisma.postContestAirdrop.create({
+      // If user did not provide his airdrop address, we just don't distribute his tokens for this airdrop.
+      if (!postInfo.post.xAccount.airdropAddress) {
+        this.logger.warn(`No airdrop address provided for quoted post ${postInfo.post.contestQuotedPostId}, no airdrop tokens sent`);
+        continue;
+      }
+
+      this.logger.log(`Post airdrop:`);
+      this.logger.log(`Content: ${postInfo.post.text}`);
+      this.logger.log(`Stats: ${postInfo.tokenAmount} tokens for ${postInfo.stats.impressionCount} impressions, ${postInfo.stats.commentCount} comments, ${postInfo.stats.likeCount} likes and ${postInfo.stats.rtCount} RTs.`);
+
+      await this.prisma.postContestAirdrop.create({
         data: {
           airdrop: { connect: { id: airdrop.id } },
           quotePost: { connect: { id: postInfo.post.id } },
-          winningXAccount: ,
+          winningXAccount: { connect: { userId: postInfo.post.xAccountUserId } },
 
-          airdropAddress: ,
-          tokenAmount:,
-          weight:,
+          airdropAddress: postInfo.post.xAccount.airdropAddress,
+          tokenAmount: postInfo.tokenAmount,
+          weight: postInfo.weight,
+
           // Stats
-          impressionCount:,
-          commentCount:,
-          likeCount:,
-          rtCount:
+          impressionCount: postInfo.stats.impressionCount,
+          commentCount: postInfo.stats.commentCount,
+          likeCount: postInfo.stats.likeCount,
+          rtCount: postInfo.stats.rtCount
         }
       });
+
+      distributedTokens += postInfo.tokenAmount;
+      airdroppedPostCount++;
     }
+
+    this.logger.log(`Distributed ${distributedTokens} tokens for ${airdroppedPostCount} posts.`);
   }
 }

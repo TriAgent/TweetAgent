@@ -23,7 +23,10 @@ export const extractAddressAgent = (logger: Logger, post: XPost) => {
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse } = await langchain().fullyInvoke<{ authorId: string, tweetContent: string }>({
       messages: [["system", SYSTEM_TEMPLATE]],
-      invocationParams: { authorId: post.authorId, tweetContent: post.text },
+      invocationParams: {
+        authorId: post.xAccountUserId,
+        tweetContent: post.text
+      },
       tools: [
         updateAirdropAddressTool(logger, post)
       ],

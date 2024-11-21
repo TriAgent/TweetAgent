@@ -2,7 +2,7 @@ import { BaseDocumentLoader } from "@langchain/core/document_loaders/base";
 import { Document } from "@langchain/core/documents";
 import { prisma } from "src/services";
 
-export type SummaryDocument = Document<{ "author", "postId", "post" }>;
+export type SummaryDocument = Document<{ "authorId", "postId", "post" }>;
 
 /**
  * Loads posts that are eligible for the airdrop contest but not yet used, from the database, 
@@ -21,13 +21,16 @@ export class PendingContestPostLoader extends BaseDocumentLoader {
         // TODO: last 6 hours max
       },
       orderBy: { createdAt: "desc" },
-      take: 3
+      take: 3,
+      include: {
+        xAccount: true
+      }
     });
 
     return posts.map(p => new Document({
       pageContent: p.text.replaceAll('\n', ''),
       metadata: {
-        author: p.authorId,
+        authorId: p.xAccount.userId,
         id: p.id,
         postId: p.id,
         post: p

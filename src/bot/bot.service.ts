@@ -1,5 +1,7 @@
 import { Injectable } from "@nestjs/common";
+import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { runEverySeconds } from "src/utils/run-every-seconds";
+import { XAccountsService } from "src/xaccounts/xaccounts.service";
 import { BotFeaturesService } from "./features.service";
 import { AirdropSenderService } from "./features/airdrop-contest/airdrop-sender/airdrop-sender-service";
 import { AirdropSnapshotService } from "./features/airdrop-contest/airdrop-snapshot/airdrop-snapshot-service";
@@ -17,6 +19,9 @@ import { XRealNewsFilterService } from "./features/news-summaries/x-real-news-fi
 export class BotService {
   constructor(
     private featuresService: BotFeaturesService,
+    private xAccounts: XAccountsService,
+    private twitterAuth: TwitterAuthService,
+
     // Features
     xPostsFetcher: XPostFetcherService,
     xPostsSender: XPostSenderService,
@@ -56,6 +61,10 @@ export class BotService {
 
       await feature.initialize();
     }
+
+    // Fetch/cache X account info to DB
+    const botXAccount = await this.twitterAuth.getAuthenticatedBotAccount();
+    await this.xAccounts.ensureXAccount(botXAccount.userId);
 
     runEverySeconds(() => this.executeFeatures(), 5);
   }

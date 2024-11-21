@@ -39,7 +39,7 @@ export class XRealNewsFilterService extends BotFeature {
 
     const recentPosts = await this.prisma.xPost.findMany({
       where: {
-        authorId: { in: targetAuthorIds },
+        xAccountUserId: { in: targetAuthorIds },
         isRealNews: null,
         createdAt: { gt: moment().subtract(2, "days").toDate() } // care only about recent enough tweets for now
       },

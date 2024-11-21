@@ -77,8 +77,8 @@ model XPost {
   wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
 
   // Specific to: our bot's published posts
-  botAccount             XPublisherAccount? @relation(fields: [publisherAccountUserId], references: [userId]) // Bot account used to send the tweet
-  publisherAccountUserId String?
+  botAccount       XPublisherAccount? @relation(fields: [botAccountUserId], references: [userId]) // Bot account used to send the tweet
+  botAccountUserId String?
 
   // Specific to: airdrop contest
   worthForAirdropContest    Boolean? // Whether this post is deemed worth to join the airdrop contest. 
@@ -117,6 +117,9 @@ model ContestAirdrop {
   totalTokenAmount Decimal // Total number of tokens distributed (human readable format)
   token            String // eg: USDT
   chain            String // eg: base
+
+  // Internal stats
+  evaluatedPostsCount Int // Number of quote posts considered for this airdrop distribution
 
   PostContestAirdrop PostContestAirdrop[]
 }

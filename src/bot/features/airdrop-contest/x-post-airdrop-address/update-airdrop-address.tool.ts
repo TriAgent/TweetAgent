@@ -10,7 +10,7 @@ export const updateAirdropAddressTool = (logger: Logger, post: XPost): Structure
       if (!userId || !airdropAddress)
         throw new Error(`Post author ID or airdrop address is missing`);
 
-      logger.log(`Updating airdrop mapping: ${userId} ${airdropAddress}`);
+      logger.log(`Updating airdrop address mapping: ${userId} ${airdropAddress}`);
 
       // Make sure we have base info about this user
       const xAccount = await xAccounts().ensureXAccount(userId);

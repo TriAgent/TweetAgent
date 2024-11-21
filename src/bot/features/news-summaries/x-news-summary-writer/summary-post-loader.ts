@@ -25,7 +25,7 @@ export class SummaryPostLoader extends BaseDocumentLoader {
     return posts.map(p => new Document({
       pageContent: p.text.replaceAll('\n', ''),
       metadata: {
-        author: p.authorId,
+        author: p.xAccountUserId,
         id: p.id
       }
     }));

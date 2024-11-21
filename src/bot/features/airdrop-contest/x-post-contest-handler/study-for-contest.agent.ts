@@ -1,6 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
-import { langchain, twitterAuth, xPosts } from "src/services";
+import { langchain, prisma, twitterAuth, xPosts } from "src/services";
 import { z } from "zod";
 import { contestHandlerStateAnnotation } from "./x-post-contest-handler.service";
 
@@ -18,11 +18,11 @@ export const studyForContestAgent = (logger: Logger, post: XPost) => {
     // Check if there are posts that mention us in the conversation tree.
     const mentioningPosts = conversationTree.searchPosts(`@${botAccount.userScreenName}`);
 
-    // We are not mentioned, give up on this post.
-    if (mentioningPosts.length === 0)
+    // We are not mentioned, give up on this post, don't update the worth for contest field in post.
+    if (mentioningPosts.length === 0) {
+      logger.log(`Post conversation is not mentioning us. Not electing for contest.`);
       return state;
-
-    console.log("YEP WE ARE MENTIONED in conv of", post);
+    }
 
     const SYSTEM_TEMPLATE = `
       Here is a twitter post from a third party user who mentioned us. 
@@ -57,6 +57,12 @@ export const studyForContestAgent = (logger: Logger, post: XPost) => {
       logger.log(`Post is NOT eligible for airdrop contest:`);
       logger.log(`Reason: ${structuredResponse.reason}`);
     }
+
+    // Save worth for contest info into post.
+    await prisma().xPost.update({
+      where: { id: post.id },
+      data: { worthForAirdropContest: state.isWorthForContest }
+    });
 
     return state;
   }

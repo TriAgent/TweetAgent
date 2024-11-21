@@ -48,7 +48,7 @@ export class XPostsHandlerService extends BotFeature {
     // Find the first post eligible for a reply analysis. ie posts that have not been handled yet.
     const xPost = await this.prisma.xPost.findFirst({
       where: {
-        authorId: { not: botAccount.userId },
+        xAccountUserId: { not: botAccount.userId },
         wasReplyHandled: false
       }
     });
@@ -68,10 +68,27 @@ export class XPostsHandlerService extends BotFeature {
       }
     }
 
-    if (replyAnalysisResults.length > 0)
-      await this.produceAggregatedXReply(replyAnalysisResults);
+    if (replyAnalysisResults.length > 0) {
+      const fullReply = await this.produceAggregatedXReply(replyAnalysisResults);
+      if (fullReply) {
+        // Schedule a post
+        this.logger.log(`Scheduling new X reply post: ${fullReply}`);
 
-    // Mark as handled, we won't check this post any more
+        await this.prisma.xPost.create({
+          data: {
+            publishRequestAt: new Date(),
+            text: fullReply,
+            xAccount: { connect: { userId: this.botAccount.userId } },
+            botAccount: { connect: { userId: this.botAccount.userId } },
+            parentPostId: xPost.postId,
+            rootPostId: xPost.rootPostId
+          }
+        });
+      }
+    }
+
+    // No matter if we could generate a reply or not, mark as reply as 
+    // handled, so we don't try to handle it again later. A missed reply is better than being stuck forever.
     await this.xPosts.markAsReplied(xPost);
   }
 
@@ -79,7 +96,7 @@ export class XPostsHandlerService extends BotFeature {
    * In case multiple features wanted to reply about a user post (if user message contains a question, his
    * airdrop address, etc), we ask AI to create an homogenous, aggregated reply based on several reply parts.
    */
-  private async produceAggregatedXReply(replyAnalysisResults: XPostReplyAnalysisResult[]) {
+  private async produceAggregatedXReply(replyAnalysisResults: XPostReplyAnalysisResult[]): Promise<string> {
     const graph = new StateGraph(replyAggregatorStateAnnotation)
       .addNode("agent", produceAggregatedReplyAgent(replyAnalysisResults))
       .addEdge(START, "agent")
@@ -88,6 +105,6 @@ export class XPostsHandlerService extends BotFeature {
     const app = graph.compile();
     const result: typeof replyAggregatorStateAnnotation.State = await app.invoke({});
 
-    console.log("produceAggregatedXReply result", result);
+    return result?.fullTweet;
   }
 }

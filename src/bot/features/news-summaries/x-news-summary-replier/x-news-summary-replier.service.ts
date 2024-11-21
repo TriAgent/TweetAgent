@@ -49,7 +49,7 @@ export class XNewsSummaryReplierService extends BotFeature {
     // Get conversation thread for this post. If not a conversation we started with a news post,
     // don't reply here.
     const conversation = await this.xPosts.getParentConversation(xPost.postId);
-    if (!conversation || conversation.length === 0 || conversation[0].publisherAccountUserId != this.botAccount.userId)
+    if (!conversation || conversation.length === 0 || conversation[0].botAccountUserId != this.botAccount.userId)
       return;
 
     this.logger.log("Building X reply for post:");
@@ -76,26 +76,6 @@ export class XNewsSummaryReplierService extends BotFeature {
     this.logger.log("Reply generation result:");
     this.logger.log(result);
 
-    return; // TMP DEV
-
-    if (result.tweetReply) {
-      // Schedule a post
-      this.logger.log("Scheduling new X reply post");
-      await this.prisma.xPost.create({
-        data: {
-          publishRequestAt: new Date(),
-          text: result.tweetReply,
-          authorId: this.botAccount.userId,
-          parentPostId: xPost.postId,
-          rootPostId: xPost.rootPostId
-        }
-      });
-    }
-
-    // No matter if we could generate a reply or not, mark as user's reply as 
-    // handled, so we don't try to handle it again later. A missed reply is better than being stuck forever.
-    await this.xPosts.markAsReplied(xPost);
-
-    return {}
+    return { reply: result.tweetReply };
   }
 }

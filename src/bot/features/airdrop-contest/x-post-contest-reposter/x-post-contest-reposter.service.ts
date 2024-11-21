@@ -68,7 +68,8 @@ export class XPostContestReposterService extends BotFeature {
         data: {
           publishRequestAt: new Date(),
           text: result.reply,
-          authorId: this.botAccount.userId,
+          xAccount: { connect: { userId: this.botAccount.userId } },
+          botAccount: { connect: { userId: this.botAccount.userId } },
           quotedPostId: result.electedPost.postId, // twitter id
           contestQuotedPost: { connect: { id: result.electedPost.id } }
         }

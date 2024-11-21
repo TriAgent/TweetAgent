@@ -1,8 +1,7 @@
 AIRDROPS:
+- TBD: update if post author and/or mentioner get the airdrop
+- send airdrop tokens on chain (base management / wallet management)
 - reply to the mentioning post, telling it is eligible for airdrop (TBD: when mentioned or when quoted?)
-- restore test X accounts, test mechanism (mentions, post, airdrop address)
-- collect quoted posts stats
-- airdrop tokens to winner posts / base management / wallet management
 
 HASHTAGS:
   - agent to extract keywords from bot posts, so we can add # (hashtag) in front of some of them

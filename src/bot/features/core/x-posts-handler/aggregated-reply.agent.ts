@@ -8,7 +8,8 @@ export const produceAggregatedReplyAgent = (replyAnalysisResults: XPostReplyAnal
     const SYSTEM_TEMPLATE = `
       We want to write a twitter post based on several content origins, but as a reply to a single user. 
       Write the X post.
-      Do not mention the user in the post.
+      Do not mention the user in the post. 
+      Keep professional tone, do not show too much excitement or marketing-oriented attitude.
       ---------------- 
       [Partial replies to aggregate:]
       {partialReplies}

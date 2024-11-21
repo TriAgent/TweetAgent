@@ -45,13 +45,6 @@ export class XPostContestHandlerService extends BotFeature {
     const app = graph.compile();
     const result: typeof contestHandlerStateAnnotation.State = await app.invoke({});
 
-    // Save worth for contest info into post.
-    // TODO: move this in the study agent
-    await this.prisma.xPost.update({
-      where: { id: post.id },
-      data: { worthForAirdropContest: result?.isWorthForContest || false }
-    });
-
     return { reply: result?.reply }
   }
 }

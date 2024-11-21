@@ -45,7 +45,8 @@ export class XPostFetcherService extends BotFeature {
     const posts = await this.xPosts.fetchAndSaveXPosts(() => {
       // Fetch recent posts, not earlier than last time we checked
       this.logger.log(`Fetching recent target accounts X posts not earlier than ${latestFetchDate}`);
-      return this.twitter.fetchAuthorsPosts(targetTwitterAccounts, moment(latestFetchDate));
+      // subtract 1 minute to compensate twitter's api lag after a post is published
+      return this.twitter.fetchAuthorsPosts(targetTwitterAccounts, moment(latestFetchDate).subtract(1, "minutes"));
     });
 
     if (posts != null) {
@@ -63,7 +64,8 @@ export class XPostFetcherService extends BotFeature {
     // Fetch recent posts, not earlier than last time we checked
     const posts = await this.xPosts.fetchAndSaveXPosts(() => {
       this.logger.log(`Fetching recent X posts we are mentioned in, not earlier than ${latestFetchDate}`);
-      return this.twitter.fetchPostsMentioningOurAccount(moment(latestFetchDate));
+      // subtract 1 minute to compensate twitter's api lag after a post is published
+      return this.twitter.fetchPostsMentioningOurAccount(moment(latestFetchDate).subtract(1, "minutes"));
     });
 
     // For each post we get mentioned in, fetch and save the whole conversation before it (parent posts).
