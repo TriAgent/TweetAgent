@@ -1,10 +1,10 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { Injectable, Logger } from "@nestjs/common";
-import { XPost } from "@prisma/client";
 import { BotFeature } from "src/bot/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bot/model/x-post-reply-analysis-result";
 import { BotConfig } from "src/config/bot-config";
 import { extractAddressAgent } from "./extract-address.agent";
+import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 
 export const airdropAddressStateAnnotation = Annotation.Root({
   isAnAirdropAddressRequest: Annotation<boolean>,
@@ -24,7 +24,7 @@ export class XPostAirdropAddressService extends BotFeature {
     return BotConfig.AirdropContest.IsActive;
   }
 
-  async studyReplyToXPost(post: XPost): Promise<XPostReplyAnalysisResult> {
+  async studyReplyToXPost(post: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
     this.logger.log("Studying reply to X post");
 
     // AI agent that checks if the post contains an EVM address, and saves it to DB for the post owner.

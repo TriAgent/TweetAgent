@@ -16,11 +16,6 @@ import { XPostsService } from "src/xposts/xposts.service";
 import { botPersonalityPromptChunk } from "../../../model/prompt-parts/news-summary";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
 
-/**
- * TODO:
- * [langchain] only for web results: make a summary of the web search result to make the stored content smaller
-*/
-
 const PostXSummaryDelaySec = 1 * 60 * 60; // 1 hour
 //const MinTimeBetweenXPosts = PostXSummaryDelaySec; // Used by retries when posts have failed to publish. Not more frequently than this delay for posts.
 

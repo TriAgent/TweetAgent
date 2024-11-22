@@ -1,6 +1,5 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { Injectable, Logger } from "@nestjs/common";
-import { XPost } from "@prisma/client";
 import { BotFeature } from "src/bot/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bot/model/x-post-reply-analysis-result";
 import { BotConfig } from "src/config/bot-config";
@@ -11,6 +10,7 @@ import { classifyPostAgent } from "./classify-post.agent";
 import { ReplierNode } from "./model/replier-node";
 import { postReplyRouter } from "./post-reply.router";
 import { replyAgent } from "./reply.agent";
+import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 
 const ProduceRepliesCheckDelaySec = 60; // 1 minute - interval between loops that check if a reply has to be produced
 
@@ -45,7 +45,7 @@ export class XNewsSummaryReplierService extends BotFeature {
    * Checks if some new replies have been sent to us as a reply to our news summaries,
    * and try to answer them.
    */
-  async studyReplyToXPost?(xPost: XPost): Promise<XPostReplyAnalysisResult> {
+  async studyReplyToXPost?(xPost: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
     // Get conversation thread for this post. If not a conversation we started with a news post,
     // don't reply here.
     const conversation = await this.xPosts.getParentConversation(xPost.postId);

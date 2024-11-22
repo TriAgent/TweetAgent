@@ -85,7 +85,7 @@ export class LangchainService implements OnModuleInit {
           model,
         ] as any); // dirty as any because of headache with from() typing (first input type etc)
 
-        responseMessage = await chain.invoke(invocationParams); // NOTE: using "" instead of "" to avoid text.replace is not a function when using vector stores // TODO: not always an AIMessage
+        responseMessage = await chain.invoke(invocationParams); // NOTE: using "" instead of "" to avoid text.replace is not a function when using vector stores
 
         // Save this preliminary/final message to history
         messageHistory.push(responseMessage);

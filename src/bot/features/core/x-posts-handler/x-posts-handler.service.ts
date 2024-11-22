@@ -50,7 +50,8 @@ export class XPostsHandlerService extends BotFeature {
       where: {
         xAccountUserId: { not: botAccount.userId },
         wasReplyHandled: false
-      }
+      },
+      include: { xAccount: true }
     });
 
     if (!xPost)

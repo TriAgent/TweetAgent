@@ -1,8 +1,12 @@
 AIRDROPS:
-- send airdrop tokens on chain (base management / wallet management)
-- reply to the mentioning post, telling it is eligible for airdrop (TBD: when mentioned or when quoted?)
+- reply to the mentioning post when airdrop has been sent
+- real airdrop contract address + real wallet + send tokens to contract
+- airdrop sender: use json abi
+- test on chain airdrop sending
 
-HASHTAGS:
+NEWS SUMMARiES:
+
+- Hashtags:
   - agent to extract keywords from bot posts, so we can add # (hashtag) in front of some of them
   - extract news post hashtags and provide them as metadata to post loader when building summary. Writer agent might use some of them in the summary post. 
 

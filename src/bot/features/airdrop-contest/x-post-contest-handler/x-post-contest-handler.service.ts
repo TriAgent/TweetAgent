@@ -1,10 +1,10 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { Injectable, Logger } from "@nestjs/common";
-import { XPost } from "@prisma/client";
 import { BotFeature } from "src/bot/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bot/model/x-post-reply-analysis-result";
 import { BotConfig } from "src/config/bot-config";
 import { PrismaService } from "src/prisma/prisma.service";
+import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { studyForContestAgent } from "./study-for-contest.agent";
 
 export const contestHandlerStateAnnotation = Annotation.Root({
@@ -28,7 +28,7 @@ export class XPostContestHandlerService extends BotFeature {
     return BotConfig.AirdropContest.IsActive;
   }
 
-  async studyReplyToXPost(post: XPost): Promise<XPostReplyAnalysisResult> {
+  async studyReplyToXPost(post: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
     // Only study root posts. We look for mentions in all conversations that start from the root,
     // this is how we know we should study it.
     // if (post.parentPostId)

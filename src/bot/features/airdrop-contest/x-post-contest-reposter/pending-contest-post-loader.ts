@@ -1,5 +1,6 @@
 import { BaseDocumentLoader } from "@langchain/core/document_loaders/base";
 import { Document } from "@langchain/core/documents";
+import moment from "moment";
 import { prisma } from "src/services";
 
 export type SummaryDocument = Document<{ "authorId", "postId", "post" }>;
@@ -17,8 +18,8 @@ export class PendingContestPostLoader extends BaseDocumentLoader {
     const posts = await prisma().xPost.findMany({
       where: {
         worthForAirdropContest: true,
-        quotedForAirdropContestAt: null
-        // TODO: last 6 hours max
+        quotedForAirdropContestAt: null,
+        createdAt: { gt: moment().subtract(6, "hours").toDate() }
       },
       orderBy: { createdAt: "desc" },
       take: 3,

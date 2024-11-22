@@ -112,8 +112,8 @@ export class AirdropSnapshotService extends BotFeature {
     const airdrop = await this.prisma.contestAirdrop.create({
       data: {
         totalTokenAmount: BotConfig.AirdropContest.TokenAmountPerAirdrop,
-        token: BotConfig.AirdropContest.AirdroppedTokenName,
-        chain: BotConfig.AirdropContest.AirdroppedTokenChain,
+        chain: BotConfig.AirdropContest.Chain.id,
+        tokenAddress: BotConfig.AirdropContest.Token.address,
         evaluatedPostsCount: eligiblePosts.length
       }
     });

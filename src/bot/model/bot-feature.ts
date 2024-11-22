@@ -1,5 +1,6 @@
 import { XPost, XPublisherAccount } from "@prisma/client";
 import { twitterAuth } from "src/services";
+import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { XPostReplyAnalysisResult } from "./x-post-reply-analysis-result";
 
 export abstract class BotFeature {
@@ -34,7 +35,7 @@ export abstract class BotFeature {
    * Decide to reply to the given post or not on X. If so, return a generated reply for the replier to
    * merge it with other potential features replies.
    */
-  studyReplyToXPost?(post: XPost): Promise<XPostReplyAnalysisResult>;
+  studyReplyToXPost?(post: XPostWithAccount): Promise<XPostReplyAnalysisResult>;
 
   /**
    * Tells if this feature can be used

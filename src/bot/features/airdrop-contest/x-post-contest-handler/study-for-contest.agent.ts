@@ -1,6 +1,6 @@
 import { Logger } from "@nestjs/common";
-import { XPost } from "@prisma/client";
 import { langchain, prisma, twitterAuth, xPosts } from "src/services";
+import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
 import { contestHandlerStateAnnotation } from "./x-post-contest-handler.service";
 
@@ -8,7 +8,7 @@ import { contestHandlerStateAnnotation } from "./x-post-contest-handler.service"
  * Determines if the post is worth being part of the airdrop contest or not, 
  * and if so, generates a reply for user to know we handled the post.
  */
-export const studyForContestAgent = (logger: Logger, post: XPost) => {
+export const studyForContestAgent = (logger: Logger, post: XPostWithAccount) => {
   return async (state: typeof contestHandlerStateAnnotation.State) => {
     const botAccount = await twitterAuth().getAuthenticatedBotAccount();
 
@@ -72,6 +72,10 @@ export const studyForContestAgent = (logger: Logger, post: XPost) => {
       logger.log(`Reason: ${structuredResponse.reason}`);
 
       state.reply = `Good news, the post has joined the airdrop contest`;
+
+      // If user hasn't configured an airdrop address yet, ask him to do so at the same time.
+      if (!targetMentioningPost.xAccount.airdropAddress)
+        state.reply += `Don't forget to give us a wallet address for your airdrop. To do so, simply reply to this post with your address, asking us to update it.`;
     }
     else {
       logger.log(`Post is NOT eligible for airdrop contest:`);

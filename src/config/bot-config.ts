@@ -1,3 +1,4 @@
+import { BaseSepolia } from "./chain-config";
 
 export const BotConfig = {
   NewsSummaryBot: {
@@ -27,10 +28,13 @@ export const BotConfig = {
   AirdropContest: {
     IsActive: process.env.BOT_FEATURE_AIRDROP_CONTEST === "1",
     MinHoursBetweenAirdrops: 24,
-    AirdroppedTokenName: "USDT",
-    AirdroppedTokenChain: "base", // TODO: improve that a lot: chain id, chain type etc
     TokenAmountPerAirdrop: 100, // eg: 100 usdt every 24h, total, dispatched between all winning posts
     DaysBeforeStatCollection: 7, // Number of days to wait before making a post eligible for airdrop.
+
+    // Chain related
+    Chain: BaseSepolia,
+    Token: BaseSepolia.tokens.find(t => t.name === "USDT"),
+    WalletPrivateKey: process.env.AIRDROP_WALLET_PRIVATE_KEY
   },
   X: {
     PublishPosts: process.env.PUBLISH_X_POSTS === "1"
