@@ -1,4 +1,4 @@
-import { BaseSepolia } from "./chain-config";
+import { BaseSepolia, findChainToken } from "./chain-config";
 
 export const BotConfig = {
   NewsSummaryBot: {
@@ -33,7 +33,7 @@ export const BotConfig = {
 
     // Chain related
     Chain: BaseSepolia,
-    Token: BaseSepolia.tokens.find(t => t.name === "USDT"),
+    Token: findChainToken(BaseSepolia, "UTT"),
     WalletPrivateKey: process.env.AIRDROP_WALLET_PRIVATE_KEY
   },
   X: {

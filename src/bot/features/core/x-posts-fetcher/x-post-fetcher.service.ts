@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OperationHistoryType } from '@prisma/client';
-import * as moment from 'moment';
+import moment from 'moment';
 import { BotConfig } from 'src/config/bot-config';
 import { OperationHistoryService } from 'src/operation-history/operation-history.service';
 import { TwitterService } from 'src/twitter/twitter.service';

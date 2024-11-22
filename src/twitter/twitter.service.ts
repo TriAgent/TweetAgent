@@ -1,6 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import * as moment from "Moment";
-import { Moment } from "moment";
+import moment, { Moment } from "moment";
 import { splitStringAtWord } from "src/utils/strings";
 import { ApiResponseError, SendTweetV2Params, TweetV2, UserV2 } from "twitter-api-v2";
 import { TwitterAuthService } from "./twitter-auth.service";

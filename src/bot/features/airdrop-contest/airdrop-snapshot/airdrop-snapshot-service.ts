@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@prisma/client";
-import * as moment from "moment";
+import moment from "moment";
 import { BotFeature } from "src/bot/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
 import { PrismaService } from "src/prisma/prisma.service";

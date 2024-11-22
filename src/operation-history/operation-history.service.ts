@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OperationHistoryType } from '@prisma/client';
-import * as moment from 'moment';
+import moment from 'moment';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()

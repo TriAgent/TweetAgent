@@ -1,7 +1,7 @@
 AIRDROPS:
-- reply to the mentioning post when airdrop has been sent
 - real airdrop contract address + real wallet + send tokens to contract
-- airdrop sender: use json abi
+- airdrop sender: catch not enough tokens error and log, so we know we need to transfer more tokens to the contract
+- test reply to the mentioning post after airdrop has been sent
 - test on chain airdrop sending
 
 NEWS SUMMARiES:

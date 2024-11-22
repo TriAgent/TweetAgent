@@ -73,7 +73,7 @@ model XPost {
   // Specific to: bot summaries
   summarySourcePosts XPost[] @relation(name: "SummaryPost") // source posts used to produce the summary
 
-  // Specific to: User replies to our bot
+  // Specific to: user replies to our bot
   wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
 
   // Specific to: our bot's published posts
@@ -83,14 +83,14 @@ model XPost {
   // Specific to: airdrop contest (quoted post)
   worthForAirdropContest    Boolean? // Whether this post is deemed worth to join the airdrop contest. 
   quotedForAirdropContestAt DateTime? // If this post got elected to be RT/quoted by our account, that's the date at which the post was created/scheduled
+  contestMentioningPost     XPost?    @relation(name: "ContestMentioningPost", fields: [contestMentioningPostId], references: [id]) // Post that mentioned this post (that is worthForAirdropContest) so this is how we detected it. Used to reward mentioning users about influencers posts in addition to their own content.
+  contestMentioningPostId   String?   @unique
+  ContestMentioningPost     XPost?    @relation(name: "ContestMentioningPost")
 
   // Specific to: airdrop contest (our bot quote post)
-  contestQuotedPost       XPost?  @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
-  contestQuotedPostId     String? @unique
-  contestQuotedByPost     XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
-  contestMentioningPost   XPost?  @relation(name: "ContestMentioningPost", fields: [contestMentioningPostId], references: [id]) // Post that mentioned this post (that is worthForAirdropContest) so this is how we detected it. Used to reward mentioning users about influencers posts in addition to their own content.
-  contestMentioningPostId String? @unique
-  ContestMentioningPost   XPost?  @relation(name: "ContestMentioningPost")
+  contestQuotedPost   XPost?  @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
+  contestQuotedPostId String? @unique
+  contestQuotedByPost XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
 
   PostContestAirdrop PostContestAirdrop? // Potential airdrop this post got involved into. Only one airdrop possible.
 }

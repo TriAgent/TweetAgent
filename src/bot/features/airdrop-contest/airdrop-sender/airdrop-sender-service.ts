@@ -1,10 +1,16 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Contract, JsonRpcProvider, Wallet } from 'ethers';
+import { XPost } from "@prisma/client";
+import { Contract, ContractTransactionReceipt, ContractTransactionResponse, JsonRpcProvider, Wallet } from 'ethers';
 import { BotFeature } from "src/bot/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
-import { SupportedChains } from "src/config/chain-config";
+import { Chain, SupportedChains } from "src/config/chain-config";
+import airdropABI from "src/contracts/airdrop.json";
 import { PrismaService } from "src/prisma/prisma.service";
 import { tokenToContractValue } from "src/utils/tokens";
+
+// const wallet = Wallet.createRandom();
+// console.log('Address:', wallet.address);
+// console.log('Private Key:', wallet.privateKey);
 
 /**
  * This feature sends airdrop snapshots to destination addresses on chain.
@@ -19,14 +25,9 @@ export class AirdropSenderService extends BotFeature {
   constructor(private prisma: PrismaService) {
     super(10);
 
-    // TODO: load ABI from assets
-    const abi = [
-      'function airdrop(address[] calldata recipients, uint256[] calldata amounts) external'
-    ];
-
     this.provider = new JsonRpcProvider(BotConfig.AirdropContest.Chain.rpcUrl);
     this.wallet = new Wallet(BotConfig.AirdropContest.WalletPrivateKey, this.provider);
-    this.airdropContract = new Contract(BotConfig.AirdropContest.Chain.contracts.airdrop, abi, this.wallet);
+    this.airdropContract = new Contract(BotConfig.AirdropContest.Chain.contracts.airdrop, airdropABI, this.wallet);
   }
 
   public isEnabled(): boolean {
@@ -53,8 +54,20 @@ export class AirdropSenderService extends BotFeature {
       where: {
         contestAirdropId: unsentAirdrop.id,
         transferedAt: null
+      },
+      include: {
+        quotePost: {
+          include: {
+            contestQuotedPost: {
+              include: {
+                contestMentioningPost: true
+              }
+            }
+          }
+        }
       }
     });
+
     const postAirdropsIds = postAirdrops.map(pa => pa.id);
 
     this.logger.log(`${postAirdrops.length} posts in this airdrop`);
@@ -86,15 +99,53 @@ export class AirdropSenderService extends BotFeature {
       })
     ])
 
-    // Send tokens on chai
-    const tx = await this.airdropContract.airdrop(airdropAddresses, airdropAmounts);
-    await tx.wait();
+    if (postAirdrops.length > 0) {
+      // Send tokens on chain
+      try {
+        const tx: ContractTransactionResponse = await this.airdropContract.batchTransfer(airdropAddresses, airdropAmounts);
+        this.logger.log(`Publishing transaction on chain. Transaction ID: ${tx?.hash}`);
 
-    // Save transaction IDs
-    await this.prisma.postContestAirdrop.updateMany({
-      where: { id: { in: postAirdropsIds } },
+        // Wait for block confirmation
+        const response: ContractTransactionReceipt = await tx?.wait();
+        this.logger.log(`Transaction sent`);
+
+        // Save transaction IDs
+        const transactionId = tx.hash;
+        await this.prisma.postContestAirdrop.updateMany({
+          where: { id: { in: postAirdropsIds } },
+          data: { transactionId }
+        });
+
+        // Let mentioners know they got an airdrop by replying to their initial post.
+        this.logger.log(`Scheduling X posts to let winners know they get an airdrop`);
+        for (const postAirdrop of postAirdrops) {
+          const mentioningPost = postAirdrop.quotePost.contestQuotedPost.contestMentioningPost;
+          await this.sendAirdroppedReply(mentioningPost, chain, transactionId);
+        }
+      }
+      catch (e) {
+        const reason: string = e.reason;
+        if (reason?.includes(`transfer amount exceeds balance`)) {
+          this.logger.error(`Failed to send airdrop tokens, not enough tokens in airdrop contract. Send more ${token.symbol} tokens to contract at ${BotConfig.AirdropContest.Chain.contracts.airdrop}.`)
+        }
+        else
+          this.logger.error(e);
+      }
+    }
+  }
+
+  private async sendAirdroppedReply(mentioningPost: XPost, chain: Chain, transactionId: string) {
+    const transactionUrl = chain.explorerTransactionUrl(transactionId);
+    const text = `Just sent you a few tokens to thank you for this contribution. Transaction can be found here: ${transactionUrl}`;
+
+    await this.prisma.xPost.create({
       data: {
-        transactionId: tx.transactionHash
+        publishRequestAt: new Date(),
+        text,
+        xAccount: { connect: { userId: this.botAccount.userId } },
+        botAccount: { connect: { userId: this.botAccount.userId } },
+        parentPostId: mentioningPost.postId,
+        rootPostId: mentioningPost.rootPostId
       }
     });
   }

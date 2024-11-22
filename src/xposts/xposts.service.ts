@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { XPost } from '@prisma/client';
-import * as moment from 'moment';
+import moment from 'moment';
 import { BotConfig } from 'src/config/bot-config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
