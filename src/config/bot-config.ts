@@ -1,6 +1,8 @@
+import { join } from "path";
 import { BaseSepolia, findChainToken } from "./chain-config";
 
 export const BotConfig = {
+  AiPromptsFolder: join(__dirname, "../../ai-prompts"),
   NewsSummaryBot: {
     IsActive: process.env.BOT_FEATURE_SUMMARIZE_NEWS === "1",
     Generation: {
@@ -30,6 +32,7 @@ export const BotConfig = {
     MinHoursBetweenAirdrops: 24,
     TokenAmountPerAirdrop: 100, // eg: 100 usdt every 24h, total, dispatched between all winning posts
     DaysBeforeStatCollection: 7, // Number of days to wait before making a post eligible for airdrop.
+    Personality: `All your produced texts should sound more like human speakers, not like an "AI"`,
 
     // Chain related
     Chain: BaseSepolia,

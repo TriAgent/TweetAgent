@@ -1,6 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
-import { langchain, prisma, twitterAuth, xPosts } from "src/services";
+import { aiPrompts, langchain, prisma, twitterAuth, xPosts } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
 import { contestHandlerStateAnnotation } from "./x-post-contest-handler.service";
@@ -53,20 +53,14 @@ export const studyForContestAgent = (logger: Logger, post: XPostWithAccount) => 
     // const targetMentioningPost = mentioningPosts[0];
     const targetMentioningPost = post;
 
-    const SYSTEM_TEMPLATE = `
-      Here is a twitter post from a third party user who mentioned us. 
-      Determine if this post is worth for our account to retweet as a crypto news, no matter if 
-      that's a good or bad news, as long as this is informative and related to crypto.
-
-      Here is the tweet:
-      ---------------- 
-      {tweetContent}
-    `;
-
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse } = await langchain().fullyInvoke({
-      messages: [["system", SYSTEM_TEMPLATE]],
-      invocationParams: { tweetContent: postEvaluatedForContest.text },
+      messages: [
+        ["system", aiPrompts().load("airdrop-contest/study-for-contest")]
+      ],
+      invocationParams: {
+        tweetContent: postEvaluatedForContest.text
+      },
       structuredOutput: z.object({
         isWorthForContest: z.boolean().describe("Whether the post is worth for the airdrop contest or not"),
         reason: z.string().describe("The reason why you think the post is worth for the airdrop contest or not")

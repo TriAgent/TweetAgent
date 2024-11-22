@@ -10,6 +10,7 @@ import { LangchainService } from "src/langchain/langchain.service";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { PrismaService } from "src/prisma/prisma.service";
+import { aiPrompts } from "src/services";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { TwitterService } from "src/twitter/twitter.service";
 import { XPostsService } from "src/xposts/xposts.service";
@@ -63,20 +64,11 @@ export class XNewsSummaryWriterService extends BotFeature {
       );
       const vectorStoreRetriever = vectorStore.asRetriever();
 
-      const REQUEST_TEMPLATE = `
-        Below is a list of several posts from twitter. 
-        - Make a short summary that combines all of them. 
-        - Your text should be smooth easy to read, with ideas connected to each other when possible. 
-        - Try to connect sentences with coordination words instead of dots.
-        ---------------- 
-        {context}
-      `;
-
       const prompt = ChatPromptTemplate.fromMessages([
         ["system", botPersonalityPromptChunk()],
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
-        ["system", REQUEST_TEMPLATE]
+        ["system", aiPrompts().load("news-summaries/create-news-summary")]
       ]);
 
       const model = this.langchain.getModel(); // high temperature for more random output

@@ -1,7 +1,7 @@
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StructuredTool } from "@langchain/core/tools";
 import { XPost } from "@prisma/client";
-import { langchain } from "src/services";
+import { aiPrompts, langchain } from "src/services";
 import { z } from "zod";
 import { TweetTrait } from "./model/tweet-trait";
 import { replierStateAnnotation } from "./x-news-summary-replier.service";
@@ -22,20 +22,10 @@ export const classifyPostAgent = (tools: StructuredTool[], reply: XPost) => {
       strict: true
     });
 
-    const SYSTEM_TEMPLATE = `
-    Here is a twitter post related to crypto. Provide a json array output that contains its traits:
-    - if the content contains a question: "question".
-    - if the content contains an opinion: "opinion".
-    - if the content contains harsh, insulting, offensive: "offensive".
-    - if the content contains a praise: "cheerful".
-    - if the content contains market price or investment talk: "pricing".
-
-    Here is the tweet:
-    ---------------- 
-    {tweetContent}`;
-
     // No actual user message, everything is in the system prompt.
-    const prompt = ChatPromptTemplate.fromMessages([["system", SYSTEM_TEMPLATE]]);
+    const prompt = ChatPromptTemplate.fromMessages([
+      ["system", aiPrompts().load("news-summaries/classify-post")]
+    ]);
 
     const response = await prompt.pipe(model).invoke({ tweetContent: reply.text });
 
@@ -44,26 +34,3 @@ export const classifyPostAgent = (tools: StructuredTool[], reply: XPost) => {
     return state;
   }
 };
-
-/* 
-
-TRAIT CREATOR
-
-const traitSchema = z.object({
-      traits: z
-        .array(z.string())
-        .describe("A list of traits contained in the input"),
-    });
-
-    const model = langchain().getModel().withStructuredOutput(traitSchema, {
-      name: "extract_traits",
-      strict: true
-    });
-
-    const SYSTEM_TEMPLATE = `
-    Here is a twitter post related to crypto. You have to evaluate if this post is a 
-    real news that brings new information to users about the crypto landscape.
-    ---------------- 
-    {tweetContent}`;
-
-*/

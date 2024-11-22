@@ -2,7 +2,7 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { Logger } from "@nestjs/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
-import { langchain } from "src/services";
+import { aiPrompts, langchain } from "src/services";
 import { z } from "zod";
 import { PendingContestPostLoader } from "./pending-contest-post-loader";
 import { contestReposterStateAnnotation } from "./x-post-contest-reposter.service";
@@ -20,13 +20,6 @@ export const electBestPostForContestAgent = (logger: Logger) => {
       return state;
     }
 
-    const REQUEST_TEMPLATE = `
-      Below is a list of several posts from twitter. Select the one that has the best chances to become 
-      popular on twitter, meaning with high number of like/rt/comments.
-      ---------------- 
-      {posts}
-    `;
-
     const vectorStore = await MemoryVectorStore.fromDocuments(
       docs,
       new OpenAIEmbeddings({ openAIApiKey: langchain().openAIAPIKey, verbose: true, stripNewLines: false })
@@ -38,7 +31,7 @@ export const electBestPostForContestAgent = (logger: Logger) => {
       messages: [
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
-        ["system", REQUEST_TEMPLATE]
+        ["system", aiPrompts().load("airdrop-contest/elect-best-post-for-contest")]
       ],
       invocationParams: "",
       structuredOutput: z.object({

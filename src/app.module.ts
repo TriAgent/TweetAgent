@@ -6,6 +6,7 @@ import { OperationHistoryModule } from './operation-history/operation-history.mo
 import { TwitterModule } from './twitter/twitter.module';
 import { XaccountsModule } from './xaccounts/xaccounts.module';
 import { XPostsModule } from './xposts/xposts.module';
+import { AiPromptsModule } from './ai-prompts/ai-prompts.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { XPostsModule } from './xposts/xposts.module';
     LangchainModule,
     XPostsModule,
     OperationHistoryModule,
-    XaccountsModule
+    XaccountsModule,
+    AiPromptsModule
   ]
 })
 export class AppModule { }

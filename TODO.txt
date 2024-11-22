@@ -1,5 +1,5 @@
 AIRDROPS:
-- bug: is someone mentions us in a quote instead of a reply to the contest post, we don't detect the right post.
+- export AI prompts to a specific prompt folder for easy change. AI features should load files every time so they get latest prompts without restarting the backend.
 - add base mainnet support
 - deploy new bot version
 

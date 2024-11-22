@@ -1,3 +1,4 @@
+import { AiPromptsService } from "./ai-prompts/ai-prompts.service";
 import { LangchainService } from "./langchain/langchain.service";
 import { app } from "./main";
 import { PrismaService } from "./prisma/prisma.service";
@@ -28,4 +29,8 @@ export const twitter = (): TwitterService => {
 
 export const twitterAuth = (): TwitterAuthService => {
   return app.get(TwitterAuthService);
+}
+
+export const aiPrompts = (): AiPromptsService => {
+  return app.get(AiPromptsService);
 }

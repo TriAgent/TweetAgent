@@ -5,7 +5,7 @@ import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
 import { botPersonalityPromptChunk } from "src/bot/model/prompt-parts/news-summary";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
-import { langchain, twitterAuth, xPosts } from "src/services";
+import { aiPrompts, langchain, twitterAuth, xPosts } from "src/services";
 import { z } from "zod";
 import { TweetTrait } from "./model/tweet-trait";
 import { replierStateAnnotation } from "./x-news-summary-replier.service";
@@ -32,10 +32,10 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
       return state;
 
     const guidelineRules = {
-      [TweetTrait.Pricing]: "Tell that we don't provide market price advice, using joyful tone. Be concise about this.",
-      [TweetTrait.Question]: "Answer the question if you really know. If you don't, don't reply to this part.",
-      [TweetTrait.Cheerful]: "Be grateful to the positive message received if it was a compliment, or simply reply with positive vibes.",
-      [TweetTrait.Opinion]: "Give your opinion about what the user stated. You can agree or disagree but be factual."
+      [TweetTrait.Pricing]: aiPrompts().load("news-summaries/reply-to-news-reply-tweet-traits/pricing"),
+      [TweetTrait.Question]: aiPrompts().load("news-summaries/reply-to-news-reply-tweet-traits/question"),
+      [TweetTrait.Cheerful]: aiPrompts().load("news-summaries/reply-to-news-reply-tweet-traits/cheerful"),
+      [TweetTrait.Opinion]: aiPrompts().load("news-summaries/reply-to-news-reply-tweet-traits/opinion")
     }
 
     const replyGuidelines = state.tweetTraits
@@ -45,8 +45,7 @@ export const replyAgent = (tools: StructuredTool[], reply: XPost) => {
       .join("\n"); // Skip lines and make as string
 
     const REQUEST_TEMPLATE = `
-      Below conversation is a twitter conversation. We have decided to write a reply for it. The parent tweet you are
-      replying to has been analyzed and you should include only the following items in the answer.
+      ${aiPrompts().load("news-summaries/reply-to-news-reply")}
 
       [Guidelines]
       ${replyGuidelines}

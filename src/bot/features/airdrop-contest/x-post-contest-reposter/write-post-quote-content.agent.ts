@@ -1,6 +1,7 @@
 import { Logger } from "@nestjs/common";
+import { BotConfig } from "src/config/bot-config";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
-import { langchain } from "src/services";
+import { aiPrompts, langchain } from "src/services";
 import { z } from "zod";
 import { contestReposterStateAnnotation } from "./x-post-contest-reposter.service";
 
@@ -12,19 +13,13 @@ export const writePostQuoteContentAgent = (logger: Logger) => {
     if (!state.electedPost)
       return state;
 
-    const REQUEST_TEMPLATE = `
-      Below is a third party user tweet that we are going to retweet/quote from our twitter account. Write a very short
-      text that we will use as quote message, to introduce the given user post. You can also give your opinion about it.
-      ---------------- 
-      {post}
-    `;
-
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse } = await langchain().fullyInvoke({
       messages: [
+        ["system", BotConfig.AirdropContest.Personality],
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
-        ["system", REQUEST_TEMPLATE]
+        ["system", aiPrompts().load("airdrop-contest/write-post-quote-content")]
       ],
       invocationParams: {
         post: state.electedPost.text

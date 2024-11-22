@@ -174,7 +174,7 @@ export class XPostsService {
       for (var post of posts) {
         const existingPost = await this.getXPostByTwitterPostId(post.id);
         if (!existingPost) {
-          this.logger.log('Created database xpost for X tweetv2:');
+          this.logger.log('Created database xpost for external X tweetv2:');
           this.logger.log(post);
 
           const parentPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
