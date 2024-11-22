@@ -1,4 +1,5 @@
 import { Logger } from "@nestjs/common";
+import { XPost } from "@prisma/client";
 import { langchain, prisma, twitterAuth, xPosts } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
@@ -17,9 +18,17 @@ export const studyForContestAgent = (logger: Logger, post: XPostWithAccount) => 
     if (post.text.indexOf(`@${botAccount.userScreenName}`) < 0)
       return state;
 
-    // Evaluate the conversation root (we already have all potential parent posts in DB, ensured by the fetcher feature )
-    const conversation = await xPosts().getParentConversation(post.postId);
-    const postEvaluatedForContest = conversation[0];
+    let postEvaluatedForContest: XPost;
+    if (post.quotedPostId) {
+      // If the post is quoting another post, we consider this quoted post as the potential post for contest so
+      // this is our target.
+      postEvaluatedForContest = await xPosts().getXPostByTwitterPostId(post.quotedPostId);
+    }
+    else {
+      // Evaluate the conversation root (we already have all potential parent posts in DB, ensured by the fetcher feature )
+      const conversation = await xPosts().getParentConversation(post.postId);
+      postEvaluatedForContest = conversation[0];
+    }
 
     // Make sure the root has not been evaluated (worth) to true or false yet (should be null)
     if (postEvaluatedForContest.worthForAirdropContest !== null)
@@ -46,7 +55,8 @@ export const studyForContestAgent = (logger: Logger, post: XPostWithAccount) => 
 
     const SYSTEM_TEMPLATE = `
       Here is a twitter post from a third party user who mentioned us. 
-      Determine if this post is worth for our account to retweet as a good crypto news.
+      Determine if this post is worth for our account to retweet as a crypto news, no matter if 
+      that's a good or bad news, as long as this is informative and related to crypto.
 
       Here is the tweet:
       ---------------- 

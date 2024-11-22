@@ -5,6 +5,7 @@ import { BotConfig } from 'src/config/bot-config';
 import { OperationHistoryService } from 'src/operation-history/operation-history.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { XPostsService } from 'src/xposts/xposts.service';
+import { TweetV2 } from 'twitter-api-v2';
 import { BotFeature } from '../../../model/bot-feature';
 
 const FetchXTargetAccountPostsDelaySec = 1 * 60; // Don't call the api more than once every N minutes
@@ -71,9 +72,17 @@ export class XPostFetcherService extends BotFeature {
     // For each post we get mentioned in, fetch and save the whole conversation before it (parent posts).
     // This is needed for example by the contest service to study the root post vs the mentioned post (possibly in replies).
     for (const post of posts) {
-      await this.xPosts.fetchAndSaveXPosts(() => {
-        this.logger.log(`Fetching conversation for mentioned post`);
-        return this.twitter.fetchParentPosts(post.postId);
+      await this.xPosts.fetchAndSaveXPosts(async () => {
+        const fetchedPosts: TweetV2[] = [];
+        if (post.quotedPostId) {
+          this.logger.log(`Fetching quoted post for mentioning post`);
+          fetchedPosts.push(await this.twitter.fetchSinglePost(post.quotedPostId));
+        }
+
+        this.logger.log(`Fetching parent conversation for mentioning post`);
+        fetchedPosts.push(...(await this.twitter.fetchParentPosts(post.postId)));
+
+        return fetchedPosts;
       });
     }
 

@@ -37,10 +37,9 @@ export class XPostsService {
 
     let currentPostId: string = childPostId;
     while (currentPostId != null) {
-
       const xPost = await this.prisma.xPost.findFirst({ where: { postId: currentPostId } });
       if (!xPost) {
-        this.logger.warn(`Could not re-create the whole conversation for twitter post id ${childPostId}`);
+        this.logger.warn(`Could not re-create the whole conversation for twitter post id ${childPostId}. Have all post's parents been fetched well by the fetcher?`);
         return null;
       }
 
@@ -122,7 +121,6 @@ export class XPostsService {
           data: {
             text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
             postId: rootTweet.postId,
-            rootPostId: postToSend.rootPostId || rootTweet.postId, // Self root if we are not writing a reply. Or use root defined at creation if this is a reply
             publishedAt: new Date(),
             xAccount: { connect: { userId: botXAccount.userId } },
             botAccount: { connect: { userId: botAuthenticatedAccount.userId } },
@@ -141,7 +139,6 @@ export class XPostsService {
               text: tweet.text,
               postId: tweet.postId,
               parentPostId: parentPostId,
-              rootPostId: rootTweet.postId,
               wasReplyHandled: true // directly mark has handled post, as this is our own post
             }
           });
@@ -177,7 +174,11 @@ export class XPostsService {
       for (var post of posts) {
         const existingPost = await this.getXPostByTwitterPostId(post.id);
         if (!existingPost) {
-          const parentXPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
+          this.logger.log('Created database xpost for X tweetv2:');
+          this.logger.log(post);
+
+          const parentPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
+          const quotedPostId = post.referenced_tweets?.find(t => t.type === "quoted")?.id;
 
           const xAccount = await this.xAccounts.ensureXAccount(post.author_id);
 
@@ -188,8 +189,8 @@ export class XPostsService {
               xAccount: { connect: { userId: xAccount.userId } },
               postId: post.id,
               publishedAt: post.created_at,
-              parentPostId: parentXPostId ? parentXPostId : null,
-              rootPostId: parentXPostId ? post.conversation_id : post.id
+              parentPostId,
+              quotedPostId
             }
           });
           newPosts.push(dbPost);

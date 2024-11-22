@@ -1,8 +1,7 @@
 AIRDROPS:
-- real airdrop contract address + real wallet + send tokens to contract
-- airdrop sender: catch not enough tokens error and log, so we know we need to transfer more tokens to the contract
-- test reply to the mentioning post after airdrop has been sent
-- test on chain airdrop sending
+- bug: is someone mentions us in a quote instead of a reply to the contest post, we don't detect the right post.
+- add base mainnet support
+- deploy new bot version
 
 NEWS SUMMARiES:
 

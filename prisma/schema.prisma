@@ -58,7 +58,6 @@ model XPost {
   text         String // Core post content
   postId       String? // ID of the post of X
   parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
-  rootPostId   String? // Parent post (id on X) - root tweet - usually, the tweet created by our bot - same as post id if root
   quotedPostId String? // Post (id on X) that we quote with this post (RT with message).
   //authorId     String // X user id
 

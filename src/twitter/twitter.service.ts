@@ -148,9 +148,7 @@ export class TwitterService {
 
       conversation.unshift(tweet.data);
 
-      const referencedTweet = tweet.data.referenced_tweets?.find(
-        (ref) => ref.type === 'replied_to'
-      );
+      const referencedTweet = tweet.data.referenced_tweets?.find((ref) => ref.type === 'replied_to');
 
       currentTweetId = referencedTweet ? referencedTweet.id : null;
     }

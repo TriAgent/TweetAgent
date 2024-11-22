@@ -81,8 +81,7 @@ export class XPostsHandlerService extends BotFeature {
             text: fullReply,
             xAccount: { connect: { userId: this.botAccount.userId } },
             botAccount: { connect: { userId: this.botAccount.userId } },
-            parentPostId: xPost.postId,
-            rootPostId: xPost.rootPostId
+            parentPostId: xPost.postId
           }
         });
       }
