@@ -1,0 +1,1 @@
+export const isProductionBuild = () => process.env.REACT_APP_ENV === "production";

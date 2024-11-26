@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Our platform can run multiple bots, including live X bots or local test bots (to test AI behaviours).
+model Bot {
+  id        String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  // TODO: type? X vs test?
+  // TODO: Twitter auth saved here?
+
+  name String @default("Bot") // Name for dashboard display
+
+  aiPrompts   AIPrompt[]
+  botFeatures BotFeatureConfig[]
+}
+
+// Prompts for AI requests
+model AIPrompt {
+  id        String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  key  String // Key used to load a specific kind of prompt. eg: news-summaries/create-news
+  text String // The prompt text itself
+
+  bot   Bot    @relation(fields: [botId], references: [id])
+  botId String
+
+  @@unique([key, botId])
+}
+
+enum BotFeatureType {
+  // Core
+  Core_XPostsFetcher
+  Core_XPostsHandler
+  Core_XPostsSender
+
+  // Airdrop contest
+  AirdropContest_AirdropSender
+  AirdropContest_AirdropSnapshot
+  AirdropContest_XPostAirdropAddress
+  AirdropContest_XPostContestHandler
+  AirdropContest_XPostContestReposter
+
+  // News summary
+  NewsSummaries_XNewsSummaryReplier
+  NewsSummaries_XNewsSummaryWriter
+  NewsSummaries_XRealNewsFilter
+}
+
+// List of bot features for every bot.
+// Also includes feature configuration for the bot.
+model BotFeatureConfig {
+  id        String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  bot   Bot    @relation(fields: [botId], references: [id])
+  botId String
+
+  key     BotFeatureType
+  enabled Boolean        @default(false) // All features are disabled by default, until manually started on dashboard
+  config  Json           @default("{}") // Feature-specific json config for the bot
+
+  @@unique([botId, key])
+}
+
+// Authenticated bot twitter account - singleton
+model XPublisherAccount {
+  updatedAt DateTime @default(now())
+
+  userId         String @unique // X user id eg: 1849649146669695000
+  userName       String // X user name eg: Proctar Elastos
+  userScreenName String // X user name eg: proctar2626
+
+  accessToken  String // X access token for this user, after web/pin authorization
+  accessSecret String // X secret token for this user, after web/pin authorization
+
+  PostedXPost XPost[]
+}
+
+// Third party X account to map usernames with user ids
+model XAccount {
+  userId         String @unique // X user id eg: 1849649146669695000
+  userName       String // X user name eg: Proctar Elastos
+  userScreenName String // X user name eg: proctar2626
+
+  // Specific to: airdrop contest
+  airdropAddress String? // Blockchain address where to airdrop tokens if this user wins a contest competition
+
+  updatedAt DateTime @default(now())
+
+  PostContestAirdrop PostContestAirdrop[]
+  XPost              XPost[]
+}
+
+// Post retrieved from X. 
+// Can be from various sources, for example:
+// - a news post from a third party account
+// - a post from any user in reply to one of our bot's posts.
+// - our bot replies
+// - our bot summaries
+//
+// IMPORTANT NOTE: a post can be retrieved from various services. Keep in mind that its content might remain neutral
+// no matter where it was fetched from, especially from posts created by third parties. For example the summary bot can
+// fetch posts as third party news but that post might be used by another bot during its operations. They just work 
+// on different fields.
+model XPost {
+  id String @unique @default(uuid())
+
+  createdAt        DateTime  @default(now()) // Entry creation date
+  publishRequestAt DateTime? // If this is a post we want to send, this is the date at which we asked to sed this post.
+  publishedAt      DateTime? // Post published date
+
+  // Raw X data
+  text         String // Core post content
+  postId       String? // ID of the post of X
+  parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
+  quotedPostId String? // Post (id on X) that we quote with this post (RT with message).
+  //authorId     String // X user id
+
+  xAccount       XAccount @relation(fields: [xAccountUserId], references: [userId])
+  xAccountUserId String
+
+  // Specific to: news summary
+  isRealNews     Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
+  summarizedBy   XPost?   @relation(name: "SummaryPost", fields: [summarizedById], references: [id])
+  summarizedById String?
+
+  // Specific to: bot summaries
+  summarySourcePosts XPost[] @relation(name: "SummaryPost") // source posts used to produce the summary
+
+  // Specific to: user replies to our bot
+  wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
+
+  // Specific to: our bot's published posts
+  botAccount       XPublisherAccount? @relation(fields: [botAccountUserId], references: [userId]) // Bot account used to send the tweet
+  botAccountUserId String?
+
+  // Specific to: airdrop contest (quoted post)
+  worthForAirdropContest    Boolean? // Whether this post is deemed worth to join the airdrop contest. 
+  quotedForAirdropContestAt DateTime? // If this post got elected to be RT/quoted by our account, that's the date at which the post was created/scheduled
+  contestMentioningPost     XPost?    @relation(name: "ContestMentioningPost", fields: [contestMentioningPostId], references: [id]) // Post that mentioned this post (that is worthForAirdropContest) so this is how we detected it. Used to reward mentioning users about influencers posts in addition to their own content.
+  contestMentioningPostId   String?   @unique
+  ContestMentioningPost     XPost?    @relation(name: "ContestMentioningPost")
+
+  // Specific to: airdrop contest (our bot quote post)
+  contestQuotedPost   XPost?  @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
+  contestQuotedPostId String? @unique
+  contestQuotedByPost XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
+
+  PostContestAirdrop PostContestAirdrop? // Potential airdrop this post got involved into. Only one airdrop possible.
+}
+
+enum OperationHistoryType {
+  FetchAccountsPosts
+  FetchPostsWeAreMentionnedIn
+}
+
+// History of operations such as post fetched from X. Used for example to 
+// know where to resume to save API data usage.
+model OperationHistory {
+  id        String               @unique @default(uuid())
+  type      OperationHistoryType
+  createdAt DateTime             @default(now()) // Fetch date
+}
+
+model WebPage {
+  id          String    @unique @default(uuid())
+  createdAt   DateTime  @default(now()) // Entry creation date
+  contentDate DateTime? // If known, date at which the web page was written/published
+}
+
+// One entry every time we make a snapshot of the best recent posts and dispatch airdrop tokens to holders
+model ContestAirdrop {
+  id           String    @unique @default(uuid())
+  createdAt    DateTime  @default(now())
+  transferedAt DateTime? // Date at which the chain token transfer has been completed
+
+  totalTokenAmount Decimal // Total number of tokens distributed (human readable format)
+  chain            String // eg: base_sepolia_testnet
+  tokenAddress     String // eg: USDT contract address on base
+
+  // Internal stats
+  evaluatedPostsCount Int // Number of quote posts considered for this airdrop distribution
+
+  PostContestAirdrop PostContestAirdrop[]
+}
+
+enum ContestAirdropTargetUser {
+  Author
+  Mentioner
+}
+
+// One entry per receiving post per airdrop
+model PostContestAirdrop {
+  id        String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  airdrop          ContestAirdrop @relation(fields: [contestAirdropId], references: [id])
+  contestAirdropId String
+
+  winningXAccount       XAccount @relation(fields: [winningXAccountUserId], references: [userId])
+  winningXAccountUserId String
+
+  airdropAddress String // Blockchain address used for the airdrop
+  tokenAmount    Decimal // Same token as in the ContestAirdrop entry, human readable amount
+
+  quotePost   XPost  @relation(fields: [quotePostId], references: [id]) // Our quoted Post that RTed user's post
+  quotePostId String @unique
+
+  targetUser ContestAirdropTargetUser // Which user is receiving the airdrop for this post? As both author and mentioner can get some
+
+  transactionId String? // Chain transaction ID
+  transferedAt  DateTime? // Date at which the chain token transfer has been completed
+
+  // Post stats at the time of snapshot
+  commentCount    Int
+  likeCount       Int
+  rtCount         Int
+  impressionCount Int
+
+  weight Float // Weight of this post among other posts of the same airdrop
+
+  @@unique([contestAirdropId, quotePostId, targetUser])
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@x-ai-wallet-bot/common",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "bignumber.js": "^9.1.2",
+    "rxjs": "^7.8.1"
+  }
+}

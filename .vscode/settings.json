@@ -1,0 +1,9 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
+    "source.addMissingImports": "always",
+    "source.removeUnusedImports": "always",
+    "editor.formatOnSave": "always",
+  },
+  "eslint.format.enable": true
+}

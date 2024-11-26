@@ -1,7 +1,47 @@
+BOTS / FEATURES rework:
+- features: toggle enabled from UI - default false
+- bug: edited prompts are not saved
+- bot twitter auth from UI
+- make real X bot run again
+- nav: combo box for active bot selection
+- Posts browser (browses ACTIVE bot DB posts)
+  - list posts (as if we were following everything)
+  - create a simulated post (select user which is different from bot)
+  - reply to post
+  - quote post
+- xpost: isSimulated field (for tests)
+
 AIRDROPS:
-- export AI prompts to a specific prompt folder for easy change. AI features should load files every time so they get latest prompts without restarting the backend.
-- add base mainnet support
-- deploy new bot version
+- New features: 
+  - Backend:
+      - apis:
+        - copy ai prompts from another bot
+        - reset ai prompts to default
+      - template DB / editing
+        - Ability to add/remove bots from UI
+      - simulated posts/publish ability
+  - Frontend
+    - dashboard (desktop only):
+      - permanent left menu drawer: 
+      - Ability to edit prompts
+        - First import from templates folder into DB. Then use DB template. Edit DB from UI.
+          TBD: test vs prod mode? test before activation?
+      - Ability to simulate posts without interacting with X, in order to quickly test various templates
+        - Hardcoded list of users
+        - Create a root post, or a reply, or quote, as a user. 
+        - maintain structure like X, but with fake ids and fake post boolean in DB
+      - View live X activity (posts, answers, stats, etc)
+        - Mimic "posts and replies" of the bot account on X
+- airdrop ELA (ESC ok) - 1000 ELA / month
+- tests:
+  - mention in the contest post content
+  - mention as a reply (not as quote)
+- other ideas:
+  - support for NFT airdrops?
+  - daily announcement of what token/amount is going to be done (also to remind to share posts)?
+  - random monthly airdrop among all contest participants?
+  - restore daily news summaries or not? Does this work well with users RTed contest posts?
+- deploy new bot version to prod (double check bot name/account)
 
 NEWS SUMMARiES:
 
@@ -31,3 +71,8 @@ NEWS SUMMARiES:
   - Knowledge base of vector documents from recent blog posts, query by similar words
   - Build, a EVM smart contract
   - Sign and deploy a EVM smart contract
+
+
+POTENTIAL EXTENSIONS:
+- distinct feature set running for each different bot.
+- distinct feature configuration for each feature-bot (eg: 2 bots not fetching same posts to build news summaries).
