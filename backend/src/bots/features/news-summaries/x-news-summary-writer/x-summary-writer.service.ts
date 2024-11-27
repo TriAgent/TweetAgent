@@ -37,7 +37,7 @@ export class XNewsSummaryWriterFeature extends BotFeature {
   }
 
   public async createRecentTweetsSummary() {
-    const loader = new SummaryPostLoader();
+    const loader = new SummaryPostLoader(this.bot);
     const docs = await loader.load();
 
     if (docs?.length < 3) {

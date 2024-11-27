@@ -15,6 +15,8 @@ export class BootstrapService implements OnApplicationBootstrap {
 
   onApplicationBootstrap() {
     //void this.parseCommandLineArgs();
+
+    this.botsService.run();
   }
 
   // @deprecated

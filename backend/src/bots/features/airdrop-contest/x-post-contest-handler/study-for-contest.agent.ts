@@ -21,11 +21,11 @@ export const studyForContestAgent = (feature: BotFeature, logger: Logger, post: 
     if (post.quotedPostId) {
       // If the post is quoting another post, we consider this quoted post as the potential post for contest so
       // this is our target.
-      postEvaluatedForContest = await xPostsService().getXPostByTwitterPostId(post.quotedPostId);
+      postEvaluatedForContest = await xPostsService().getXPostByTwitterPostId(feature.bot, post.quotedPostId);
     }
     else {
       // Evaluate the conversation root (we already have all potential parent posts in DB, ensured by the fetcher feature )
-      const conversation = await xPostsService().getParentConversation(post.postId);
+      const conversation = await xPostsService().getParentConversation(feature.bot, post.postId);
       postEvaluatedForContest = conversation[0];
     }
 

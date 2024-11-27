@@ -34,11 +34,16 @@ export class XPostsHandlerFeature extends BotFeature {
   }
 
   private async checkUnhandledPosts() {
+    // Need a linked X account even for test bots
+    if (!this.bot.dbBot.twitterUserId)
+      return;
+
     this.logger.log("Checking unhandled posts to potentially create replies");
 
     // Find the first post eligible for a reply analysis. ie posts that have not been handled yet.
     const xPost = await prisma().xPost.findFirst({
       where: {
+        botId: this.bot.id,
         xAccountUserId: { not: this.bot.dbBot.twitterUserId },
         wasReplyHandled: false
       },

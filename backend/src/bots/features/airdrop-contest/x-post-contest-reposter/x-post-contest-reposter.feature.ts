@@ -32,6 +32,7 @@ export class XPostContestReposterFeature extends BotFeature {
     // Ensure to not elect/RT contest posts too often (like every 1 hour)
     const mostRecentContestQuote = await prisma().xPost.findFirst({
       where: {
+        botId: this.bot.id,
         contestQuotedPost: { isNot: null }
       },
       orderBy: { createdAt: "desc" }

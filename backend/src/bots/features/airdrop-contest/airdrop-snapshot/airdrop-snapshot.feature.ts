@@ -50,6 +50,7 @@ export class AirdropSnapshotFeature extends BotFeature {
     const eligibleStartate = eligibleEndDate.clone().subtract(BotConfig.AirdropContest.MinHoursBetweenAirdrops, "hours");
     const eligiblePosts = await prisma().xPost.findMany({
       where: {
+        botId: this.bot.id,
         xAccountUserId: this.bot.dbBot.twitterUserId, // Published by us
         contestQuotedPost: {
           worthForAirdropContest: true // took part in the airdrop contest

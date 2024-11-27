@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { runEverySeconds } from "src/utils/run-every-seconds";
 import { XAccountsService } from "src/xaccounts/xaccounts.service";
@@ -7,6 +7,8 @@ import { BotsService } from "./bots.service";
 
 @Injectable()
 export class BotsRunnerService {
+  private logger = new Logger("BotRunner");
+
   constructor(
     @Inject(forwardRef(() => BotsService)) private botsService: BotsService,
     private featuresService: BotFeaturesService,
@@ -45,6 +47,8 @@ export class BotsRunnerService {
    * Root entry point for our bot.
    */
   public async run() {
+    this.logger.log("Bot runner is starting");
+
     // Fetch/cache X account info to DB
     // const botXAccount = await this.twitterAuth.getAuthenticatedBotAccount();
     // await this.xAccounts.ensureXAccount(botXAccount.userId);

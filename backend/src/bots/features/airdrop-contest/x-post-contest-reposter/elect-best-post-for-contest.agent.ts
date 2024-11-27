@@ -13,7 +13,7 @@ import { contestReposterStateAnnotation } from "./x-post-contest-reposter.featur
  */
 export const electBestPostForContestAgent = (feature: BotFeature, logger: Logger) => {
   return async (state: typeof contestReposterStateAnnotation.State) => {
-    const loader = new PendingContestPostLoader();
+    const loader = new PendingContestPostLoader(feature.bot);
     const docs = await loader.load();
 
     if (docs?.length < 1) {

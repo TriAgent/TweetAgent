@@ -148,6 +148,8 @@ model XPost {
   contestQuotedByPost XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
 
   PostContestAirdrop PostContestAirdrop? // Potential airdrop this post got involved into. Only one airdrop possible.
+
+  @@unique([botId, postId])
 }
 
 enum OperationHistoryType {

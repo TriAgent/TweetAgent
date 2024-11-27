@@ -27,7 +27,7 @@ export const replyAgent = (feature: BotFeature, reply: XPost) => {
 
     // Retrieve conversation
     // TODO: store in state for multiple agents to use it?
-    const conversation = await xPostsService().getParentConversation(reply.postId);
+    const conversation = await xPostsService().getParentConversation(feature.bot, reply.postId);
     if (!conversation)
       return state;
 

@@ -10,7 +10,7 @@
         "run",
         "start:debug"
       ],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/backend",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },

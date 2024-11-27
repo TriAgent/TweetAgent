@@ -63,6 +63,9 @@ export class XPostFetcherFeature extends BotFeature {
       return twitterService().fetchPostsMentioningOurAccount(this.bot, moment(latestFetchDate).subtract(1, "minutes"));
     });
 
+    if (!posts)
+      return;
+
     // For each post we get mentioned in, fetch and save the whole conversation before it (parent posts).
     // This is needed for example by the contest service to study the root post vs the mentioned post (possibly in replies).
     for (const post of posts) {

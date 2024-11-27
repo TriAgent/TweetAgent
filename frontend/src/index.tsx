@@ -1,9 +1,9 @@
 window.Buffer = window.Buffer || require("buffer").Buffer;
-
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import { SnackbarProvider } from "notistack";
 import * as ReactDOM from "react-dom/client";
+import "reflect-metadata"; // For class-transofmer
 import { Routing } from "./routes/routing";
 import theme from "./theme";
 

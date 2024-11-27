@@ -37,6 +37,7 @@ export const MainNavMenu: FC = () => {
         items: [
           { title: "Settings", path: `/bot/settings` },
           { title: "Prompts", path: `/bot/prompts` },
+          { title: "Posts", path: `/bot/posts` },
         ]
       })
     }
@@ -54,19 +55,21 @@ export const MainNavMenu: FC = () => {
 
   return <Stack direction="column" padding={2} mt={3}>
     <BotSelect bot={activeBot} onChange={handleActiveBotChange} />
-    {
-      navItems.map((group, gi) => (
-        <List key={gi} subheader={
-          <ListSubheader component="div">{group.title}</ListSubheader>
-        }>
-          {group.items.map((item, ii) => (
-            <ListItemButton key={ii} onClick={() => handleNavItemClicked(item)}>
-              <ListItemText primary={item.title} />
-            </ListItemButton>
-          ))}
-        </List>
-      ))
-    }
+    <Stack direction="column" gap={3} mt={3}>
+      {
+        navItems.map((group, gi) => (
+          <List key={gi} subheader={
+            <ListSubheader component="div">{group.title}</ListSubheader>
+          }>
+            {group.items.map((item, ii) => (
+              <ListItemButton key={ii} onClick={() => handleNavItemClicked(item)}>
+                <ListItemText primary={item.title} />
+              </ListItemButton>
+            ))}
+          </List>
+        ))
+      }
+    </Stack>
     <DataSavedLabel width="100%" />
   </Stack>
 }

@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { XPost } from '@prisma/client';
+import { Bot as DBBot, XPost } from '@prisma/client';
 import moment from 'moment';
 import { BotsService } from 'src/bots/bots.service';
 import { Bot } from 'src/bots/model/bot';
@@ -30,17 +30,22 @@ export class XPostsService {
   ) { }
 
   /**
-   * From a child post, retrieves all XPosts that belog to a conversation.
+   * From a child post, retrieves all XPosts that belong to a conversation.
    * A conversation is a list of ordered posts from the root post (no parent) to the current post id.
    * 
    * @param childPostId Post ID on X.
    */
-  public async getParentConversation(childPostId: string): Promise<XPost[]> {
+  public async getParentConversation(bot: Bot, childPostId: string): Promise<XPost[]> {
     const conversation: XPost[] = [];
 
     let currentPostId: string = childPostId;
     while (currentPostId != null) {
-      const xPost = await this.prisma.xPost.findFirst({ where: { postId: currentPostId } });
+      const xPost = await this.prisma.xPost.findFirst({
+        where: {
+          botId: bot.id,
+          postId: currentPostId
+        }
+      });
       if (!xPost) {
         this.logger.warn(`Could not re-create the whole conversation for twitter post id ${childPostId}. Have all post's parents been fetched well by the fetcher?`);
         return null;
@@ -58,21 +63,31 @@ export class XPostsService {
   /**
    * From the given root post, recursively retrieves child posts and their descendants (database only).
    */
-  public async getConversationTree(post: XPost) {
+  public async getConversationTree(bot: Bot, post: XPost) {
     const tree = new ConversationTree(post);
 
     // Get child posts
-    const childrenPosts = await this.prisma.xPost.findMany({ where: { parentPostId: post.postId } });
+    const childrenPosts = await this.prisma.xPost.findMany({
+      where: {
+        botId: bot.id,
+        parentPostId: post.postId
+      }
+    });
 
     for (const child of childrenPosts) {
-      tree.children.push(await this.getConversationTree(child));
+      tree.children.push(await this.getConversationTree(bot, child));
     }
 
     return tree;
   }
 
-  public getXPostByTwitterPostId(twitterPostId: string): Promise<XPost> {
-    return this.prisma.xPost.findFirst({ where: { postId: twitterPostId } });
+  public getXPostByTwitterPostId(bot: Bot, twitterPostId: string): Promise<XPost> {
+    return this.prisma.xPost.findFirst({
+      where: {
+        botId: bot.id,
+        postId: twitterPostId
+      }
+    });
   }
 
   /**
@@ -175,7 +190,7 @@ export class XPostsService {
       // Store every post that we don't have yet
       const newPosts: XPost[] = [];
       for (var post of posts) {
-        const existingPost = await this.getXPostByTwitterPostId(post.id);
+        const existingPost = await this.getXPostByTwitterPostId(bot, post.id);
         if (!existingPost) {
           this.logger.log('Created database xpost for external X tweetv2:');
           this.logger.log(post);
@@ -216,5 +231,30 @@ export class XPostsService {
       rtCount: postLatest.public_metrics.quote_count + postLatest.public_metrics.retweet_count,
       commentCount: postLatest.public_metrics.reply_count
     }
+  }
+
+  /**
+   * @param rootPostId the XPost database id, not twitter id
+   */
+  public async getChildrenPosts(bot: DBBot, rootPostId?: string): Promise<{ root?: XPost, posts: XPost[] }> {
+    let root: XPost;
+    if (rootPostId) {
+      root = await this.prisma.xPost.findFirst({
+        where: {
+          id: rootPostId
+        },
+        include: { xAccount: true }
+      });
+    }
+
+    const posts = await this.prisma.xPost.findMany({
+      where: {
+        botId: bot.id,
+        ...(root && { parentPostId: root.postId })
+      },
+      include: { xAccount: true }
+    });
+
+    return { root, posts };
   }
 }

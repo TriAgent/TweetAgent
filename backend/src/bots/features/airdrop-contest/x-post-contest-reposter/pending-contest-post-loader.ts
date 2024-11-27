@@ -1,6 +1,7 @@
 import { BaseDocumentLoader } from "@langchain/core/document_loaders/base";
 import { Document } from "@langchain/core/documents";
 import moment from "moment";
+import { Bot } from "src/bots/model/bot";
 import { prisma } from "src/services";
 
 export type SummaryDocument = Document<{ "authorId", "postId", "post" }>;
@@ -10,13 +11,14 @@ export type SummaryDocument = Document<{ "authorId", "postId", "post" }>;
  * as a list of langchain documents.
  */
 export class PendingContestPostLoader extends BaseDocumentLoader {
-  constructor() {
+  constructor(private bot: Bot) {
     super();
   }
 
   async load(): Promise<SummaryDocument[]> {
     const posts = await prisma().xPost.findMany({
       where: {
+        botId: this.bot.id,
         worthForAirdropContest: true,
         quotedForAirdropContestAt: null,
         createdAt: { gt: moment().subtract(6, "hours").toDate() }

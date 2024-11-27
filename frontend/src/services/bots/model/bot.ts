@@ -1,5 +1,7 @@
 import { apiGet, apiPost, apiPut } from "@services/api-base";
 import { backendUrl } from "@services/backend/backend";
+import { PostChildren } from "@services/posts/model/post-thread";
+import { XPost } from "@services/posts/model/x-post";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
 import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
@@ -64,7 +66,10 @@ export class Bot {
   public async finalizeTwitterAuthWithPIN(request: TwitterAuthenticationRequest, pinCode: string) {
     const authResult = await apiPut<LinkerTwitterAccountInfo>(`${backendUrl}/bots/${this.id}/twitter/auth`, {request, pinCode});
 
-this.twitterUserId = authResult.twitterUserId;
+    // Refresh local model
+    this.twitterUserId = authResult.twitterUserId;
+    this.twitterUserName = authResult.twitterUserName;
+    this.twitterUserScreenName = authResult.twitterUserScreenName;
 
     // Force UI refresh by overwriting ourselves
     setActiveBot(this);
@@ -72,4 +77,27 @@ this.twitterUserId = authResult.twitterUserId;
     return authResult;
   }
 
+  /**
+   * Fetches posts. 
+   * - If rootPostId is not given, fetches all root posts (no parent)
+   * - If rootPostId is given, fetches that root post, and all its children posts
+   */
+  public async fetchPosts(rootPostId?: string):Promise<PostChildren> {
+    let url = `${backendUrl}/bots/${this.id}/posts`;
+    if (rootPostId)
+      url += `?root=${rootPostId}`;
+
+    const rawThread = await apiGet<PostChildren>(url);
+    if (rawThread) {
+      const root = rawThread.root && plainToInstance(XPost, rawThread.root, {excludeExtraneousValues: true});
+      const posts = plainToInstance(XPost, rawThread.posts, {excludeExtraneousValues: true});
+      console.log("Got posts:", posts, "with root:", root);
+      return {
+        root,
+        posts
+      };
+    }
+
+    return null;
+  }
 }

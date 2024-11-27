@@ -43,7 +43,7 @@ export class XNewsSummaryReplierFeature extends BotFeature {
   async studyReplyToXPost?(xPost: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
     // Get conversation thread for this post. If not a conversation we started with a news post,
     // don't reply here.
-    const conversation = await xPostsService().getParentConversation(xPost.postId);
+    const conversation = await xPostsService().getParentConversation(this.bot, xPost.postId);
     if (!conversation || conversation.length === 0 || conversation[0].botId != this.bot.dbBot.id)
       return;
 

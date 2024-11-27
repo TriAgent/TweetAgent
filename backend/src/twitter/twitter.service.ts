@@ -43,6 +43,7 @@ export class TwitterService {
       return pagination?.tweets;
     }
     catch (e) {
+      console.error(e)
       return this.handleTwitterApiError("Fetch authors posts", e);
     }
   }
@@ -136,21 +137,26 @@ export class TwitterService {
     let currentTweetId = postId;
 
     while (currentTweetId) {
-      const tweet = await client.v2.singleTweet(currentTweetId, {
-        expansions: ['referenced_tweets.id'],
-        'tweet.fields': TweetFields,
-      });
+      try {
+        const tweet = await client.v2.singleTweet(currentTweetId, {
+          expansions: ['referenced_tweets.id'],
+          'tweet.fields': TweetFields,
+        });
 
-      if (!tweet.data) {
-        this.logger.warn(`Failed to retrieve tweet with ID ${currentTweetId}. Possibly deleted.`);
-        return null;
+        if (!tweet.data) {
+          this.logger.warn(`Failed to retrieve tweet with ID ${currentTweetId}. Possibly deleted.`);
+          return null;
+        }
+
+        conversation.unshift(tweet.data);
+
+        const referencedTweet = tweet.data.referenced_tweets?.find((ref) => ref.type === 'replied_to');
+
+        currentTweetId = referencedTweet ? referencedTweet.id : null;
       }
-
-      conversation.unshift(tweet.data);
-
-      const referencedTweet = tweet.data.referenced_tweets?.find((ref) => ref.type === 'replied_to');
-
-      currentTweetId = referencedTweet ? referencedTweet.id : null;
+      catch (e) {
+        return this.handleTwitterApiError("Fetch parent posts", e);
+      }
     }
 
     return conversation;
@@ -168,27 +174,37 @@ export class TwitterService {
   public async fetchAccountByUserId(bot: Bot, userId: string): Promise<UserV2> {
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
-    const result = await client.v2.user(userId);
-    if (result.errors) {
-      this.logger.error("fetchAccountByUserId");
-      this.logger.error(result.errors);
-      return null;
-    }
+    try {
+      const result = await client.v2.user(userId);
+      if (result.errors) {
+        this.logger.error("fetchAccountByUserId");
+        this.logger.error(result.errors);
+        return null;
+      }
 
-    return result.data;
+      return result.data;
+    }
+    catch (e) {
+      return this.handleTwitterApiError("Fetch account by user id", e);
+    }
   }
 
   public async fetchAccountByUserName(bot: Bot, userScreenName: string): Promise<UserV2> {
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
-    const result = await client.v2.userByUsername(userScreenName);
-    if (result.errors) {
-      this.logger.error("fetchAccountByUserName");
-      this.logger.error(result.errors);
-      return null;
-    }
+    try {
+      const result = await client.v2.userByUsername(userScreenName);
+      if (result.errors) {
+        this.logger.error("fetchAccountByUserName");
+        this.logger.error(result.errors);
+        return null;
+      }
 
-    return result.data;
+      return result.data;
+    }
+    catch (e) {
+      return this.handleTwitterApiError("Fetch account by user name", e);
+    }
   }
 
   private handleTwitterApiError(context: string, e: Error) {
