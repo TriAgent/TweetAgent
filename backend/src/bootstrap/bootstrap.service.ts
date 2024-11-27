@@ -14,9 +14,10 @@ export class BootstrapService implements OnApplicationBootstrap {
   ) { }
 
   onApplicationBootstrap() {
-    void this.parseCommandLineArgs();
+    //void this.parseCommandLineArgs();
   }
 
+  // @deprecated
   private async parseCommandLineArgs() {
     await sleepSecs(1);
 
@@ -24,17 +25,6 @@ export class BootstrapService implements OnApplicationBootstrap {
     this.logger.log("Parsing command line arguments");
 
     let argv = await options({
-      'twitter:auth': { type: 'boolean' },
-      'bot:run': { type: 'boolean' },
     }).help().argv;
-
-    if (argv["twitter:auth"])
-      void this.twitterAuth.startUserAuth();
-    else if (argv["bot:run"]) {
-      void this.botsService.run();
-    }
-    else {
-      this.logger.warn(`No run command was passed, nothing might happen`);
-    }
   }
 }

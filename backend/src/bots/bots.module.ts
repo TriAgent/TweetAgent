@@ -6,10 +6,10 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { TwitterModule } from 'src/twitter/twitter.module';
 import { XaccountsModule } from 'src/xaccounts/xaccounts.module';
 import { XPostsModule } from 'src/xposts/xposts.module';
+import { BotFeaturesService } from './bot-features.service';
 import { BotsRunnerService } from './bot-runner.service';
 import { BotsController } from './bots.controller';
 import { BotsService } from './bots.service';
-import { BotFeaturesService } from './features.service';
 
 @Module({
   controllers: [

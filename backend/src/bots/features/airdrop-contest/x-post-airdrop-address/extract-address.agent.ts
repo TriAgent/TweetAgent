@@ -22,7 +22,7 @@ export const extractAddressAgent = (feature: BotFeature, logger: Logger, post: X
         tweetContent: post.text
       },
       tools: [
-        updateAirdropAddressTool(logger, post)
+        updateAirdropAddressTool(feature, logger, post)
       ],
       structuredOutput: z.object({
         airdropAddress: z.string().describe("The airdrop blockchain address")

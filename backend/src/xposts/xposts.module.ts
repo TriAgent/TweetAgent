@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
+import { BotsModule } from 'src/bots/bots.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { TwitterModule } from 'src/twitter/twitter.module';
 import { XaccountsModule } from 'src/xaccounts/xaccounts.module';
@@ -14,7 +15,8 @@ import { XPostsService } from './xposts.service';
   imports: [
     PrismaModule,
     TwitterModule,
-    XaccountsModule
+    XaccountsModule,
+    forwardRef(() => BotsModule)
   ]
 })
 export class XPostsModule { }

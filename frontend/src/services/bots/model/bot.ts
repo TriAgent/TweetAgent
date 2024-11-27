@@ -1,15 +1,21 @@
-import { apiGet, apiPut } from "@services/api-base";
+import { apiGet, apiPost, apiPut } from "@services/api-base";
 import { backendUrl } from "@services/backend/backend";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
 import { BehaviorSubject } from "rxjs";
+import { setActiveBot } from "../bots.service";
 import { AiPrompt } from "./ai-prompt";
 import { BotFeatureConfig } from "./bot-feature-config";
 
 export class Bot {
   @Expose() public id: string;
   @Expose() public name: string;
+  @Expose() public twitterUserId?: string; // X user id eg: 1849649146669695000
+  @Expose() public twitterUserName?: string; // X user name eg: Proctar Elastos
+  @Expose() public twitterUserScreenName?: string; // X user name eg: proctar2626
+  @Expose() public twitterAccessToken?: string; // X access token for this user, after web/pin authorization
+  @Expose() public twitterAccessSecret?: string; // X secret token for this user, after web/pin authorization
 
   public prompts$ = new BehaviorSubject<AiPrompt[]>(undefined);
   public features$ = new BehaviorSubject<BotFeatureConfig[]>(undefined);
@@ -50,4 +56,20 @@ export class Bot {
       this.features$.next(features);
     }
   }
+
+  public async startTwitterAuth():Promise<TwitterAuthenticationRequest> {
+    return apiPost<TwitterAuthenticationRequest>(`${backendUrl}/bots/${this.id}/twitter/auth`, {}, undefined, "Failed to start twitter auth");
+  }
+
+  public async finalizeTwitterAuthWithPIN(request: TwitterAuthenticationRequest, pinCode: string) {
+    const authResult = await apiPut<LinkerTwitterAccountInfo>(`${backendUrl}/bots/${this.id}/twitter/auth`, {request, pinCode});
+
+this.twitterUserId = authResult.twitterUserId;
+
+    // Force UI refresh by overwriting ourselves
+    setActiveBot(this);
+
+    return authResult;
+  }
+
 }

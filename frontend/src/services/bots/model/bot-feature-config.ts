@@ -15,7 +15,7 @@ export class BotFeatureConfig {
    */
   public async updateProperty(key: Exclude<keyof BotFeatureConfigDTO, "id">) {
     await apiPut(`${backendUrl}/bots/${this.botId}/features/${this.id}`, {
-      prompt: instanceToPlain(this, {excludeExtraneousValues: true}), 
+      feature: instanceToPlain(this, {excludeExtraneousValues: true}), 
       key
     }, undefined, "Failed to update feature");
 

@@ -50,7 +50,7 @@ export class AirdropSnapshotFeature extends BotFeature {
     const eligibleStartate = eligibleEndDate.clone().subtract(BotConfig.AirdropContest.MinHoursBetweenAirdrops, "hours");
     const eligiblePosts = await prisma().xPost.findMany({
       where: {
-        botAccountUserId: { not: null }, // Published by us
+        xAccountUserId: this.bot.dbBot.twitterUserId, // Published by us
         contestQuotedPost: {
           worthForAirdropContest: true // took part in the airdrop contest
         },
@@ -79,7 +79,7 @@ export class AirdropSnapshotFeature extends BotFeature {
     // Gather stats for all eligible posts (force fetch twitter api)
     const postsInfo: PostInfo[] = [];
     for (const eligiblePost of eligiblePosts) {
-      const stats = await xPostsService().getLatestPostStats(eligiblePost.postId);
+      const stats = await xPostsService().getLatestPostStats(this.bot, eligiblePost.postId);
       postsInfo.push({
         post: eligiblePost,
         stats, weight: 0, score: 0, tokenAmount: 0

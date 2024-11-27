@@ -44,7 +44,7 @@ export class XNewsSummaryReplierFeature extends BotFeature {
     // Get conversation thread for this post. If not a conversation we started with a news post,
     // don't reply here.
     const conversation = await xPostsService().getParentConversation(xPost.postId);
-    if (!conversation || conversation.length === 0 || conversation[0].botAccountUserId != this.botAccount.userId)
+    if (!conversation || conversation.length === 0 || conversation[0].botId != this.bot.dbBot.id)
       return;
 
     this.logger.log("Building X reply for post:");

@@ -5,7 +5,7 @@ import { XPost } from "@prisma/client";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { botPersonalityPromptChunk } from "src/bots/model/prompt-parts/news-summary";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
-import { aiPromptsService, langchainService, twitterAuthService, xPostsService } from "src/services";
+import { aiPromptsService, langchainService, xPostsService } from "src/services";
 import { z } from "zod";
 import { TweetTrait } from "./model/tweet-trait";
 import { replierStateAnnotation } from "./x-news-summary-replier.feature";
@@ -23,7 +23,7 @@ export const replyAgent = (feature: BotFeature, reply: XPost) => {
 
     const model = langchainService().getModel().withStructuredOutput(outputSchema);
 
-    const botAccount = await twitterAuthService().getAuthenticatedBotAccount();
+    //const botAccount = await twitterAuthService().getAuthenticatedBotAccount();
 
     // Retrieve conversation
     // TODO: store in state for multiple agents to use it?
@@ -60,7 +60,7 @@ export const replyAgent = (feature: BotFeature, reply: XPost) => {
     ];
 
     for (var post of conversation) {
-      if (post.xAccountUserId === botAccount.userId)
+      if (post.xAccountUserId === feature.bot.dbBot.twitterUserId)
         messages.push(["human", `[we wrote:] ${post.text}`])
       else
         messages.push(["human", `[twitter user ${post.xAccountUserId} wrote:] ${post.text}`])

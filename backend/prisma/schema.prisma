@@ -17,8 +17,16 @@ model Bot {
 
   name String @default("Bot") // Name for dashboard display
 
+  // Linked twitter account info
+  twitterUserId         String? // X user id eg: 1849649146669695000
+  twitterUserName       String? // X user name eg: Proctar Elastos
+  twitterUserScreenName String? // X user name eg: proctar2626
+  twitterAccessToken    String? // X access token for this user, after web/pin authorization
+  twitterAccessSecret   String? // X secret token for this user, after web/pin authorization
+
   aiPrompts   AIPrompt[]
   botFeatures BotFeatureConfig[]
+  posts       XPost[]
 }
 
 // Prompts for AI requests
@@ -70,20 +78,6 @@ model BotFeatureConfig {
   @@unique([botId, key])
 }
 
-// Authenticated bot twitter account - singleton
-model XPublisherAccount {
-  updatedAt DateTime @default(now())
-
-  userId         String @unique // X user id eg: 1849649146669695000
-  userName       String // X user name eg: Proctar Elastos
-  userScreenName String // X user name eg: proctar2626
-
-  accessToken  String // X access token for this user, after web/pin authorization
-  accessSecret String // X secret token for this user, after web/pin authorization
-
-  PostedXPost XPost[]
-}
-
 // Third party X account to map usernames with user ids
 model XAccount {
   userId         String @unique // X user id eg: 1849649146669695000
@@ -117,6 +111,9 @@ model XPost {
   publishRequestAt DateTime? // If this is a post we want to send, this is the date at which we asked to sed this post.
   publishedAt      DateTime? // Post published date
 
+  bot   Bot    @relation(fields: [botId], references: [id]) // Bot account used to send the tweet
+  botId String
+
   // Raw X data
   text         String // Core post content
   postId       String? // ID of the post of X
@@ -137,10 +134,6 @@ model XPost {
 
   // Specific to: user replies to our bot
   wasReplyHandled Boolean @default(false) // For third party replies to our posts, whether we have analyzed it (reply or not, post reply)
-
-  // Specific to: our bot's published posts
-  botAccount       XPublisherAccount? @relation(fields: [botAccountUserId], references: [userId]) // Bot account used to send the tweet
-  botAccountUserId String?
 
   // Specific to: airdrop contest (quoted post)
   worthForAirdropContest    Boolean? // Whether this post is deemed worth to join the airdrop contest. 

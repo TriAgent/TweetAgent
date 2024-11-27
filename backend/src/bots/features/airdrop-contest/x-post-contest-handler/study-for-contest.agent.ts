@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
 import { BotFeature } from "src/bots/model/bot-feature";
-import { aiPromptsService, langchainService, prisma, twitterAuthService, xPostsService } from "src/services";
+import { aiPromptsService, langchainService, prisma, xPostsService } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
 import { contestHandlerStateAnnotation } from "./x-post-contest-handler.feature";
@@ -12,11 +12,9 @@ import { contestHandlerStateAnnotation } from "./x-post-contest-handler.feature"
  */
 export const studyForContestAgent = (feature: BotFeature, logger: Logger, post: XPostWithAccount) => {
   return async (state: typeof contestHandlerStateAnnotation.State) => {
-    const botAccount = await twitterAuthService().getAuthenticatedBotAccount();
-
     // The current post should mention us (either root possibly for contest, 
     // or a mention reply on the potential contest post), otherwise dismiss
-    if (post.text.indexOf(`@${botAccount.userScreenName}`) < 0)
+    if (post.text.indexOf(`@${feature.bot.dbBot.twitterUserScreenName}`) < 0)
       return state;
 
     let postEvaluatedForContest: XPost;
@@ -36,7 +34,7 @@ export const studyForContestAgent = (feature: BotFeature, logger: Logger, post: 
       return state;
 
     // Make sure the root is not our own bot post
-    if (postEvaluatedForContest.xAccountUserId === botAccount.userId)
+    if (postEvaluatedForContest.xAccountUserId === feature.bot.dbBot.twitterUserId)
       return state;
 
     // Check if any child tweet mentions us.

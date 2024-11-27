@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import moment, { Moment } from "moment";
+import { Bot } from "src/bots/model/bot";
 import { splitStringAtWord } from "src/utils/strings";
 import { ApiResponseError, SendTweetV2Params, TweetV2, UserV2 } from "twitter-api-v2";
 import { TwitterAuthService } from "./twitter-auth.service";
@@ -17,8 +18,8 @@ export class TwitterService {
    * 
    * @param accounts twitter accounts without trailing @
    */
-  public async fetchAuthorsPosts(accounts: string[], notBefore: Moment): Promise<TweetV2[]> {
-    const client = await this.auth.getAuthorizedClientForBot();
+  public async fetchAuthorsPosts(bot: Bot, accounts: string[], notBefore: Moment): Promise<TweetV2[]> {
+    const client = await this.auth.getAuthorizedClientForBot(bot);
 
     // X API limitation: make sure start time is not older than a week ago
     const aWeekAgo = moment().subtract(7, "days");
@@ -46,9 +47,8 @@ export class TwitterService {
     }
   }
 
-  public async fetchPostsMentioningOurAccount(notBefore: Moment): Promise<TweetV2[]> {
-    const client = await this.auth.getAuthorizedClientForBot();
-    const botAuth = await this.auth.getAuthenticatedBotAccount();
+  public async fetchPostsMentioningOurAccount(bot: Bot, notBefore: Moment): Promise<TweetV2[]> {
+    const client = await this.auth.getAuthorizedClientForBot(bot);
 
     // X API limitation: make sure start time is not older than a week ago
     const aWeekAgo = moment().subtract(7, "days");
@@ -58,7 +58,7 @@ export class TwitterService {
     }
 
     try {
-      const replies = await client.v2.search(`@${botAuth.userScreenName}`, {
+      const replies = await client.v2.search(`@${bot.dbBot.twitterUserScreenName}`, {
         //sort_order: "relevancy",
         start_time: notBefore.toISOString(),
         'tweet.fields': TweetFields
@@ -75,16 +75,16 @@ export class TwitterService {
    * Publishes a quote to an existing tweet (RT with comment).
    * This throws an error in case the content cannot fit in 
    */
-  public publishQuote(tweetContent: string, quotedPostId: string): Promise<{ postId: string, text: string }[]> {
-    return this.publishTweet(tweetContent, undefined, quotedPostId);
+  public publishQuote(bot: Bot, tweetContent: string, quotedPostId: string): Promise<{ postId: string, text: string }[]> {
+    return this.publishTweet(bot, tweetContent, undefined, quotedPostId);
   }
 
   /**
    * Sends the given text as a tweet to the current bot X account.
    * Returns the created post ids (in conversation order)
    */
-  public async publishTweet(tweetContent: string, inReplyToTweetId?: string, quoteTweetId?: string): Promise<{ postId: string, text: string }[]> {
-    const client = await this.auth.getAuthorizedClientForBot();
+  public async publishTweet(bot: Bot, tweetContent: string, inReplyToTweetId?: string, quoteTweetId?: string): Promise<{ postId: string, text: string }[]> {
+    const client = await this.auth.getAuthorizedClientForBot(bot);
 
     // Split content if larger than 280 chars
     const subTweets: SendTweetV2Params[] = [];
@@ -128,8 +128,8 @@ export class TwitterService {
   /**
    * Iteratively fetches parent posts (beginning of conversation) from the given post.
    */
-  public async fetchParentPosts(postId: string): Promise<TweetV2[]> {
-    const client = await this.auth.getAuthorizedClientForBot();
+  public async fetchParentPosts(bot: Bot, postId: string): Promise<TweetV2[]> {
+    const client = await this.auth.getAuthorizedClientForBot(bot);
 
     const conversation: any[] = [];
 
@@ -156,8 +156,8 @@ export class TwitterService {
     return conversation;
   }
 
-  public async fetchSinglePost(postId: string): Promise<TweetV2> {
-    const client = await this.auth.getAuthorizedClientForBot();
+  public async fetchSinglePost(bot: Bot, postId: string): Promise<TweetV2> {
+    const client = await this.auth.getAuthorizedClientForBot(bot);
     const result = await client.v2.singleTweet(postId, {
       'tweet.fields': TweetFields
     });
@@ -165,8 +165,8 @@ export class TwitterService {
     return result?.data;
   }
 
-  public async fetchAccountByUserId(userId: string): Promise<UserV2> {
-    const client = await this.auth.getAuthorizedClientForBot();
+  public async fetchAccountByUserId(bot: Bot, userId: string): Promise<UserV2> {
+    const client = await this.auth.getAuthorizedClientForBot(bot);
 
     const result = await client.v2.user(userId);
     if (result.errors) {
@@ -178,8 +178,8 @@ export class TwitterService {
     return result.data;
   }
 
-  public async fetchAccountByUserName(userScreenName: string): Promise<UserV2> {
-    const client = await this.auth.getAuthorizedClientForBot();
+  public async fetchAccountByUserName(bot: Bot, userScreenName: string): Promise<UserV2> {
+    const client = await this.auth.getAuthorizedClientForBot(bot);
 
     const result = await client.v2.userByUsername(userScreenName);
     if (result.errors) {

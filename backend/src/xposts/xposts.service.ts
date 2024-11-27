@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { XPost } from '@prisma/client';
 import moment from 'moment';
+import { BotsService } from 'src/bots/bots.service';
+import { Bot } from 'src/bots/model/bot';
 import { BotConfig } from 'src/config/bot-config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
@@ -23,7 +25,8 @@ export class XPostsService {
     private prisma: PrismaService,
     private twitter: TwitterService,
     private twitterAuth: TwitterAuthService,
-    private xAccounts: XAccountsService
+    private xAccounts: XAccountsService,
+    @Inject(forwardRef(() => BotsService)) private botsService: BotsService
   ) { }
 
   /**
@@ -108,10 +111,10 @@ export class XPostsService {
 
     if (BotConfig.X.PublishPosts) {
       this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
-      const createdTweets = await this.twitter.publishTweet(postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
+      const bot = this.botsService.getBotById(postToSend.botId);
+      const createdTweets = await this.twitter.publishTweet(bot, postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
 
-      const botAuthenticatedAccount = await this.twitterAuth.getAuthenticatedBotAccount();
-      const botXAccount = await this.xAccounts.ensureXAccount(botAuthenticatedAccount.userId);
+      const botXAccount = await this.xAccounts.ensureXAccount(bot, bot.dbBot.twitterUserId);
 
       // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
       if (createdTweets && createdTweets.length > 0) {
@@ -119,11 +122,11 @@ export class XPostsService {
         await this.prisma.xPost.update({
           where: { id: postToSend.id },
           data: {
+            bot: { connect: { id: bot.dbBot.id } },
             text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
             postId: rootTweet.postId,
             publishedAt: new Date(),
             xAccount: { connect: { userId: botXAccount.userId } },
-            botAccount: { connect: { userId: botAuthenticatedAccount.userId } },
             wasReplyHandled: true // directly mark has handled post, as this is our own post
           }
         });
@@ -133,9 +136,9 @@ export class XPostsService {
         for (var tweet of createdTweets.slice(1)) {
           await this.prisma.xPost.create({
             data: {
+              bot: { connect: { id: bot.dbBot.id } },
               publishedAt: new Date(),
               xAccount: { connect: { userId: botXAccount.userId } },
-              botAccount: { connect: { userId: botAuthenticatedAccount.userId } },
               text: tweet.text,
               postId: tweet.postId,
               parentPostId: parentPostId,
@@ -163,7 +166,7 @@ export class XPostsService {
    * Fetches every post not yet in database from twitter api, and saves it to database.
    * API is not called for posts we already know.
    */
-  public async fetchAndSaveXPosts(fetcher: () => Promise<TweetV2[]>): Promise<XPost[]> {
+  public async fetchAndSaveXPosts(bot: Bot, fetcher: () => Promise<TweetV2[]>): Promise<XPost[]> {
     const posts = await fetcher();
 
     if (posts) {
@@ -180,11 +183,12 @@ export class XPostsService {
           const parentPostId = post.referenced_tweets?.find(t => t.type === "replied_to")?.id;
           const quotedPostId = post.referenced_tweets?.find(t => t.type === "quoted")?.id;
 
-          const xAccount = await this.xAccounts.ensureXAccount(post.author_id);
+          const xAccount = await this.xAccounts.ensureXAccount(bot, post.author_id);
 
           // Save post to database
           const dbPost = await this.prisma.xPost.create({
             data: {
+              bot: { connect: { id: bot.dbBot.id } },
               text: post.text,
               xAccount: { connect: { userId: xAccount.userId } },
               postId: post.id,
@@ -203,8 +207,8 @@ export class XPostsService {
     return null;
   }
 
-  public async getLatestPostStats(postId: string): Promise<PostStats> {
-    const postLatest = await this.twitter.fetchSinglePost(postId);
+  public async getLatestPostStats(bot: Bot, postId: string): Promise<PostStats> {
+    const postLatest = await this.twitter.fetchSinglePost(bot, postId);
 
     return {
       impressionCount: postLatest.public_metrics.impression_count,

@@ -6,7 +6,7 @@ import { BotFeature } from "./bot-feature";
  * High level class helper on top of database's Bot type.
  */
 export class Bot {
-  private features: BotFeature[];
+  private features: BotFeature[] = [];
 
   private constructor(public dbBot: DBBot) { }
 
@@ -23,6 +23,10 @@ export class Bot {
     }
 
     return bot;
+  }
+
+  public get id(): string {
+    return this.dbBot.id;
   }
 
   public getActiveFeatureConfigs(): Promise<BotFeatureConfig[]> {

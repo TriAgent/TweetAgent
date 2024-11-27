@@ -60,10 +60,10 @@ export class XPostContestReposterFeature extends BotFeature {
       this.logger.log("Scheduling new X reply post");
       await prisma().xPost.create({
         data: {
+          bot: { connect: { id: this.bot.dbBot.id } },
           publishRequestAt: new Date(),
           text: result.reply,
-          xAccount: { connect: { userId: this.botAccount.userId } },
-          botAccount: { connect: { userId: this.botAccount.userId } },
+          xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
           quotedPostId: result.electedPost.postId, // twitter id
           contestQuotedPost: { connect: { id: result.electedPost.id } }
         }

@@ -1,18 +1,20 @@
 import { Body, Controller, Get, HttpException, Post, Put, UseGuards } from '@nestjs/common';
 import { Bot } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO } from "@x-ai-wallet-bot/common";
-import { AiPromptsService } from 'src/ai-prompts/ai-prompts.service';
-import { ParamPrompt } from 'src/ai-prompts/decorators/prompt-decorator';
-import { PromptGuard } from 'src/ai-prompts/guards/prompt-guard';
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
+import { ParamPrompt } from 'src/bots/decorators/prompt-decorator';
+import { PromptGuard } from 'src/bots/guards/prompt-guard';
+import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
 import { BotsService } from './bots.service';
 import { ParamBot } from './decorators/bot-decorator';
+import { ParamFeature } from './decorators/feature-decorator';
 import { BotGuard } from './guards/bot-guard';
+import { FeatureGuard } from './guards/feature-guard';
 
 @Controller('bots')
 export class BotsController {
   constructor(
     private bots: BotsService,
-    private aiPrompts: AiPromptsService
+    private twitterAuthService: TwitterAuthService
   ) { }
 
   @Get()
@@ -41,11 +43,11 @@ export class BotsController {
 
   @Put(':botId/prompts/:promptId')
   @UseGuards(BotGuard, PromptGuard)
-  async updatePrompt(@ParamBot() bot: Bot, @ParamPrompt() prompt, @Body() body: { prompt: AiPromptDTO, key: Exclude<keyof AiPromptDTO, "id>"> }) {
+  async updatePrompt(@ParamPrompt() prompt, @Body() body: { prompt: AiPromptDTO, key: Exclude<keyof AiPromptDTO, "id>"> }) {
     if (!prompt)
       throw new HttpException(`Prompt not found`, 404);
 
-    return this.bots.updatePrompt(bot, prompt, body.prompt, body.key);
+    return this.bots.updatePrompt(prompt, body.prompt, body.key);
   }
 
   @Get(':botId/features')
@@ -55,5 +57,33 @@ export class BotsController {
       throw new HttpException(`Bot not found`, 404);
 
     return this.bots.listBotFeatureConfigs(bot);
+  }
+
+  @Put(':botId/features/:featureId')
+  @UseGuards(BotGuard, FeatureGuard)
+  async updateFeature(@ParamFeature() feature, @Body() body: { feature: BotFeatureConfigDTO, key: Exclude<keyof BotFeatureConfigDTO, "id>"> }) {
+    if (!feature)
+      throw new HttpException(`Feature not found`, 404);
+
+    return this.bots.updateBotFeatureConfig(feature, body.feature, body.key);
+  }
+
+  @Post(':botId/twitter/auth')
+  @UseGuards(BotGuard)
+  public startTwitterAuthentication(@ParamBot() bot: Bot) {
+    return this.twitterAuthService.startRemoteUserAuth(bot);
+  }
+
+  @Put(':botId/twitter/auth')
+  @UseGuards(BotGuard)
+  public finalizeTwitterAuthenticationWithPIN(@ParamBot() bot: Bot, @Body() body: { request: TwitterAuthenticationRequest, pinCode: string }) {
+    console.log("body", body)
+    return this.twitterAuthService.finalizeTwitterAuthenticationWithPIN(bot, body.request, body.pinCode);
+  }
+
+  @Get(':botId/twitter/auth')
+  @UseGuards(BotGuard)
+  public getTwitterAuthenticationStatus(@ParamBot() bot: Bot) {
+    return this.twitterAuthService.getAuthenticationStatus(bot);
   }
 }

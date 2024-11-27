@@ -1,6 +1,6 @@
 import { AiPromptsService } from "./ai-prompts/ai-prompts.service";
+import { BotFeaturesService } from "./bots/bot-features.service";
 import { BotsService } from "./bots/bots.service";
-import { BotFeaturesService } from "./bots/features.service";
 import { LangchainService } from "./langchain/langchain.service";
 import { app } from "./main";
 import { OperationHistoryService } from "./operation-history/operation-history.service";

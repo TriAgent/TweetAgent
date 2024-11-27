@@ -11,8 +11,6 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch -- --bot:run",
     "start:prod": "node dist/main",
-    "bot:run": "nest start --watch -- --bot:run",
-    "twitter:auth": "nest start --watch -- --twitter:auth",
     "prisma:generate": "prisma generate",
     "prisma:reset": "prisma migrate reset",
     "prisma:dev": "prisma migrate dev",

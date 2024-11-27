@@ -22,6 +22,8 @@ export const fetchBots = async (): Promise<Bot[]> => {
 
   bots$.next(bots);
 
+  setActiveBot(bots?.[0]); // TMP DEV
+
   return bots;
 }
 

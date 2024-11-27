@@ -1,10 +1,11 @@
 import { StructuredTool, tool } from "@langchain/core/tools";
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
+import { BotFeature } from "src/bots/model/bot-feature";
 import { prisma, xAccountsService } from "src/services";
 import { z } from "zod";
 
-export const updateAirdropAddressTool = (logger: Logger, post: XPost): StructuredTool => {
+export const updateAirdropAddressTool = (feature: BotFeature, logger: Logger, post: XPost): StructuredTool => {
   return tool(
     async ({ userId, airdropAddress }: { userId: string, airdropAddress: string }) => {
       if (!userId || !airdropAddress)
@@ -13,7 +14,7 @@ export const updateAirdropAddressTool = (logger: Logger, post: XPost): Structure
       logger.log(`Updating airdrop address mapping: ${userId} ${airdropAddress}`);
 
       // Make sure we have base info about this user
-      const xAccount = await xAccountsService().ensureXAccount(userId);
+      const xAccount = await xAccountsService().ensureXAccount(feature.bot, userId);
 
       // Update airdrop address
       await prisma().xAccount.update({

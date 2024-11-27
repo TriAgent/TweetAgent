@@ -28,7 +28,7 @@ export class XRealNewsFilterFeature extends BotFeature {
 
   private async categorizeFollowedNewsAccountsTweetsAsRealNews() {
     // Retrieve user ids of accounts we are following for their news
-    const targetAuthorAccounts = await xAccountsService().getXAccountsFromScreenNames(BotConfig.NewsSummaryBot.News.XSourceAccounts)
+    const targetAuthorAccounts = await xAccountsService().getXAccountsFromScreenNames(this.bot, BotConfig.NewsSummaryBot.News.XSourceAccounts)
     const targetAuthorIds = targetAuthorAccounts.map(a => a.userId);
 
     const recentPosts = await prisma().xPost.findMany({

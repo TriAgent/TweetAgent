@@ -37,11 +37,11 @@ export class XPostFetcherFeature extends BotFeature {
     if (moment().diff(latestFetchDate, "seconds") < FetchXTargetAccountPostsDelaySec)
       return;
 
-    const posts = await xPostsService().fetchAndSaveXPosts(() => {
+    const posts = await xPostsService().fetchAndSaveXPosts(this.bot, () => {
       // Fetch recent posts, not earlier than last time we checked
       this.logger.log(`Fetching recent target accounts X posts not earlier than ${latestFetchDate}`);
       // subtract 1 minute to compensate twitter's api lag after a post is published
-      return twitterService().fetchAuthorsPosts(targetTwitterAccounts, moment(latestFetchDate).subtract(1, "minutes"));
+      return twitterService().fetchAuthorsPosts(this.bot, targetTwitterAccounts, moment(latestFetchDate).subtract(1, "minutes"));
     });
 
     if (posts != null) {
@@ -57,24 +57,24 @@ export class XPostFetcherFeature extends BotFeature {
       return;
 
     // Fetch recent posts, not earlier than last time we checked
-    const posts = await xPostsService().fetchAndSaveXPosts(() => {
+    const posts = await xPostsService().fetchAndSaveXPosts(this.bot, () => {
       this.logger.log(`Fetching recent X posts we are mentioned in, not earlier than ${latestFetchDate}`);
       // subtract 1 minute to compensate twitter's api lag after a post is published
-      return twitterService().fetchPostsMentioningOurAccount(moment(latestFetchDate).subtract(1, "minutes"));
+      return twitterService().fetchPostsMentioningOurAccount(this.bot, moment(latestFetchDate).subtract(1, "minutes"));
     });
 
     // For each post we get mentioned in, fetch and save the whole conversation before it (parent posts).
     // This is needed for example by the contest service to study the root post vs the mentioned post (possibly in replies).
     for (const post of posts) {
-      await xPostsService().fetchAndSaveXPosts(async () => {
+      await xPostsService().fetchAndSaveXPosts(this.bot, async () => {
         const fetchedPosts: TweetV2[] = [];
         if (post.quotedPostId) {
           this.logger.log(`Fetching quoted post for mentioning post`);
-          fetchedPosts.push(await twitterService().fetchSinglePost(post.quotedPostId));
+          fetchedPosts.push(await twitterService().fetchSinglePost(this.bot, post.quotedPostId));
         }
 
         this.logger.log(`Fetching parent conversation for mentioning post`);
-        fetchedPosts.push(...(await twitterService().fetchParentPosts(post.postId)));
+        fetchedPosts.push(...(await twitterService().fetchParentPosts(this.bot, post.postId)));
 
         return fetchedPosts;
       });

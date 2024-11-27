@@ -5,7 +5,7 @@ import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bots/model/x-post-reply-analysis-result";
 import { standardStringAnnotationReducer } from "src/langchain/utils";
-import { prisma, twitterAuthService, xPostsService } from "src/services";
+import { prisma, xPostsService } from "src/services";
 import { produceAggregatedReplyAgent } from "./aggregated-reply.agent";
 
 type ReplyAggregatorStateAnnotationSchema = {
@@ -36,12 +36,10 @@ export class XPostsHandlerFeature extends BotFeature {
   private async checkUnhandledPosts() {
     this.logger.log("Checking unhandled posts to potentially create replies");
 
-    const botAccount = await twitterAuthService().getAuthenticatedBotAccount();
-
     // Find the first post eligible for a reply analysis. ie posts that have not been handled yet.
     const xPost = await prisma().xPost.findFirst({
       where: {
-        xAccountUserId: { not: botAccount.userId },
+        xAccountUserId: { not: this.bot.dbBot.twitterUserId },
         wasReplyHandled: false
       },
       include: { xAccount: true }
@@ -70,10 +68,10 @@ export class XPostsHandlerFeature extends BotFeature {
 
         await prisma().xPost.create({
           data: {
+            bot: { connect: { id: this.bot.dbBot.id } },
             publishRequestAt: new Date(),
             text: fullReply,
-            xAccount: { connect: { userId: this.botAccount.userId } },
-            botAccount: { connect: { userId: this.botAccount.userId } },
+            xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
             parentPostId: xPost.postId
           }
         });

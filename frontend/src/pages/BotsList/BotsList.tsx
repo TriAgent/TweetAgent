@@ -1,7 +1,7 @@
 import { PageTitle } from "@components/base/PageTitle/PageTitle";
 import { Add } from "@mui/icons-material";
 import { IconButton, List, ListItemButton, ListItemText, Stack } from "@mui/material";
-import { createBot } from "@services/bots/bots.service";
+import { createBot, setActiveBot } from "@services/bots/bots.service";
 import { useBots } from "@services/bots/hooks/useBots";
 import { Bot } from "@services/bots/model/bot";
 import { FC, useCallback } from "react";
@@ -16,7 +16,8 @@ const BotsList: FC = () => {
   }, []);
 
   const handleBotClicked = useCallback((bot: Bot) => {
-    navigate(`/bots/${bot.id}`);
+    setActiveBot(bot);
+    navigate(`/bot/settings`);
   }, [navigate]);
 
   return (

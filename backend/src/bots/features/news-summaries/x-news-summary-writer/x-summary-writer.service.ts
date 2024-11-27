@@ -94,8 +94,8 @@ export class XNewsSummaryWriterFeature extends BotFeature {
       data: {
         publishRequestAt: new Date(),
         text: tweetContent,
-        xAccount: { connect: { userId: this.botAccount.userId } },
-        botAccount: { connect: { userId: this.botAccount.userId } }
+        xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
+        bot: { connect: { id: this.bot.dbBot.id } },
       }
     });
 

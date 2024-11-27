@@ -1,12 +1,10 @@
-import { BotFeatureType, XPost, XPublisherAccount } from "@prisma/client";
-import { twitterAuthService } from "src/services";
+import { BotFeatureType, XPost } from "@prisma/client";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { Bot } from "./bot";
 import { XPostReplyAnalysisResult } from "./x-post-reply-analysis-result";
 
 export abstract class BotFeature {
   private lastExecutionTime: number = 0;
-  protected botAccount: XPublisherAccount; // Authenticated X account for publishing
 
   /**
    * @param runLoopMinIntervalSec In case there is a run loop implemented, how often should it be launched 
@@ -14,7 +12,6 @@ export abstract class BotFeature {
   constructor(public type: BotFeatureType, public bot: Bot, public runLoopMinIntervalSec?: number) { }
 
   async initialize() {
-    this.botAccount = await twitterAuthService().getAuthenticatedBotAccount();
   }
 
   /**

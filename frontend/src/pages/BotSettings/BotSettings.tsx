@@ -2,13 +2,14 @@ import { DebouncedTextField } from "@components/base/DebouncedTextField/Debounce
 import { PageSubtitle } from "@components/base/PageSubtitle/PageSubtitle";
 import { PageTitle } from "@components/base/PageTitle/PageTitle";
 import { Stack } from "@mui/material";
-import { useParamsBot } from "@services/bots/hooks/useParamsBot";
-import { FC, useCallback } from "react";
+import { useActiveBot } from "@services/bots/hooks/useActiveBot";
+import { FC, useCallback, useMemo } from "react";
 import { FeatureList } from "./components/FeatureList/FeatureList";
-import { PromptList } from "./components/PromptList/PromptList";
+import { TwitterSettings } from "./components/TwitterSettings/TwitterSettings";
 
-export const BotEdit: FC = () => {
-  const editedBot = useParamsBot();
+export const BotSettings: FC = () => {
+  const editedBot = useActiveBot();
+  const defaultName = useMemo(() => editedBot?.name, [editedBot?.name]);
 
   const handleNameChange = useCallback((value: string) => {
     editedBot.name = value;  // Update locally
@@ -21,21 +22,21 @@ export const BotEdit: FC = () => {
   return (
     <>
       <Stack direction="column" alignItems="flex-start" >
-        <PageTitle>Bot edition</PageTitle>
+        <PageTitle>Bot settings</PageTitle>
         <Stack direction="column">
-          <DebouncedTextField label="Name" defaultValue={editedBot?.name} onChange={handleNameChange} />
+          <DebouncedTextField label="Name" defaultValue={defaultName} onChange={handleNameChange} />
         </Stack>
         <Stack direction="column" mt={2} width="100%">
           <PageSubtitle>Features</PageSubtitle>
           <FeatureList bot={editedBot} />
         </Stack>
         <Stack direction="column" mt={2} width="100%">
-          <PageSubtitle>Prompts</PageSubtitle>
-          <PromptList bot={editedBot} />
+          <PageSubtitle>Twitter / X</PageSubtitle>
+          <TwitterSettings />
         </Stack>
       </Stack>
     </>
   );
 };
 
-export default BotEdit;
+export default BotSettings;
