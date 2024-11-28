@@ -145,6 +145,7 @@ export class AirdropSenderFeature extends BotFeature {
         xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
         bot: { connect: { id: this.bot.dbBot.id } },
         parentPostId: mentioningPost.postId,
+        isSimulated: mentioningPost.isSimulated
       }
     });
   }

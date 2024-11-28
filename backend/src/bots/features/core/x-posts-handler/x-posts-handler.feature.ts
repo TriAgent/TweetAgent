@@ -1,6 +1,6 @@
 import { Annotation, BaseChannel, END, START, StateGraph } from "@langchain/langgraph";
-import { Logger } from "@nestjs/common";
 import { BotFeatureType } from "@prisma/client";
+import { BotLogger } from "src/bots/bot.logger";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bots/model/x-post-reply-analysis-result";
@@ -23,7 +23,7 @@ export let replyAggregatorStateAnnotation = Annotation.Root<ReplyAggregatorState
  * Replies are built by asking other features to categorize and build reply parts.
  */
 export class XPostsHandlerFeature extends BotFeature {
-  private logger = new Logger("XPostsHandler");
+  private logger = new BotLogger("XPostsHandler", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.Core_XPostsHandler, bot, 20);
@@ -71,13 +71,16 @@ export class XPostsHandlerFeature extends BotFeature {
         // Schedule a post
         this.logger.log(`Scheduling new X reply post: ${fullReply}`);
 
+        console.log("this.bot.dbBot.twitterUserId", this.bot.dbBot.twitterUserId)
+
         await prisma().xPost.create({
           data: {
             bot: { connect: { id: this.bot.dbBot.id } },
             publishRequestAt: new Date(),
             text: fullReply,
             xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
-            parentPostId: xPost.postId
+            parentPostId: xPost.postId,
+            isSimulated: xPost.isSimulated
           }
         });
       }

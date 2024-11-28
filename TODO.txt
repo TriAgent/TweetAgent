@@ -1,12 +1,16 @@
 BOTS / FEATURES rework:
-- Ability to create simulated X posts mixed with real posts
-  - select user which is different from bot
-  - xpost: isSimulated field (for tests)
-  - reply to post
-  - quote post
-- make real X bot run again
+- bug: X fetcher should not try to auth if no twitter account bound
+- TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
+
+- manual posts: reply to post
+- manual posts: quote post
 
 P2:
+- UI: show more info on UI about posts: reply handled? worth for contest?
+- don't call xpost.create from everywhere: centralize one method in xposts service
+- TBD: logs to DB + list on UI + errors through websockets?
+- bot features: load all features even if disabled, instead of loading on demand?
+- websockets for "new post" + update posts list with this post if relevant
 - use X post id as XPost id instead of duplicate
 - move env setting "publish on x" as a UI bot setting
 - bug: bot list name not changing when bot name changes in settings

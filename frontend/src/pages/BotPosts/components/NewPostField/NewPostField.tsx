@@ -26,7 +26,7 @@ export const NewPostField: FC = () => {
   return <Stack direction="row" gap={2}>
     <DebouncedTextField label="What is happening?" onChange={setPostText} debounceTime={0} />
     <FakeXAccountSelect onAccountSelected={setAuthorAccount} />
-    <Button variant="contained" onClick={handleSendAsCommentOrNew}>Comment</Button>
-    <Button variant="contained" onClick={handleSendAsQuote}>Quote</Button>
+    <Button variant="contained" disabled={!postText} onClick={handleSendAsCommentOrNew}>Comment</Button>
+    <Button variant="contained" disabled={!postText} onClick={handleSendAsQuote}>Quote</Button>
   </Stack>
 }

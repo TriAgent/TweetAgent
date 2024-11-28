@@ -118,7 +118,8 @@ export class XPostsService {
     const postToSend = await this.prisma.xPost.findFirst({
       where: {
         publishRequestAt: { not: null },
-        publishedAt: null
+        publishedAt: null,
+        isSimulated: false // Don't try publish simulated/test posts to X, this stays in local DB
       }
     });
 
@@ -159,7 +160,8 @@ export class XPostsService {
               text: tweet.text,
               postId: tweet.postId,
               parentPostId: parentPostId,
-              wasReplyHandled: true // directly mark has handled post, as this is our own post
+              wasReplyHandled: true, // directly mark has handled post, as this is our own post
+              isSimulated: postToSend.isSimulated
             }
           });
 
@@ -211,7 +213,8 @@ export class XPostsService {
               postId: post.id,
               publishedAt: post.created_at,
               parentPostId,
-              quotedPostId
+              quotedPostId,
+              isSimulated: false // coming from X api
             }
           });
           newPosts.push(dbPost);
@@ -271,10 +274,10 @@ export class XPostsService {
       data: {
         bot: { connect: { id: bot.id } },
         publishedAt: new Date(), // Considered as published
-        isSimulated: true,
         xAccount: { connect: { userId: postCreationInput.xAccountUserId } },
         text: postCreationInput.text,
         postId: `simulated-${uuidV4()}`,
+        isSimulated: true,
         // TODO parentPostId: parentPostId,
       },
       include: {

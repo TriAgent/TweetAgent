@@ -337,6 +337,13 @@ const theme = createTheme({
         },
       },
     },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          background: alpha("#fff", 0.1)
+        }
+      }
+    },
     MuiChip: {
       styleOverrides: {
         root: {

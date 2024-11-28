@@ -1,7 +1,7 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import { Logger } from "@nestjs/common";
 import { BotFeatureType, XPost } from "@prisma/client";
 import moment from "moment";
+import { BotLogger } from "src/bots/bot.logger";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
@@ -18,7 +18,7 @@ export const contestReposterStateAnnotation = Annotation.Root({
  * This feature publishes RTs of elected contest posts from time to time.
  */
 export class XPostContestReposterFeature extends BotFeature {
-  private logger = new Logger("XPostContestReposter");
+  private logger = new BotLogger("XPostContestReposter", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.AirdropContest_XPostContestReposter, bot, 20);
@@ -66,7 +66,8 @@ export class XPostContestReposterFeature extends BotFeature {
           text: result.reply,
           xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
           quotedPostId: result.electedPost.postId, // twitter id
-          contestQuotedPost: { connect: { id: result.electedPost.id } }
+          contestQuotedPost: { connect: { id: result.electedPost.id } },
+          isSimulated: result.electedPost.isSimulated
         }
       });
 

@@ -23,7 +23,6 @@ const BotPosts: FC = () => {
 
   useEffect(() => {
     const sub = activeBot?.onNewPost$.subscribe(post => {
-      console.log("new post:", post);
       if (post.parentPostId == rootPost?.postId)
         setPosts([post, ...posts]);
     });

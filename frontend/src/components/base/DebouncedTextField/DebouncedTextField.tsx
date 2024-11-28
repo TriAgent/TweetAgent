@@ -1,6 +1,6 @@
 import { TextField } from "@mui/material";
 import { useDebounceInput } from "@services/ui-ux/hooks/useDebounceInput";
-import { FC, useCallback, useEffect, useState } from "react";
+import { CSSProperties, FC, useCallback, useEffect, useState } from "react";
 
 export const DebouncedTextField: FC<{
   label: string;
@@ -10,7 +10,8 @@ export const DebouncedTextField: FC<{
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onChange: (newValue: string) => void;
   debounceTime?: number; // Milliseconds. Can use 0
-}> = ({ label, defaultValue = "", onChange, multiline = false, maxRows = 5, debounceTime = 1000 }) => {
+  style?: CSSProperties;
+}> = ({ label, defaultValue = "", onChange, multiline = false, maxRows = 100, debounceTime = 1000, style }) => {
   const [value, setValue] = useState(defaultValue);
 
   const onDebouncedChange = useCallback(onChange, [onChange]);
@@ -25,6 +26,7 @@ export const DebouncedTextField: FC<{
     multiline={multiline}
     maxRows={maxRows}
     value={value || ""}
+    style={style}
     onChange={e => { setValue(e.target.value); inputSubject.next(e.target.value) }}
   />
 }
