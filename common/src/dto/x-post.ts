@@ -17,3 +17,12 @@ export type XPost = {
   xAccount: XAccount;
   xAccountUserId: string;
 }
+
+/**
+ * Used to pass xPost creation parameters from UI to backend.
+ */
+export type XPostCreationDTO = {
+  xAccountUserId: string; // User sending the post
+  text: string;
+  // TODO
+}

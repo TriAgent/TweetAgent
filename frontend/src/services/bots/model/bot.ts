@@ -3,9 +3,9 @@ import { backendUrl } from "@services/backend/backend";
 import { PostChildren } from "@services/posts/model/post-thread";
 import { XPost } from "@services/posts/model/x-post";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Subject } from "rxjs";
 import { setActiveBot } from "../bots.service";
 import { AiPrompt } from "./ai-prompt";
 import { BotFeatureConfig } from "./bot-feature-config";
@@ -21,6 +21,8 @@ export class Bot {
 
   public prompts$ = new BehaviorSubject<AiPrompt[]>(undefined);
   public features$ = new BehaviorSubject<BotFeatureConfig[]>(undefined);
+
+  public onNewPost$ = new Subject<XPost>();
 
   public async initialize(): Promise<void> {
     await Promise.all([
@@ -99,5 +101,17 @@ export class Bot {
     }
 
     return null;
+  }
+
+  public async createPost(postCreationInput: XPostCreationDTO): Promise<XPost> {
+    const rawPost = await apiPost<XPostDTO>(`${backendUrl}/bots/${this.id}/posts`, postCreationInput);
+
+    if (!rawPost)
+      return null;
+
+    const post = plainToInstance(XPost, rawPost, {excludeExtraneousValues:true});
+    this.onNewPost$.next(post);
+
+    return post;
   }
 }

@@ -1,15 +1,12 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { existsSync, readFileSync } from 'fs';
 import { Bot } from 'src/bots/model/bot';
 import { BotConfig } from 'src/config/bot-config';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class AiPromptsService implements OnApplicationBootstrap {
+export class AiPromptsService {
   constructor(private prisma: PrismaService) { }
-
-  onApplicationBootstrap() {
-  }
 
   /**
    * Loads a prompt from the database.

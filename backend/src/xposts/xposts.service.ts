@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Bot as DBBot, XPost } from '@prisma/client';
+import { XPostCreationDTO } from '@x-ai-wallet-bot/common';
 import moment from 'moment';
 import { BotsService } from 'src/bots/bots.service';
 import { Bot } from 'src/bots/model/bot';
@@ -9,6 +10,7 @@ import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { XAccountsService } from 'src/xaccounts/xaccounts.service';
 import { TweetV2 } from 'twitter-api-v2';
+import { v4 as uuidV4 } from "uuid";
 import { ConversationTree } from './model/conversation-tree';
 import { PostStats } from './model/post-stats';
 
@@ -250,11 +252,34 @@ export class XPostsService {
     const posts = await this.prisma.xPost.findMany({
       where: {
         botId: bot.id,
+        publishedAt: { not: null },
         ...(root && { parentPostId: root.postId })
       },
-      include: { xAccount: true }
+      include: { xAccount: true },
+      orderBy: { publishedAt: "desc" }
     });
 
     return { root, posts };
+  }
+
+  /**
+   * Manually creates a post (simulated). Helps to test more use cases without depending 
+   * on twitter posts/fetches.
+   */
+  public createManualPost(bot: DBBot, postCreationInput: XPostCreationDTO): Promise<XPost> {
+    return this.prisma.xPost.create({
+      data: {
+        bot: { connect: { id: bot.id } },
+        publishedAt: new Date(), // Considered as published
+        isSimulated: true,
+        xAccount: { connect: { userId: postCreationInput.xAccountUserId } },
+        text: postCreationInput.text,
+        postId: `simulated-${uuidV4()}`,
+        // TODO parentPostId: parentPostId,
+      },
+      include: {
+        xAccount: true
+      }
+    });
   }
 }

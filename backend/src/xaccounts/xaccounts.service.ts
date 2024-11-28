@@ -1,18 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { XAccount } from '@prisma/client';
 import { Bot } from 'src/bots/model/bot';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { UserV2 } from 'twitter-api-v2';
+import { fakeAccounts } from './model/fake-accounts';
+
 
 @Injectable()
-export class XAccountsService {
+export class XAccountsService implements OnApplicationBootstrap {
   private logger = new Logger("XAccounts");
 
   constructor(
     private prisma: PrismaService,
     private twitter: TwitterService
   ) { }
+
+  async onApplicationBootstrap() {
+    await this.ensureFakeAccounts();
+  }
 
   public async getXAccountFromUserId(userId: string): Promise<XAccount> {
     return this.prisma.xAccount.findUnique({
@@ -77,5 +83,31 @@ export class XAccountsService {
 
   public getXUserIdFromScreenName(bot: Bot, userScreenName: string): Promise<XAccount> {
     return this.getXAccountsFromScreenNames(bot, [userScreenName])?.[0];
+  }
+
+  /**
+   * Ensures that some fake accounts are created in the database.
+   * Used to simulate publishing accounts for simulated posts, without using with real X accounts.
+   * Like totally different users.
+   */
+  public async ensureFakeAccounts() {
+    for (const fakeAccount of fakeAccounts) {
+      await this.prisma.xAccount.upsert({
+        where: { userId: fakeAccount.userId },
+        create: {
+          userId: fakeAccount.userId,
+          userName: fakeAccount.userName,
+          userScreenName: fakeAccount.userScreenName
+        },
+        update: {}
+      });
+    }
+  }
+
+  public listFakeAccounts() {
+    const fakeAccountsIds = fakeAccounts.map(a => a.userId);
+    return this.prisma.xAccount.findMany({
+      where: { userId: { in: fakeAccountsIds } }
+    });
   }
 }

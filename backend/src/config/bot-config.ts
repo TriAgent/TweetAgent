@@ -7,8 +7,13 @@ export const BotConfig = {
     // List of prompt types required for the app. Must be kept up to date otherwise prompts can't get loaded by the 
     // prompt service.
     RequiredTypes: [
+      // Core
+      "core/produce-aggregated-reply",
+      // News summaries
       "news-summaries/classify-post",
-      "airdrop-contest/extract-address"
+      // Airdrop contest
+      "airdrop-contest/extract-address",
+      "airdrop-contest/study-for-contest"
     ]
   },
   NewsSummaryBot: {

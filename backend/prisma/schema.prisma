@@ -124,6 +124,8 @@ model XPost {
   xAccount       XAccount @relation(fields: [xAccountUserId], references: [userId])
   xAccountUserId String
 
+  isSimulated Boolean @default(false) // Whether this post was manually created for our tests (true) or coming from twitter (false)
+
   // Specific to: news summary
   isRealNews     Boolean? // Whether this post is considered as a real crypto news by our AI or not - only for news posts
   summarizedBy   XPost?   @relation(name: "SummaryPost", fields: [summarizedById], references: [id])

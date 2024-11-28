@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpException, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Bot } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, TwitterAuthenticationRequest, XPostCreationDTO } from "@x-ai-wallet-bot/common";
 import { ParamPrompt } from 'src/bots/decorators/prompt-decorator';
 import { PromptGuard } from 'src/bots/guards/prompt-guard';
 import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
@@ -96,5 +96,14 @@ export class BotsController {
       throw new HttpException(`Bot not found`, 404);
 
     return this.xPosts.getChildrenPosts(bot, rootPostId);
+  }
+
+  @Post(':botId/posts')
+  @UseGuards(BotGuard)
+  async createBotPost(@ParamBot() bot: Bot, @Body() postCreationInput: XPostCreationDTO) {
+    if (!bot)
+      throw new HttpException(`Bot not found`, 404);
+
+    return this.xPosts.createManualPost(bot, postCreationInput);
   }
 }

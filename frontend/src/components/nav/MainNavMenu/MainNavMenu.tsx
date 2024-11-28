@@ -6,6 +6,7 @@ import { Bot } from "@services/bots/model/bot";
 import { useBehaviorSubject } from "@services/ui-ux/hooks/useBehaviorSubject";
 import { FC, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-use";
 
 type NavItem = {
   title: string;
@@ -18,7 +19,6 @@ type NavGroup = {
 }
 
 export const MainNavMenu: FC = () => {
-  const navigate = useNavigate();
   const activeBot = useBehaviorSubject(activeBot$);
 
   const navItems = useMemo(() => {
@@ -45,10 +45,6 @@ export const MainNavMenu: FC = () => {
     return items;
   }, [activeBot]);
 
-  const handleNavItemClicked = useCallback((item: NavItem) => {
-    navigate(item.path);
-  }, [navigate]);
-
   const handleActiveBotChange = useCallback((bot: Bot) => {
     setActiveBot(bot);
   }, []);
@@ -57,19 +53,35 @@ export const MainNavMenu: FC = () => {
     <BotSelect bot={activeBot} onChange={handleActiveBotChange} />
     <Stack direction="column" gap={3} mt={3}>
       {
-        navItems.map((group, gi) => (
-          <List key={gi} subheader={
-            <ListSubheader component="div">{group.title}</ListSubheader>
-          }>
-            {group.items.map((item, ii) => (
-              <ListItemButton key={ii} onClick={() => handleNavItemClicked(item)}>
-                <ListItemText primary={item.title} />
-              </ListItemButton>
-            ))}
-          </List>
-        ))
+        navItems.map((group, gi) => <NavGroupComponent key={gi} group={group} />)
       }
     </Stack>
     <DataSavedLabel width="100%" />
   </Stack>
 }
+
+const NavGroupComponent: FC<{
+  group: NavGroup;
+}> = ({ group }) => {
+  return <List subheader={<ListSubheader component="div">{group.title}</ListSubheader>}>
+    {group.items.map((item, i) => <NavItemComponent key={i} item={item} />)}
+  </List>
+}
+
+const NavItemComponent: FC<{ item: NavItem }> = ({ item }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavItemClicked = useCallback(() => {
+    navigate(item.path);
+  }, [navigate, item.path]);
+
+  // Determine if the current location path starts with the nav item path
+  const isSelected = useMemo(() => location.pathname.startsWith(item.path), [item, location.pathname]);
+
+  return (
+    <ListItemButton onClick={handleNavItemClicked} selected={isSelected}>
+      <ListItemText primary={item.title} />
+    </ListItemButton>
+  );
+};

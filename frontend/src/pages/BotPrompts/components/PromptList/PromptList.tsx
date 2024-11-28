@@ -1,5 +1,6 @@
 import { DebouncedTextField } from "@components/base/DebouncedTextField/DebouncedTextField";
-import { Stack } from "@mui/material";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from "@mui/material";
 import { AiPrompt } from "@services/bots/model/ai-prompt";
 import { Bot } from "@services/bots/model/bot";
 import { useBehaviorSubject } from "@services/ui-ux/hooks/useBehaviorSubject";
@@ -16,6 +17,20 @@ export const PromptList: FC<{
   }, []);
 
   return <Stack direction="column" width="100%" pt={2} gap={3}>
+    <Accordion>
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls="panel1a-content"
+        id="panel1a-header"
+      >
+        <Typography>Accordion 1</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Typography>
+          Content for Accordion 1.
+        </Typography>
+      </AccordionDetails>
+    </Accordion>
     {
       prompts?.map((prompt, i) => (
         <DebouncedTextField
