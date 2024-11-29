@@ -5,8 +5,7 @@ import type { } from '@mui/x-data-grid/themeAugmentation';
 import {
   BACKGROUND_LIGHT_GRAY,
   BACKGROUND_PRIMARY_COLOR, BACKGROUND_SECONDARY_COLOR, MAIN_FONT_FAMILY,
-  TEXT_PRIMARY_COLOR,
-  TEXT_SECONDARY_COLOR
+  TEXT_PRIMARY_COLOR, TEXT_SECONDARY_COLOR
 } from "./constants";
 
 // // Augment the palette to include a violet color
@@ -308,12 +307,19 @@ const theme = createTheme({
           //"&:hover": { color: `${BACKGROUND_SECONDARY_COLOR} !important` },
         },
         divider: {
-          borderColor: "rgba(190, 194, 218, 0.12)",
+          borderColor: TEXT_PRIMARY_COLOR, //"rgba(190, 194, 218, 0.12)",
           "&:last-child": {
             border: "none",
           },
         },
       },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor:  alpha(TEXT_PRIMARY_COLOR, 0.3)
+        }
+      }
     },
     MuiListItemButton: {
       styleOverrides: {

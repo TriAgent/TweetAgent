@@ -1,7 +1,7 @@
 import { PageTitle } from "@components/base/PageTitle/PageTitle";
 import { PostWriterModalProvider } from "@components/modals/PostWriterModal/PostWriterModal";
 import { ArrowBack } from "@mui/icons-material";
-import { IconButton, List, ListItem, Stack } from "@mui/material";
+import { Divider, IconButton, List, ListItem, Stack } from "@mui/material";
 import { useActiveBot } from "@services/bots/hooks/useActiveBot";
 import { XPost } from "@services/posts/model/x-post";
 import { XAccount } from "@x-ai-wallet-bot/common";
@@ -40,7 +40,7 @@ const BotPosts: FC = () => {
   return (
     <>
       <PostWriterModalProvider>
-        <Stack direction="column">
+        <Stack direction="column" style={{ width: 600 }}>
           <Stack direction="row" alignItems="center" gap={2}>
             <PageTitle>Posts</PageTitle>
           </Stack>
@@ -57,9 +57,13 @@ const BotPosts: FC = () => {
             <NewPostField width={500} onPost={handleCreatePost} />
           }
           <List>
-            {posts?.map((post, i) => <ListItem key={i} style={{ marginBottom: 10 }}>
-              <Post post={post} />
-            </ListItem>)}
+            {posts?.map((post, i) => <Stack key={i}>
+              <ListItem style={{ marginBottom: 10, marginTop: 10 }}>
+                <Post post={post} />
+              </ListItem>
+              <Divider />
+            </Stack>
+            )}
           </List>
         </Stack>
       </PostWriterModalProvider>

@@ -260,10 +260,10 @@ export class XPostsService {
       posts = await this.prisma.xPost.findMany({
         where: {
           botId: bot.id,
-          parentPostId: root ? root.postId : null // If no root, we must force NO parent
+          ...(root && { parentPostId: root.postId })
         },
         include: { xAccount: true },
-        orderBy: { publishedAt: "desc" }
+        orderBy: { createdAt: "desc" } // Sort by creation date instead of publishing, so we can also see unpublished posts ordered
       });
     }
 

@@ -1,15 +1,19 @@
 BOTS / FEATURES rework:
+- TBD: ability to browse post by tree, or flat by date ? (need link to browse to parent post then)
+  - because in tree mode we don't see all answers! too hidden...
 - TBD: menu to show airdrop contests? (list of elected posts? airdrop transactions? reposted posts?)
 - TBD: show "for contest" on posts?
 - TBD: show "is contest repost" on posts?
 - TBD: show post "published" or not (so we can see unpublished posts too)
 - TBD: show a yellow star in front of bot's name in posts.
-- ability to customize per bot feature config:
+- ability to customize PER BOT feature CONFIG:
   - eg: delay for airdrop snapshot to happen
-
-- TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
+  - delay for elected posts to happen
+  - TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
 
 P2:
+- posts list : pagination and auto fetch more
+- ability to define introduction text to features and display them on UI
 - bug: X fetcher should not try to auth if no twitter account bound
 - bug: after twitter auth. backend bot db instance not updated with twitter auth info
 - bug: bot list name not changing when bot name changes in settings
