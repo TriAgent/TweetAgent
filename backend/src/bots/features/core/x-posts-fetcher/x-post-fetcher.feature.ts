@@ -2,10 +2,10 @@ import { BotFeatureType, OperationHistoryType } from '@prisma/client';
 import moment from 'moment';
 import { Bot } from 'src/bots/model/bot';
 import { BotConfig } from 'src/config/bot-config';
+import { AppLogger } from 'src/logs/app-logger';
 import { operationHistoryService, twitterService, xPostsService } from 'src/services';
 import { TweetV2 } from 'twitter-api-v2';
 import { BotFeature } from '../../../model/bot-feature';
-import { BotLogger } from 'src/bots/bot.logger';
 
 const FetchXTargetAccountPostsDelaySec = 1 * 60; // Don't call the api more than once every N minutes
 const FetchXMentionPostsDelaySec = 1 * 60;
@@ -15,7 +15,7 @@ const FetchXMentionPostsDelaySec = 1 * 60;
  * as the number of posts we can read has a quota.
  */
 export class XPostFetcherFeature extends BotFeature {
-  private logger = new BotLogger("XPostFetcher", this.bot);
+  private logger = new AppLogger("XPostFetcher", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.Core_XPostsFetcher, bot, 5);

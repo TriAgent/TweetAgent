@@ -1,14 +1,15 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Bot as DBBot } from '@prisma/client';
 import { LinkerTwitterAccountInfo, TwitterAuthenticationRequest } from '@x-ai-wallet-bot/common';
 import { Bot } from 'src/bots/model/bot';
+import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ensureEnv } from 'src/utils/ensure-env';
 import client, { TwitterApi } from 'twitter-api-v2';
 
 @Injectable()
 export class TwitterAuthService implements OnModuleInit {
-  private logger = new Logger(TwitterAuthService.name);
+  private logger = new AppLogger("TwitterAuth");
 
   private appConsumerKey: string;
   private appSecret: string;

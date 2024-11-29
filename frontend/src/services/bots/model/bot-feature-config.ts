@@ -14,11 +14,12 @@ export class BotFeatureConfig {
    * Updates one of the root properties
    */
   public async updateProperty(key: Exclude<keyof BotFeatureConfigDTO, "id">) {
-    await apiPut(`${backendUrl}/bots/${this.botId}/features/${this.id}`, {
+    const result = await apiPut(`${backendUrl}/bots/${this.botId}/features/${this.id}`, {
       feature: instanceToPlain(this, {excludeExtraneousValues: true}), 
       key
     }, undefined, "Failed to update feature");
 
-    notifyDataSaved();
+    if (result)
+      notifyDataSaved();
   }
 }

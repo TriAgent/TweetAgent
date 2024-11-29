@@ -1,19 +1,23 @@
 BOTS / FEATURES rework:
-- bug: X fetcher should not try to auth if no twitter account bound
-- TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
-
+- nav menu: show the currently executed bot+feature
 - manual posts: reply to post
 - manual posts: quote post
+- UI: show more info on UI about posts: 
+  - reply handled
+  - worth for contest?
+
+
+- TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
 
 P2:
-- UI: show more info on UI about posts: reply handled? worth for contest?
+- bug: X fetcher should not try to auth if no twitter account bound
+- bug: after twitter auth. backend bot db instance not updated with twitter auth info
+- bug: bot list name not changing when bot name changes in settings
 - don't call xpost.create from everywhere: centralize one method in xposts service
-- TBD: logs to DB + list on UI + errors through websockets?
 - bot features: load all features even if disabled, instead of loading on demand?
 - websockets for "new post" + update posts list with this post if relevant
 - use X post id as XPost id instead of duplicate
 - move env setting "publish on x" as a UI bot setting
-- bug: bot list name not changing when bot name changes in settings
 - UI: save and restore last used bot
 
 AIRDROPS:
@@ -22,21 +26,6 @@ AIRDROPS:
       - apis:
         - copy ai prompts from another bot
         - reset ai prompts to default
-      - template DB / editing
-        - Ability to add/remove bots from UI
-      - simulated posts/publish ability
-  - Frontend
-    - dashboard (desktop only):
-      - permanent left menu drawer: 
-      - Ability to edit prompts
-        - First import from templates folder into DB. Then use DB template. Edit DB from UI.
-          TBD: test vs prod mode? test before activation?
-      - Ability to simulate posts without interacting with X, in order to quickly test various templates
-        - Hardcoded list of users
-        - Create a root post, or a reply, or quote, as a user. 
-        - maintain structure like X, but with fake ids and fake post boolean in DB
-      - View live X activity (posts, answers, stats, etc)
-        - Mimic "posts and replies" of the bot account on X
 - airdrop ELA (ESC ok) - 1000 ELA / month
 - tests:
   - mention in the contest post content

@@ -1,3 +1,4 @@
+import { ActiveFeatureAction } from "@components/data/ActiveFeatureAction/ActiveFeatureAction";
 import { BotSelect } from "@components/data/BotSelect/BotSelect";
 import { DataSavedLabel } from "@components/data/DataSavedLabel/DataSavedLabel";
 import { List, ListItemButton, ListItemText, ListSubheader, Stack } from "@mui/material";
@@ -56,6 +57,7 @@ export const MainNavMenu: FC = () => {
         navItems.map((group, gi) => <NavGroupComponent key={gi} group={group} />)
       }
     </Stack>
+    <ActiveFeatureAction />
     <DataSavedLabel width="100%" />
   </Stack>
 }

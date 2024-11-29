@@ -1,10 +1,10 @@
 import { BaseMessageLike } from "@langchain/core/messages";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { botPersonalityPromptChunk } from "src/bots/model/prompt-parts/news-summary";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
+import { AppLogger } from "src/logs/app-logger";
 import { aiPromptsService, langchainService, xPostsService } from "src/services";
 import { z } from "zod";
 import { TweetTrait } from "./model/tweet-trait";
@@ -15,7 +15,7 @@ import { replierStateAnnotation } from "./x-news-summary-replier.feature";
  */
 export const replyAgent = (feature: BotFeature, reply: XPost) => {
   return async (state: typeof replierStateAnnotation.State) => {
-    const logger = new Logger("ReplyAgent");
+    const logger = new AppLogger("ReplyAgent", feature.bot);
 
     const outputSchema = z.object({
       tweetReply: z.string().describe("The tweet reply"),

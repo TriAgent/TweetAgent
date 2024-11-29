@@ -1,5 +1,4 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import { Logger } from "@nestjs/common";
 import { BotFeatureType } from "@prisma/client";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
@@ -11,6 +10,7 @@ import { classifyPostAgent } from "./classify-post.agent";
 import { ReplierNode } from "./model/replier-node";
 import { postReplyRouter } from "./post-reply.router";
 import { replyAgent } from "./reply.agent";
+import { AppLogger } from "src/logs/app-logger";
 
 const ProduceRepliesCheckDelaySec = 60; // 1 minute - interval between loops that check if a reply has to be produced
 
@@ -26,7 +26,7 @@ export let replierStateAnnotation = Annotation.Root({
  * This feature generates replies to X users that posted in reply to our news summary posts.
  */
 export class XNewsSummaryReplierFeature extends BotFeature {
-  private logger = new Logger("NewsSummaryReplier");
+  private logger = new AppLogger("NewsSummaryReplier", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.NewsSummaries_XNewsSummaryReplier, bot, ProduceRepliesCheckDelaySec);

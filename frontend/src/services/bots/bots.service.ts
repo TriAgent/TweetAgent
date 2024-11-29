@@ -41,4 +41,8 @@ export const createBot = async (): Promise<Bot> => {
   return undefined;
 }
 
+export const getBotById = (botId:string):Bot => {
+  return bots$.value.find(bot => bot.id === botId);
+}
+
 fetchBots();

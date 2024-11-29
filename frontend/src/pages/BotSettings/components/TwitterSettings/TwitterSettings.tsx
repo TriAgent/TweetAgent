@@ -39,6 +39,7 @@ export const TwitterSettings: FC = () => {
     const authStatus = await activeBot.finalizeTwitterAuthWithPIN(twitterAuthRequest, PIN);
     console.log("authStatus", authStatus)
     setConfirming(false);
+    setAwaitingPIN(false);
   }, [PIN, activeBot, twitterAuthRequest]);
 
   const handleCancellation = useCallback(() => {

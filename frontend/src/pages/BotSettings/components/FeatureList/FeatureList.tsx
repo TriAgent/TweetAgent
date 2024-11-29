@@ -1,6 +1,7 @@
 import { Checkbox, FormControlLabel, Grid, Stack } from "@mui/material";
 import { Bot } from "@services/bots/model/bot";
 import { BotFeatureConfig } from "@services/bots/model/bot-feature-config";
+import { friendlyFeatureKey } from "@services/features/features.service";
 import { useBehaviorSubject } from "@services/ui-ux/hooks/useBehaviorSubject";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -23,7 +24,7 @@ const FeatureCheckbox: FC<{
 }> = ({ feature }) => {
   const [enabled, setEnabled] = useState(feature.enabled);
   const name = useMemo(() => {
-    return feature.key.replaceAll("_", ": ");
+    return friendlyFeatureKey(feature?.key);
   }, [feature.key]);
 
   const handleValueChange = useCallback((checked: boolean) => {

@@ -1,15 +1,16 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { XAccount } from '@prisma/client';
 import { Bot } from 'src/bots/model/bot';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { UserV2 } from 'twitter-api-v2';
 import { fakeAccounts } from './model/fake-accounts';
+import { AppLogger } from 'src/logs/app-logger';
 
 
 @Injectable()
 export class XAccountsService implements OnApplicationBootstrap {
-  private logger = new Logger("XAccounts");
+  private logger = new AppLogger("XAccounts");
 
   constructor(
     private prisma: PrismaService,

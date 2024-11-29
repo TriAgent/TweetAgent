@@ -36,6 +36,20 @@ export class BotFeaturesService {
   public async newFromKey(bot: Bot, featureKey: BotFeatureType): Promise<BotFeature> {
     let feature: BotFeature;
 
+    /* featuresService.registerFeatures([
+      xPostsFetcher, // Fetches and caches X Posts
+      xPostsHandler, // Handle unanswered third party posts and generate replies when possible.
+      xPostsSender, // Send our pending posts/replies to X
+      xNewsSummaryWriter, // From time to time, write news summary from cached news posts, and publish to X
+      xNewsSummaryReplier, // Write replies to users posts following our news summary posts
+      xRealNewsFilter, // Browses recent posts from followed X news accounts, and classifies posts as real news or not (used by the news summary writer).
+      xPostContestHandler, // Classifies upcoming X posts as eligible for the airdrop contest or not
+      xPostContestReposter, // RTs user posts from time to time, for the airdrop contest
+      xPostAirdropAddress, // Collects user airdrop addresses from X posts and acknowledges with a reply when successfully handled
+      airdropSnapshot, // Elects best posts and dispatches airdrop tokens to authors
+      airdropSender, // Sends airdrop tokens on chain
+    ]); */
+
     const mapping = {
       // Core
       [BotFeatureType.Core_XPostsHandler]: () => new XPostsHandlerFeature(bot),

@@ -2,7 +2,6 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnablePassthrough, RunnableSequence } from "@langchain/core/runnables";
 import { OpenAIEmbeddings } from "@langchain/openai";
-import { Logger } from '@nestjs/common';
 import { BotFeatureType } from "@prisma/client";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { Bot } from "src/bots/model/bot";
@@ -13,6 +12,7 @@ import { formatDocumentsAsString } from "src/langchain/utils";
 import { aiPromptsService, langchainService, prisma } from "src/services";
 import { botPersonalityPromptChunk } from "../../../model/prompt-parts/news-summary";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
+import { AppLogger } from "src/logs/app-logger";
 
 const PostXSummaryDelaySec = 1 * 60 * 60; // 1 hour
 //const MinTimeBetweenXPosts = PostXSummaryDelaySec; // Used by retries when posts have failed to publish. Not more frequently than this delay for posts.
@@ -22,7 +22,7 @@ const PostXSummaryDelaySec = 1 * 60 * 60; // 1 hour
  * Summaries are posted on X.
  */
 export class XNewsSummaryWriterFeature extends BotFeature {
-  private logger = new Logger("XSummaryWriter");
+  private logger = new AppLogger("XSummaryWriter", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.NewsSummaries_XNewsSummaryWriter, bot, PostXSummaryDelaySec);

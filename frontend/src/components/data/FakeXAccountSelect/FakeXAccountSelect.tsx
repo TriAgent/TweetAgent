@@ -11,20 +11,20 @@ export const FakeXAccountSelect: FC<{
   const [selectedAccount, setSelectedAccount] = useState<XAccount>(undefined);
   const fakeAccounts = useBehaviorSubject(fakeAccounts$);
 
-  const handleAccountChange = (userId: string) => {
+  const accountById = useCallback((id: string) => fakeAccounts?.find(account => account.userId === id), [fakeAccounts]);
+
+  const handleAccountChange = useCallback((userId: string) => {
     const account = accountById(userId);
 
     setSelectedAccount(account);
     onAccountSelected(account);
-  }
-
-  const accountById = useCallback((id: string) => fakeAccounts?.find(account => account.userId === id), [fakeAccounts]);
+  }, [accountById, onAccountSelected]);
 
   // Select first user by default
   useEffect(() => {
     if (fakeAccounts && !selectedAccount)
       handleAccountChange(fakeAccounts[0].userId);
-  }, [fakeAccounts, selectedAccount]);
+  }, [fakeAccounts, handleAccountChange, selectedAccount]);
 
   return (
     <FormControl sx={{ minWidth: 100, height: "100%", margin: 0, mt: "2px" }} size="small">

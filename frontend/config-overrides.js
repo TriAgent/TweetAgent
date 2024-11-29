@@ -14,7 +14,6 @@ module.exports = override(
         '@routes': path.resolve(__dirname, 'src/routes'),
         '@services': path.resolve(__dirname, 'src/services'),
         '@utils': path.resolve(__dirname, 'src/utils'),
-        '@sandstorm_verifier_wasm': path.resolve(__dirname, 'src/third-party/sandstorm_verifier_wasm'),
     }),
     addWebpackResolve({
         fallback: {

@@ -49,7 +49,7 @@ const BotPosts: FC = () => {
           <NewPostField />
         }
         <List>
-          {posts?.map((post, i) => <ListItem key={i}>
+          {posts?.map((post, i) => <ListItem key={i} style={{ marginBottom: 10 }}>
             <Post post={post} />
           </ListItem>)}
         </List>

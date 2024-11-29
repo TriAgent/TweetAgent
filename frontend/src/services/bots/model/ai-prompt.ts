@@ -14,11 +14,12 @@ export class AiPrompt {
    * Updates one of the root properties
    */
   public async updateProperty(key: Exclude<keyof AiPromptDTO, "id">) {
-    await apiPut(`${backendUrl}/bots/${this.botId}/prompts/${this.id}`, {
+    const result = await apiPut(`${backendUrl}/bots/${this.botId}/prompts/${this.id}`, {
       prompt: instanceToPlain(this, {excludeExtraneousValues: true}), 
       key
     }, undefined, "Failed to update prompt");
 
-    notifyDataSaved();
+    if (result)
+      notifyDataSaved();
   }
 }

@@ -8,27 +8,28 @@ import { FeatureList } from "./components/FeatureList/FeatureList";
 import { TwitterSettings } from "./components/TwitterSettings/TwitterSettings";
 
 export const BotSettings: FC = () => {
-  const editedBot = useActiveBot();
-  const defaultName = useMemo(() => editedBot?.name, [editedBot?.name]);
+  const activeBot = useActiveBot();
+  const defaultName = useMemo(() => activeBot?.name, [activeBot?.name]);
 
   const handleNameChange = useCallback((value: string) => {
-    editedBot.name = value;  // Update locally
-    editedBot.updateProperty("name"); // update remotely
-  }, [editedBot]);
+    activeBot.name = value;  // Update locally
+    activeBot.updateProperty("name"); // update remotely
+  }, [activeBot]);
 
-  if (!editedBot)
+  if (!activeBot)
     return null;
 
   return (
     <>
       <Stack direction="column" alignItems="flex-start" >
         <PageTitle>Bot settings</PageTitle>
-        <Stack direction="column">
+        <Stack direction="column" gap={2}>
+          <div>{activeBot.id}</div>
           <DebouncedTextField label="Name" defaultValue={defaultName} onChange={handleNameChange} />
         </Stack>
         <Stack direction="column" mt={2} width="100%">
           <PageSubtitle>Features</PageSubtitle>
-          <FeatureList bot={editedBot} />
+          <FeatureList bot={activeBot} />
         </Stack>
         <Stack direction="column" mt={2} width="100%">
           <PageSubtitle>Twitter / X</PageSubtitle>

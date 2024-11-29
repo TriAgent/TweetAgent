@@ -1,9 +1,10 @@
-import { forwardRef, HttpException, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { forwardRef, HttpException, Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AIPrompt, BotFeatureConfig, Bot as DBBot, Prisma } from '@prisma/client';
 import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO } from "@x-ai-wallet-bot/common";
 import { Subject } from 'rxjs';
 import { AiPromptsService } from 'src/ai-prompts/ai-prompts.service';
 import { Bot } from 'src/bots/model/bot';
+import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BotsRunnerService } from './bot-runner.service';
 
@@ -19,7 +20,7 @@ export type BotFeatureUpdate = {
 
 @Injectable()
 export class BotsService implements OnApplicationBootstrap {
-  private logger = new Logger("Bots");
+  private logger = new AppLogger("Bots");
 
   private bots: Bot[] = [];
 

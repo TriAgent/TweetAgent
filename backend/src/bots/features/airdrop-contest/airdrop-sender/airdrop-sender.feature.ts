@@ -1,4 +1,3 @@
-import { Logger } from "@nestjs/common";
 import { BotFeatureType, XPost } from "@prisma/client";
 import { Contract, ContractTransactionReceipt, ContractTransactionResponse, JsonRpcProvider, Wallet } from 'ethers';
 import { Bot } from "src/bots/model/bot";
@@ -6,6 +5,7 @@ import { BotFeature } from "src/bots/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
 import { Chain, SupportedChains } from "src/config/chain-config";
 import airdropABI from "src/contracts/airdrop.json";
+import { AppLogger } from "src/logs/app-logger";
 import { prisma } from "src/services";
 import { tokenToContractValue } from "src/utils/tokens";
 
@@ -17,7 +17,7 @@ import { tokenToContractValue } from "src/utils/tokens";
  * This feature sends airdrop snapshots to destination addresses on chain.
  */
 export class AirdropSenderFeature extends BotFeature {
-  private logger = new Logger("AirdropSender");
+  private logger = new AppLogger("AirdropSender", this.bot);
   private provider: JsonRpcProvider;
   private wallet: Wallet;
   private airdropContract: Contract;

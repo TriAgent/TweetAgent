@@ -1,6 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import moment, { Moment } from "moment";
 import { Bot } from "src/bots/model/bot";
+import { AppLogger } from "src/logs/app-logger";
 import { splitStringAtWord } from "src/utils/strings";
 import { ApiResponseError, SendTweetV2Params, TweetV2, UserV2 } from "twitter-api-v2";
 import { TwitterAuthService } from "./twitter-auth.service";
@@ -9,9 +10,11 @@ const TweetFields = `created_at,id,author_id,conversation_id,text,referenced_twe
 
 @Injectable()
 export class TwitterService {
-  private logger = new Logger(TwitterService.name);
+  private logger = new AppLogger("Twitter");
 
-  constructor(private auth: TwitterAuthService) { }
+  constructor(
+    @Inject(forwardRef(() => TwitterAuthService)) private auth: TwitterAuthService
+  ) { }
 
   /**
    * - Pagination is not used, only call once

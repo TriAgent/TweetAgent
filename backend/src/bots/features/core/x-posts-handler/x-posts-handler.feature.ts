@@ -1,11 +1,11 @@
 import { Annotation, BaseChannel, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureType } from "@prisma/client";
-import { BotLogger } from "src/bots/bot.logger";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bots/model/x-post-reply-analysis-result";
 import { standardStringAnnotationReducer } from "src/langchain/utils";
-import { prisma, xPostsService } from "src/services";
+import { AppLogger } from "src/logs/app-logger";
+import { prisma, wsDispatcherService, xPostsService } from "src/services";
 import { produceAggregatedReplyAgent } from "./aggregated-reply.agent";
 
 type ReplyAggregatorStateAnnotationSchema = {
@@ -23,7 +23,7 @@ export let replyAggregatorStateAnnotation = Annotation.Root<ReplyAggregatorState
  * Replies are built by asking other features to categorize and build reply parts.
  */
 export class XPostsHandlerFeature extends BotFeature {
-  private logger = new BotLogger("XPostsHandler", this.bot);
+  private logger = new AppLogger("XPostsHandler", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.Core_XPostsHandler, bot, 20);
@@ -58,6 +58,7 @@ export class XPostsHandlerFeature extends BotFeature {
     const replyAnalysisResults: XPostReplyAnalysisResult[] = [];
     for (const feature of this.bot.getActiveFeatures()) {
       if (feature.isEnabled() && feature.studyReplyToXPost) {
+        wsDispatcherService().emitMostRecentFeatureAction(this.bot, feature, "studyReplyToXPost");
         const replyAnalysisResult = await feature.studyReplyToXPost(xPost);
         if (replyAnalysisResult?.reply) {
           replyAnalysisResults.push(replyAnalysisResult);

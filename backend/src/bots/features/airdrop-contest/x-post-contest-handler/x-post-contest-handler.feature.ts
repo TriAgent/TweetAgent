@@ -1,5 +1,4 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import { Logger } from "@nestjs/common";
 import { BotFeatureType } from "@prisma/client";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
@@ -7,6 +6,7 @@ import { XPostReplyAnalysisResult } from "src/bots/model/x-post-reply-analysis-r
 import { BotConfig } from "src/config/bot-config";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { studyForContestAgent } from "./study-for-contest.agent";
+import { AppLogger } from "src/logs/app-logger";
 
 export const contestHandlerStateAnnotation = Annotation.Root({
   isWorthForContest: Annotation<boolean>,
@@ -18,7 +18,7 @@ export const contestHandlerStateAnnotation = Annotation.Root({
  * then reply to users if they are.
  */
 export class XPostContestHandlerFeature extends BotFeature {
-  private logger = new Logger("XPostContestHandler");
+  private logger = new AppLogger("XPostContestHandler", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.AirdropContest_XPostContestHandler, bot, 5);

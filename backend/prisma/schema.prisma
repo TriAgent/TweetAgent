@@ -27,6 +27,7 @@ model Bot {
   aiPrompts   AIPrompt[]
   botFeatures BotFeatureConfig[]
   posts       XPost[]
+  logs        Log[]
 }
 
 // Prompts for AI requests
@@ -225,4 +226,24 @@ model PostContestAirdrop {
   weight Float // Weight of this post among other posts of the same airdrop
 
   @@unique([contestAirdropId, quotePostId, targetUser])
+}
+
+enum LogType {
+  Debug
+  Log
+  Warning
+  Error
+}
+
+model Log {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  name    String // Name of the log (eg: one log per service)
+  type    LogType
+  message String? // String messages are stored here
+  json    Json? // Object messages are stored here
+
+  bot   Bot?    @relation(fields: [botId], references: [id]) // Optional bot related to this los entry
+  botId String?
 }

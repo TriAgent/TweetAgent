@@ -7,6 +7,7 @@ import { OperationHistoryService } from "./operation-history/operation-history.s
 import { PrismaService } from "./prisma/prisma.service";
 import { TwitterAuthService } from "./twitter/twitter-auth.service";
 import { TwitterService } from "./twitter/twitter.service";
+import { DispatcherService } from "./websockets/dispatcher.service";
 import { XAccountsService } from "./xaccounts/xaccounts.service";
 import { XPostsService } from "./xposts/xposts.service";
 
@@ -48,4 +49,8 @@ export const botFeaturesService = (): BotFeaturesService => {
 
 export const operationHistoryService = (): OperationHistoryService => {
   return app.get(OperationHistoryService);
+}
+
+export const wsDispatcherService = (): DispatcherService => {
+  return app.get(DispatcherService);
 }

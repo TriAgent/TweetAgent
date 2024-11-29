@@ -1,9 +1,9 @@
-import { Logger } from "@nestjs/common";
 import { BotFeatureType, ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@prisma/client";
 import moment from "moment";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
+import { AppLogger } from "src/logs/app-logger";
 import { prisma, xPostsService } from "src/services";
 import { PostStats } from "src/xposts/model/post-stats";
 
@@ -29,7 +29,7 @@ type PostInfo = {
  * Scheduled airdrops are then sent by the airdrop sender feature.
  */
 export class AirdropSnapshotFeature extends BotFeature {
-  private logger = new Logger("AirdropSnapshot");
+  private logger = new AppLogger("AirdropSnapshot", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.AirdropContest_AirdropSnapshot, bot, 10);

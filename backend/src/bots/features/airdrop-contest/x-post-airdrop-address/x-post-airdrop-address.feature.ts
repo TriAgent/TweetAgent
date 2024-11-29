@@ -1,5 +1,4 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import { Logger } from "@nestjs/common";
 import { BotFeatureType } from "@prisma/client";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
@@ -7,6 +6,7 @@ import { XPostReplyAnalysisResult } from "src/bots/model/x-post-reply-analysis-r
 import { BotConfig } from "src/config/bot-config";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { extractAddressAgent } from "./extract-address.agent";
+import { AppLogger } from "src/logs/app-logger";
 
 export const airdropAddressStateAnnotation = Annotation.Root({
   isAnAirdropAddressRequest: Annotation<boolean>,
@@ -15,7 +15,7 @@ export const airdropAddressStateAnnotation = Annotation.Root({
 });
 
 export class XPostAirdropAddressFeature extends BotFeature {
-  private logger = new Logger("XPostAirdropAddress");
+  private logger = new AppLogger("XPostAirdropAddress", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.AirdropContest_XPostAirdropAddress, bot, 20);

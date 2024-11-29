@@ -1,12 +1,12 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Bot as DBBot, XPost } from '@prisma/client';
 import { XPostCreationDTO } from '@x-ai-wallet-bot/common';
 import moment from 'moment';
 import { BotsService } from 'src/bots/bots.service';
 import { Bot } from 'src/bots/model/bot';
 import { BotConfig } from 'src/config/bot-config';
+import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { XAccountsService } from 'src/xaccounts/xaccounts.service';
 import { TweetV2 } from 'twitter-api-v2';
@@ -21,12 +21,11 @@ import { PostStats } from './model/post-stats';
  */
 @Injectable()
 export class XPostsService {
-  private logger = new Logger("XPosts");
+  private logger = new AppLogger("XPosts");
 
   constructor(
     private prisma: PrismaService,
     private twitter: TwitterService,
-    private twitterAuth: TwitterAuthService,
     private xAccounts: XAccountsService,
     @Inject(forwardRef(() => BotsService)) private botsService: BotsService
   ) { }

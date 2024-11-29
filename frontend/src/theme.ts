@@ -141,15 +141,21 @@ const theme = createTheme({
       }
     },
     MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          color: TEXT_PRIMARY_COLOR
+        }
+      },
       defaultProps: {
-        disableRipple: true,
-        disableFocusRipple: true,
-        disableTouchRipple: true,
+        // disableRipple: true,
+        // disableFocusRipple: true,
+        // disableTouchRipple: true,
       },
     },
     MuiIconButton: {
       styleOverrides: {
         root: {
+          color: TEXT_SECONDARY_COLOR,
           '&:hover': {
             backgroundColor: alpha(BACKGROUND_SECONDARY_COLOR, 1)
           },

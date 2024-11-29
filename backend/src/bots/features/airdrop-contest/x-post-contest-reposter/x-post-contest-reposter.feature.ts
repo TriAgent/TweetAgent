@@ -1,10 +1,10 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureType, XPost } from "@prisma/client";
 import moment from "moment";
-import { BotLogger } from "src/bots/bot.logger";
 import { Bot } from "src/bots/model/bot";
 import { BotFeature } from "src/bots/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
+import { AppLogger } from "src/logs/app-logger";
 import { prisma } from "src/services";
 import { electBestPostForContestAgent } from "./elect-best-post-for-contest.agent";
 import { writePostQuoteContentAgent } from "./write-post-quote-content.agent";
@@ -18,7 +18,7 @@ export const contestReposterStateAnnotation = Annotation.Root({
  * This feature publishes RTs of elected contest posts from time to time.
  */
 export class XPostContestReposterFeature extends BotFeature {
-  private logger = new BotLogger("XPostContestReposter", this.bot);
+  private logger = new AppLogger("XPostContestReposter", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.AirdropContest_XPostContestReposter, bot, 20);

@@ -1,7 +1,6 @@
-import { DispatcherUpdate, StateUpdate } from '@x-ai-wallet-bot/common';
-import { BehaviorSubject } from 'rxjs';
+import { DispatcherUpdate } from '@x-ai-wallet-bot/common';
+import { BehaviorSubject, Subject } from 'rxjs';
 import io, { Socket } from 'socket.io-client';
-import { backendState$ } from './backend/state.service';
 
 // const SOCKET_SERVER_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -9,6 +8,7 @@ export class WebsocketProxy {
   private socket: Socket;
 
   public connected$ = new BehaviorSubject(false);
+  public onNewMessage$ = new Subject<DispatcherUpdate<any, any>>();
 
   constructor(private address: string) {
     this.connect();
@@ -33,19 +33,19 @@ export class WebsocketProxy {
     this.socket.on('dispatcher', (rawMessage: string) => {
       const message: DispatcherUpdate<any, any> = JSON.parse(rawMessage);
 
-      // console.log("WS Message:", message);
+       console.log("WS Message:", message);
 
       switch (message.op) {
         case "ready":
-          // nothing
+          // nothing 
           break;
-        // case "logs":
-        //   const logsUpdate = message as LogUpdate;
-        //   this.logs$.next(logsUpdate.data);
-        //   break;
-        case "state":
-          const stateUpdate = message as StateUpdate;
-          backendState$.next(stateUpdate.data);
+        case "log":
+        case "active-feature":
+          // case "state":
+          //   const stateUpdate = message as StateUpdate;
+          // backendState$.next(stateUpdate.data);
+          // break;
+          this.onNewMessage$.next(message);
           break;
         default:
           console.warn("Unhandled dispatcher message", message);
@@ -55,6 +55,9 @@ export class WebsocketProxy {
 }
 
 export let wsService: WebsocketProxy;
-export const connectWebsockets = () => {
+
+const connectWebsockets = () => {
   wsService = new WebsocketProxy(process.env.REACT_APP_BACKEND_URL);
 }
+
+connectWebsockets();

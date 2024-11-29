@@ -5,8 +5,9 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { RunnableLike, RunnableSequence } from '@langchain/core/runnables';
 import { StructuredTool } from '@langchain/core/tools';
 import { ChatOpenAI } from '@langchain/openai';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { merge } from "lodash";
+import { AppLogger } from 'src/logs/app-logger';
 import { ensureEnv } from 'src/utils/ensure-env';
 import { infer as zodInfer, ZodType } from 'zod';
 import { StructureToolOrBindToolsInput, zodSchemaToOpenAICompatibleTool } from './utils';
@@ -29,7 +30,7 @@ type FullInvocationOutput<OutputSchema extends ZodType> = {
 
 @Injectable()
 export class LangchainService implements OnModuleInit {
-  private logger = new Logger("Langchain");
+  private logger = new AppLogger("Langchain");
 
   private _openAIAPIKey: string;
   private _tavilyAPIKey: string;

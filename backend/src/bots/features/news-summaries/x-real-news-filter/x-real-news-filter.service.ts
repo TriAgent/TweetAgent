@@ -1,5 +1,4 @@
 import { END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
-import { Logger } from "@nestjs/common";
 import { BotFeatureType, XPost } from "@prisma/client";
 import moment from "moment";
 import { Bot } from "src/bots/model/bot";
@@ -7,12 +6,13 @@ import { BotFeature } from "src/bots/model/bot-feature";
 import { BotConfig } from "src/config/bot-config";
 import { prisma, xAccountsService } from "src/services";
 import { categorizeNewsAgent } from "./categorize-news.agent";
+import { AppLogger } from "src/logs/app-logger";
 
 /**
  * This service categorizes posts as real news or not
  */
 export class XRealNewsFilterFeature extends BotFeature {
-  private logger = new Logger("XRealNewsFilter");
+  private logger = new AppLogger("XRealNewsFilter", this.bot);
 
   constructor(bot: Bot) {
     super(BotFeatureType.NewsSummaries_XRealNewsFilter, bot, 10);
