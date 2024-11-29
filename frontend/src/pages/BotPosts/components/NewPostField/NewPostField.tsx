@@ -1,32 +1,29 @@
 import { DebouncedTextField } from "@components/base/DebouncedTextField/DebouncedTextField";
 import { FakeXAccountSelect } from "@components/data/FakeXAccountSelect/FakeXAccountSelect";
 import { Button, Stack } from "@mui/material";
-import { useActiveBot } from "@services/bots/hooks/useActiveBot";
 import { XAccount } from "@x-ai-wallet-bot/common";
 import { FC, useCallback, useState } from "react";
 
-export const NewPostField: FC = () => {
-  const activeBot = useActiveBot();
+type OnPostHandler = (text: string, account: XAccount) => void;
+
+export const NewPostField: FC<{
+  title?: string;
+  mode?: "new" | "reply" | "quote";
+  width?: number;
+  onPost: OnPostHandler;
+}> = ({ title = "What's happening?", mode = "new", width = 200, onPost }) => {
   const [postText, setPostText] = useState("");
   const [authorAccount, setAuthorAccount] = useState<XAccount>(undefined);
 
-  const handleSendAsCommentOrNew = useCallback(async () => {
-    const createdPost = await activeBot.createPost({
-      text: postText,
-      xAccountUserId: authorAccount.userId
-    });
+  const handlePost = useCallback(async () => {
+    onPost(postText, authorAccount);
+  }, [authorAccount, onPost, postText]);
 
-    console.log("Post created:", createdPost)
-  }, [activeBot, authorAccount, postText]);
-
-  const handleSendAsQuote = useCallback(async () => {
-
-  }, []);
-
-  return <Stack direction="row" gap={2}>
-    <DebouncedTextField label="What is happening?" onChange={setPostText} debounceTime={0} />
+  return <Stack direction="row" gap={2} alignItems="center">
+    <DebouncedTextField multiline label={title} onChange={setPostText} debounceTime={0} minRows={2} style={{ width }} />
     <FakeXAccountSelect onAccountSelected={setAuthorAccount} />
-    <Button variant="contained" disabled={!postText} onClick={handleSendAsCommentOrNew}>Comment</Button>
-    <Button variant="contained" disabled={!postText} onClick={handleSendAsQuote}>Quote</Button>
+    {mode === "new" && <Button variant="contained" size="large" disabled={!postText} onClick={handlePost}>Post</Button>}
+    {mode === "reply" && <Button variant="contained" size="large" disabled={!postText} onClick={handlePost}>Reply</Button>}
+    {mode === "quote" && <Button variant="contained" size="large" disabled={!postText} onClick={handlePost}>Quote</Button>}
   </Stack>
 }

@@ -106,7 +106,7 @@ model XAccount {
 // fetch posts as third party news but that post might be used by another bot during its operations. They just work 
 // on different fields.
 model XPost {
-  id String @unique @default(uuid())
+  id String @unique @default(uuid()) // Note that a xpost can have the same 'postId' several times, fetched by multiple bots.
 
   createdAt        DateTime  @default(now()) // Entry creation date
   publishRequestAt DateTime? // If this is a post we want to send, this is the date at which we asked to sed this post.
@@ -120,7 +120,6 @@ model XPost {
   postId       String? // ID of the post of X
   parentPostId String? // Parent post (id on X) - direct "replied to" = null if root
   quotedPostId String? // Post (id on X) that we quote with this post (RT with message).
-  //authorId     String // X user id
 
   xAccount       XAccount @relation(fields: [xAccountUserId], references: [userId])
   xAccountUserId String
@@ -143,7 +142,7 @@ model XPost {
   quotedForAirdropContestAt DateTime? // If this post got elected to be RT/quoted by our account, that's the date at which the post was created/scheduled
   contestMentioningPost     XPost?    @relation(name: "ContestMentioningPost", fields: [contestMentioningPostId], references: [id]) // Post that mentioned this post (that is worthForAirdropContest) so this is how we detected it. Used to reward mentioning users about influencers posts in addition to their own content.
   contestMentioningPostId   String?   @unique
-  ContestMentioningPost     XPost?    @relation(name: "ContestMentioningPost")
+  contestMentioedPost       XPost?    @relation(name: "ContestMentioningPost")
 
   // Specific to: airdrop contest (our bot quote post)
   contestQuotedPost   XPost?  @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest

@@ -6,12 +6,13 @@ export const DebouncedTextField: FC<{
   label: string;
   defaultValue?: string;
   multiline?: boolean;
+  minRows?: number; // for multline only
   maxRows?: number; // for multline only
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onChange: (newValue: string) => void;
   debounceTime?: number; // Milliseconds. Can use 0
   style?: CSSProperties;
-}> = ({ label, defaultValue = "", onChange, multiline = false, maxRows = 100, debounceTime = 1000, style }) => {
+}> = ({ label, defaultValue = "", onChange, multiline = false, minRows = 1, maxRows = 100, debounceTime = 1000, style }) => {
   const [value, setValue] = useState(defaultValue);
 
   const onDebouncedChange = useCallback(onChange, [onChange]);
@@ -24,6 +25,7 @@ export const DebouncedTextField: FC<{
 
   return <TextField label={label} variant="outlined"
     multiline={multiline}
+    minRows={minRows}
     maxRows={maxRows}
     value={value || ""}
     style={style}

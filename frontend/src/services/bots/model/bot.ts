@@ -3,7 +3,7 @@ import { backendUrl } from "@services/backend/backend";
 import { PostChildren } from "@services/posts/model/post-thread";
 import { XPost } from "@services/posts/model/x-post";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
 import { BehaviorSubject, Subject } from "rxjs";
 import { setActiveBot } from "../bots.service";
@@ -79,6 +79,15 @@ export class Bot {
     return authResult;
   }
 
+  public async fetchPostByPostId(postId: string): Promise<XPost> {
+    const rawPost = await apiGet<XPostDTO>(`${backendUrl}/bots/${this.id}/posts/${postId}`);
+    if (rawPost) {
+      return plainToInstance(XPost, rawPost, {excludeExtraneousValues: true});
+    }
+
+    return undefined;
+  }
+
   /**
    * Fetches posts. 
    * - If rootPostId is not given, fetches all root posts (no parent)
@@ -103,7 +112,13 @@ export class Bot {
     return null;
   }
 
-  public async createPost(postCreationInput: XPostCreationDTO): Promise<XPost> {
+  public async createPost(text: string, xAccount: XAccountDTO, parentPostId?:string, quotedPostId?:string): Promise<XPost> {
+    const postCreationInput: XPostCreationDTO = {
+      text,
+      xAccountUserId: xAccount.userId,
+      parentPostId,
+      quotedPostId
+    };
     const rawPost = await apiPost<XPostDTO>(`${backendUrl}/bots/${this.id}/posts`, postCreationInput);
 
     if (!rawPost)

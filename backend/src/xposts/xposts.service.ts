@@ -82,12 +82,15 @@ export class XPostsService {
     return tree;
   }
 
-  public getXPostByTwitterPostId(bot: Bot, twitterPostId: string): Promise<XPost> {
-    return this.prisma.xPost.findFirst({
+  public getXPostByTwitterPostId(bot: DBBot, twitterPostId: string): Promise<XPost> {
+    return this.prisma.xPost.findUnique({
       where: {
-        botId: bot.id,
-        postId: twitterPostId
-      }
+        botId_postId: {
+          botId: bot.id,
+          postId: twitterPostId
+        }
+      },
+      include: { xAccount: true }
     });
   }
 
@@ -193,7 +196,7 @@ export class XPostsService {
       // Store every post that we don't have yet
       const newPosts: XPost[] = [];
       for (var post of posts) {
-        const existingPost = await this.getXPostByTwitterPostId(bot, post.id);
+        const existingPost = await this.getXPostByTwitterPostId(bot.dbBot, post.id);
         if (!existingPost) {
           this.logger.log('Created database xpost for external X tweetv2:');
           this.logger.log(post);
@@ -251,15 +254,18 @@ export class XPostsService {
       });
     }
 
-    const posts = await this.prisma.xPost.findMany({
-      where: {
-        botId: bot.id,
-        publishedAt: { not: null },
-        ...(root && { parentPostId: root.postId })
-      },
-      include: { xAccount: true },
-      orderBy: { publishedAt: "desc" }
-    });
+    let posts: XPost[] = [];
+    if (!root || root.publishedAt) {
+      // Only fetch child posts if the root post has been published or if no root post
+      posts = await this.prisma.xPost.findMany({
+        where: {
+          botId: bot.id,
+          parentPostId: root ? root.postId : null // If no root, we must force NO parent
+        },
+        include: { xAccount: true },
+        orderBy: { publishedAt: "desc" }
+      });
+    }
 
     return { root, posts };
   }
@@ -277,7 +283,8 @@ export class XPostsService {
         text: postCreationInput.text,
         postId: `simulated-${uuidV4()}`,
         isSimulated: true,
-        // TODO parentPostId: parentPostId,
+        ...(postCreationInput.parentPostId && { parentPostId: postCreationInput.parentPostId }),
+        ...(postCreationInput.quotedPostId && { quotedPostId: postCreationInput.quotedPostId }),
       },
       include: {
         xAccount: true

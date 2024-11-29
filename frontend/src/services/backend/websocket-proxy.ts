@@ -33,7 +33,7 @@ export class WebsocketProxy {
     this.socket.on('dispatcher', (rawMessage: string) => {
       const message: DispatcherUpdate<any, any> = JSON.parse(rawMessage);
 
-       console.log("WS Message:", message);
+       //console.log("WS Message:", message);
 
       switch (message.op) {
         case "ready":

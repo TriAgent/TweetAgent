@@ -24,5 +24,7 @@ export type XPost = {
 export type XPostCreationDTO = {
   xAccountUserId: string; // User sending the post
   text: string;
-  // TODO
+
+  parentPostId?: string; // Post ID on X. Matches 'postId'
+  quotedPostId?: string; // Post ID on X. Matches 'postId'
 }

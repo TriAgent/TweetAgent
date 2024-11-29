@@ -1,11 +1,11 @@
 BOTS / FEATURES rework:
-- nav menu: show the currently executed bot+feature
-- manual posts: reply to post
-- manual posts: quote post
-- UI: show more info on UI about posts: 
-  - reply handled
-  - worth for contest?
-
+- TBD: menu to show airdrop contests? (list of elected posts? airdrop transactions? reposted posts?)
+- TBD: show "for contest" on posts?
+- TBD: show "is contest repost" on posts?
+- TBD: show post "published" or not (so we can see unpublished posts too)
+- TBD: show a yellow star in front of bot's name in posts.
+- ability to customize per bot feature config:
+  - eg: delay for airdrop snapshot to happen
 
 - TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
 
@@ -16,7 +16,6 @@ P2:
 - don't call xpost.create from everywhere: centralize one method in xposts service
 - bot features: load all features even if disabled, instead of loading on demand?
 - websockets for "new post" + update posts list with this post if relevant
-- use X post id as XPost id instead of duplicate
 - move env setting "publish on x" as a UI bot setting
 - UI: save and restore last used bot
 
