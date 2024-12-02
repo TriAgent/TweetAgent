@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpException, Post, Put, UseGuards } from '@nestjs/common';
 import { Bot } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
 import { ParamPrompt } from 'src/bots/decorators/prompt-decorator';
 import { PromptGuard } from 'src/bots/guards/prompt-guard';
 import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
@@ -58,7 +58,7 @@ export class BotsController {
     if (!bot)
       throw new HttpException(`Bot not found`, 404);
 
-    return this.bots.listBotFeatureConfigs(bot);
+    return this.bots.listBotFeatures(bot);
   }
 
   @Put(':botId/features/:featureId')
@@ -67,7 +67,7 @@ export class BotsController {
     if (!feature)
       throw new HttpException(`Feature not found`, 404);
 
-    return this.bots.updateBotFeatureConfig(feature, body.feature, body.key);
+    return this.bots.updateBotFeature(feature, body.feature, body.key);
   }
 
   @Post(':botId/twitter/auth')

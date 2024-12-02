@@ -1,4 +1,4 @@
-export type BotFeatureConfig = {
+export type BotFeature = {
   id: string;
   key: string; // BotFeatureType
   botId: string;

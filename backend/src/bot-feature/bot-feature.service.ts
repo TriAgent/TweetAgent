@@ -1,0 +1,97 @@
+import { Injectable } from "@nestjs/common";
+import { BotFeatureType } from "@prisma/client";
+import { PrismaService } from "src/prisma/prisma.service";
+import { Bot } from "../bots/model/bot";
+import { AirdropSenderProvider } from "./features/airdrop-contest/airdrop-sender/airdrop-sender.feature";
+import { AirdropSnapshotProvider } from "./features/airdrop-contest/airdrop-snapshot/airdrop-snapshot.feature";
+import { XPostAirdropAddressProvider } from "./features/airdrop-contest/x-post-airdrop-address/x-post-airdrop-address.feature";
+import { XPostContestHandlerProvider } from "./features/airdrop-contest/x-post-contest-handler/x-post-contest-handler.feature";
+import { XPostContestReposterProvider } from "./features/airdrop-contest/x-post-contest-reposter/x-post-contest-reposter.feature";
+import { XPostsFetcherProvider } from "./features/core/x-posts-fetcher/x-post-fetcher.feature";
+import { XPostsHandlerProvider } from "./features/core/x-posts-handler/x-posts-handler.feature";
+import { XPostsSenderProvider } from "./features/core/x-posts-sender/x-post-sender.feature";
+import { XNewsSummaryReplierProvider } from "./features/news-summaries/x-news-summary-replier/x-news-summary-replier.feature";
+import { XNewsSummaryWriterProvider } from "./features/news-summaries/x-news-summary-writer/x-summary-writer.service";
+import { XRealNewsFilterProvider } from "./features/news-summaries/x-real-news-filter/x-real-news-filter.service";
+import { AnyBotFeature } from "./model/bot-feature";
+import { AnyBotFeatureProvider } from "./model/bot-feature-provider";
+
+@Injectable()
+export class BotFeatureService {
+  private featureProviders: AnyBotFeatureProvider[];
+
+  constructor(private prisma: PrismaService) {
+    this.registerFeatureProviders();
+  }
+
+  public registerFeatureProviders() {
+    this.featureProviders = [
+      // Core
+      new XPostsFetcherProvider(),
+      new XPostsHandlerProvider(),
+      new XPostsSenderProvider(),
+      // Airdrop contest
+      new AirdropSnapshotProvider(),
+      new AirdropSenderProvider(),
+      new XPostAirdropAddressProvider(),
+      new XPostContestReposterProvider(),
+      new XPostContestHandlerProvider(),
+      // News summaries
+      new XRealNewsFilterProvider(),
+      new XNewsSummaryReplierProvider(),
+      new XNewsSummaryWriterProvider(),
+    ]
+  }
+
+  public getFeatureProviders(): AnyBotFeatureProvider[] {
+    return this.featureProviders;
+  }
+
+  public getFeatureProvider(type: BotFeatureType): AnyBotFeatureProvider {
+    const provider = this.featureProviders.find(p => p.type === type);
+    if (!provider)
+      throw new Error(`Feature provider with type ${type} is not registered`);
+
+    return provider;
+  }
+
+  /**
+   * Instantiates a feature instance specific to a bot
+   */
+  public async newFromKey(bot: Bot, featureKey: BotFeatureType): Promise<AnyBotFeature> {
+    const provider = this.getFeatureProvider(featureKey);
+    const feature = provider.newInstance(bot);
+
+    // Safety check
+    if (feature.runLoopMinIntervalSec === undefined && feature.scheduledExecution !== undefined)
+      throw new Error(`Feature ${feature.type} has an execution method but no loop interval configured!`);
+
+    await feature.initialize();
+
+    return feature;
+  }
+
+  /**
+   * Ensures all required bot features types are created in database for the given bot
+   */
+  public async ensureBotRequiredFeatures(bot: Bot) {
+    const requiredBotFeatureTypes = Object.values(BotFeatureType);
+    for (const requiredBotFeatureType of requiredBotFeatureTypes) {
+      await this.prisma.botFeature.upsert({
+        where: {
+          botId_key: {
+            botId: bot.dbBot.id,
+            key: requiredBotFeatureType
+          }
+        },
+        create: {
+          bot: { connect: { id: bot.dbBot.id } },
+          key: requiredBotFeatureType,
+          enabled: false,
+          config: {}
+        },
+        update: {}
+      })
+    }
+  }
+}

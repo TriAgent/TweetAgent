@@ -1,13 +1,13 @@
-import { BotFeatureConfig, BotFeatureType, Bot as DBBot } from "@prisma/client";
-import { aiPromptsService, botFeaturesService, botsService, xAccountsService } from "src/services";
+import { BotFeatureType, Bot as DBBot, BotFeature as DBBotFeature } from "@prisma/client";
+import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
+import { aiPromptsService, botFeatureService, botsService, xAccountsService } from "src/services";
 import { BotFeatureUpdate } from "../bots.service";
-import { BotFeature } from "./bot-feature";
 
 /**
  * High level class helper on top of database's Bot type.
  */
 export class Bot {
-  private features: BotFeature[] = [];
+  private features: AnyBotFeature[] = [];
 
   private constructor(public dbBot: DBBot) {
     botsService().onBotFeatureUpdate$.subscribe(e => this.handleUpdatedFeatureConfig(e));
@@ -19,12 +19,12 @@ export class Bot {
     if (dbBot.twitterUserId)
       await xAccountsService().ensureXAccount(bot, dbBot.twitterUserId);
 
-    await botFeaturesService().ensureBotRequiredFeatures(bot);
+    await botFeatureService().ensureBotRequiredFeatures(bot);
     await aiPromptsService().ensureBotRequiredPrompts(bot);
 
-    const featureConfigs = await bot.getActiveFeatureConfigs();
+    const featureConfigs = await bot.getActiveDBFeatures();
     for (const featureConfig of featureConfigs) {
-      await bot.addFeatureFromFeatureConfig(featureConfig);
+      await bot.newFeatureFromDBFeature(featureConfig);
     }
 
     return bot;
@@ -34,21 +34,21 @@ export class Bot {
     return this.dbBot.id;
   }
 
-  public getActiveFeatureConfigs(): Promise<BotFeatureConfig[]> {
-    return botsService().getBotFeatureConfigs(this.dbBot, true);
+  public getActiveDBFeatures(): Promise<DBBotFeature[]> {
+    return botsService().getBotFeatures(this.dbBot, true);
   }
 
-  public getActiveFeatures(): BotFeature[] {
+  public getActiveFeatures(): AnyBotFeature[] {
     return this.features;
   }
 
-  private async addFeatureFromFeatureConfig(featureConfig: BotFeatureConfig) {
-    const feature = await botFeaturesService().newFromKey(this, featureConfig.key);
+  private async newFeatureFromDBFeature(dbFeature: DBBotFeature) {
+    const feature = await botFeatureService().newFromKey(this, dbFeature.key);
     this.features.push(feature);
   }
 
   private removeFeature(type: BotFeatureType) {
-    const index = this.features.findIndex(f => f.type === type);
+    const index = this.features.findIndex(f => f.provider.type === type);
     if (index >= 0)
       this.features.splice(index);
   }
@@ -63,7 +63,7 @@ export class Bot {
     if (e.updatedKey === "enabled") {
       const isNowEnabled = e.update["enabled"];
       if (isNowEnabled)
-        await this.addFeatureFromFeatureConfig(e.update);
+        await this.newFeatureFromDBFeature(e.update);
       else
         this.removeFeature(e.update.key);
     }

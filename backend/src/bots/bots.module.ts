@@ -7,10 +7,10 @@ import { TwitterModule } from 'src/twitter/twitter.module';
 import { WebsocketsModule } from 'src/websockets/websockets.module';
 import { XaccountsModule } from 'src/xaccounts/xaccounts.module';
 import { XPostsModule } from 'src/xposts/xposts.module';
-import { BotFeaturesService } from './bot-features.service';
 import { BotsRunnerService } from './bot-runner.service';
 import { BotsController } from './bots.controller';
 import { BotsService } from './bots.service';
+import { BotFeatureService } from 'src/bot-feature/bot-feature.service';
 
 @Module({
   controllers: [
@@ -19,7 +19,7 @@ import { BotsService } from './bots.service';
   providers: [
     BotsRunnerService,
     BotsService,
-    BotFeaturesService,
+    BotFeatureService,
   ],
   imports: [
     PrismaModule,

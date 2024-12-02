@@ -25,7 +25,7 @@ model Bot {
   twitterAccessSecret   String? // X secret token for this user, after web/pin authorization
 
   aiPrompts   AIPrompt[]
-  botFeatures BotFeatureConfig[]
+  botFeatures BotFeature[]
   posts       XPost[]
   logs        Log[]
 }
@@ -65,7 +65,7 @@ enum BotFeatureType {
 
 // List of bot features for every bot.
 // Also includes feature configuration for the bot.
-model BotFeatureConfig {
+model BotFeature {
   id        String   @unique @default(uuid())
   createdAt DateTime @default(now())
 

@@ -1,6 +1,6 @@
 import { forwardRef, HttpException, Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { AIPrompt, BotFeatureConfig, Bot as DBBot, Prisma } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeatureConfig as BotFeatureConfigDTO } from "@x-ai-wallet-bot/common";
+import { AIPrompt, BotFeature, Bot as DBBot, Prisma } from '@prisma/client';
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO } from "@x-ai-wallet-bot/common";
 import { Subject } from 'rxjs';
 import { AiPromptsService } from 'src/ai-prompts/ai-prompts.service';
 import { Bot } from 'src/bots/model/bot';
@@ -15,7 +15,7 @@ const allowedFeatureUpdateKeys = ["enabled"];
 export type BotFeatureUpdate = {
   bot: Bot;
   updatedKey: Exclude<keyof BotFeatureConfigDTO, "id>">;
-  update: BotFeatureConfig;
+  update: BotFeature;
 }
 
 @Injectable()
@@ -108,8 +108,8 @@ export class BotsService implements OnApplicationBootstrap {
     });
   }
 
-  public getBotFeatureConfigs(bot: DBBot, enabledOnly = false): Promise<BotFeatureConfig[]> {
-    return this.prisma.botFeatureConfig.findMany({
+  public getBotFeatures(bot: DBBot, enabledOnly = false): Promise<BotFeature[]> {
+    return this.prisma.botFeature.findMany({
       where: {
         botId: bot.id,
         ...(enabledOnly && { enabled: true })
@@ -117,24 +117,24 @@ export class BotsService implements OnApplicationBootstrap {
     });
   }
 
-  public listBotFeatureConfigs(bot: DBBot): Promise<BotFeatureConfig[]> {
-    return this.prisma.botFeatureConfig.findMany({
+  public listBotFeatures(bot: DBBot): Promise<BotFeature[]> {
+    return this.prisma.botFeature.findMany({
       where: { botId: bot.id },
       orderBy: { key: "asc" }
     });
   }
 
-  public async updateBotFeatureConfig(currentFeature: BotFeatureConfig, updatedFeature: BotFeatureConfigDTO, key: Exclude<keyof BotFeatureConfigDTO, "id>">) {
+  public async updateBotFeature(currentFeature: BotFeature, updatedFeatureDTO: BotFeatureConfigDTO, key: Exclude<keyof BotFeatureConfigDTO, "id>">) {
     if (!(allowedFeatureUpdateKeys.includes(key)))
       throw new HttpException(`Not allowed to update feature property field ${key}`, 403);
 
-    const updateData: Prisma.BotFeatureConfigUpdateArgs["data"] = {};
-    updateData[key] = updatedFeature[key];
+    const updateData: Prisma.BotFeatureUpdateArgs["data"] = {};
+    updateData[key] = updatedFeatureDTO[key];
 
     if (key === "enabled")
-      this.logger.warn(`Feature change: ${currentFeature.key} is now ${updatedFeature[key] ? "enabled" : "disabled"} for bot ${currentFeature.botId}`);
+      this.logger.warn(`Feature change: ${currentFeature.key} is now ${updatedFeatureDTO[key] ? "enabled" : "disabled"} for bot ${currentFeature.botId}`);
 
-    const updatedFeatureConfig = await this.prisma.botFeatureConfig.update({
+    const updatedFeature = await this.prisma.botFeature.update({
       where: { id: currentFeature.id },
       data: updateData
     });
@@ -142,9 +142,9 @@ export class BotsService implements OnApplicationBootstrap {
     this.onBotFeatureUpdate$.next({
       bot: this.getBotById(currentFeature.botId),
       updatedKey: key,
-      update: updatedFeatureConfig
+      update: updatedFeature
     });
 
-    return updatedFeatureConfig;
+    return updatedFeatureDTO;
   }
 }

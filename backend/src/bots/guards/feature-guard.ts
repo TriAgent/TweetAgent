@@ -12,7 +12,7 @@ export class FeatureGuard implements CanActivate {
     if (!botId || !featureId)
       throw new NotFoundException('Bot or feature ID not provided');
 
-    const feature = await this.prisma.botFeatureConfig.findFirst({
+    const feature = await this.prisma.botFeature.findFirst({
       where: {
         id: featureId,
         botId: botId

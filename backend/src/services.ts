@@ -1,5 +1,5 @@
 import { AiPromptsService } from "./ai-prompts/ai-prompts.service";
-import { BotFeaturesService } from "./bots/bot-features.service";
+import { BotFeatureService } from "./bot-feature/bot-feature.service";
 import { BotsService } from "./bots/bots.service";
 import { LangchainService } from "./langchain/langchain.service";
 import { app } from "./main";
@@ -43,8 +43,8 @@ export const botsService = (): BotsService => {
   return app.get(BotsService);
 }
 
-export const botFeaturesService = (): BotFeaturesService => {
-  return app.get(BotFeaturesService);
+export const botFeatureService = (): BotFeatureService => {
+  return app.get(BotFeatureService);
 }
 
 export const operationHistoryService = (): OperationHistoryService => {

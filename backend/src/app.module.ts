@@ -10,6 +10,7 @@ import { TwitterModule } from './twitter/twitter.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { XaccountsModule } from './xaccounts/xaccounts.module';
 import { XPostsModule } from './xposts/xposts.module';
+import { BotFeatureModule } from './bot-feature/bot-feature.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { XPostsModule } from './xposts/xposts.module';
     AiPromptsModule,
     BotsModule,
     LogsModule,
-    WebsocketsModule
+    WebsocketsModule,
+    BotFeatureModule
   ]
 })
 export class AppModule { }
