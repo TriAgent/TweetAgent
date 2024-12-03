@@ -25,7 +25,7 @@ export class AirdropSnapshotProvider extends BotFeatureProvider<AirdropSnapshotF
     );
   }
 
-  protected getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       snapshotInterval: 24 * 60 * 60 // 1 per day

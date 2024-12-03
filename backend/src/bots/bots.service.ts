@@ -1,6 +1,6 @@
 import { forwardRef, HttpException, Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { AIPrompt, BotFeature, Bot as DBBot, Prisma } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureDTO } from "@x-ai-wallet-bot/common";
 import { Subject } from 'rxjs';
 import { AiPromptsService } from 'src/ai-prompts/ai-prompts.service';
 import { Bot } from 'src/bots/model/bot';
@@ -10,11 +10,11 @@ import { BotsRunnerService } from './bot-runner.service';
 
 const allowedBotUpdateKeys = ["name"];
 const allowedPromptUpdateKeys = ["text"];
-const allowedFeatureUpdateKeys = ["enabled"];
+const allowedFeatureUpdateKeys = ["config"];
 
 export type BotFeatureUpdate = {
   bot: Bot;
-  updatedKey: Exclude<keyof BotFeatureConfigDTO, "id>">;
+  updatedKey: string;
   update: BotFeature;
 }
 
@@ -112,7 +112,7 @@ export class BotsService implements OnApplicationBootstrap {
     return this.prisma.botFeature.findMany({
       where: {
         botId: bot.id,
-        ...(enabledOnly && { enabled: true })
+        ...(enabledOnly && { config: { path: ['enabled'], equals: true } })
       }
     });
   }
@@ -124,15 +124,12 @@ export class BotsService implements OnApplicationBootstrap {
     });
   }
 
-  public async updateBotFeature(currentFeature: BotFeature, updatedFeatureDTO: BotFeatureConfigDTO, key: Exclude<keyof BotFeatureConfigDTO, "id>">) {
+  public async updateBotFeature(currentFeature: BotFeature, updatedFeatureDTO: BotFeatureDTO, key: string) {
     if (!(allowedFeatureUpdateKeys.includes(key)))
       throw new HttpException(`Not allowed to update feature property field ${key}`, 403);
 
     const updateData: Prisma.BotFeatureUpdateArgs["data"] = {};
     updateData[key] = updatedFeatureDTO[key];
-
-    if (key === "enabled")
-      this.logger.warn(`Feature change: ${currentFeature.key} is now ${updatedFeatureDTO[key] ? "enabled" : "disabled"} for bot ${currentFeature.botId}`);
 
     const updatedFeature = await this.prisma.botFeature.update({
       where: { id: currentFeature.id },

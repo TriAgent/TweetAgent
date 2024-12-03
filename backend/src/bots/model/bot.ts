@@ -1,5 +1,6 @@
 import { BotFeatureType, Bot as DBBot, BotFeature as DBBotFeature } from "@prisma/client";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
+import { AppLogger } from "src/logs/app-logger";
 import { aiPromptsService, botFeatureService, botsService, xAccountsService } from "src/services";
 import { BotFeatureUpdate } from "../bots.service";
 
@@ -8,6 +9,7 @@ import { BotFeatureUpdate } from "../bots.service";
  */
 export class Bot {
   private features: AnyBotFeature[] = [];
+  private logger = new AppLogger("Bot");
 
   private constructor(public dbBot: DBBot) {
     botsService().onBotFeatureUpdate$.subscribe(e => this.handleUpdatedFeatureConfig(e));
@@ -22,7 +24,7 @@ export class Bot {
     await botFeatureService().ensureBotRequiredFeatures(bot);
     await aiPromptsService().ensureBotRequiredPrompts(bot);
 
-    const featureConfigs = await bot.getActiveDBFeatures();
+    const featureConfigs = await bot.getAllDBFeatures();
     for (const featureConfig of featureConfigs) {
       await bot.newFeatureFromDBFeature(featureConfig);
     }
@@ -34,8 +36,8 @@ export class Bot {
     return this.dbBot.id;
   }
 
-  public getActiveDBFeatures(): Promise<DBBotFeature[]> {
-    return botsService().getBotFeatures(this.dbBot, true);
+  public getAllDBFeatures(): Promise<DBBotFeature[]> {
+    return botsService().getBotFeatures(this.dbBot, false);
   }
 
   public getActiveFeatures(): AnyBotFeature[] {
@@ -44,6 +46,7 @@ export class Bot {
 
   private async newFeatureFromDBFeature(dbFeature: DBBotFeature) {
     const feature = await botFeatureService().newFromKey(this, dbFeature.key);
+    feature.updateConfig(dbFeature.config as any);
     this.features.push(feature);
   }
 
@@ -60,12 +63,10 @@ export class Bot {
     if (e.bot.id !== this.id)
       return;
 
-    if (e.updatedKey === "enabled") {
-      const isNowEnabled = e.update["enabled"];
-      if (isNowEnabled)
-        await this.newFeatureFromDBFeature(e.update);
-      else
-        this.removeFeature(e.update.key);
+    const feature = this.features.find(f => f.provider.type === e.update.key);
+
+    if (e.updatedKey === "config") {
+      feature.updateConfig(e.update.config as any);
     }
   }
 }

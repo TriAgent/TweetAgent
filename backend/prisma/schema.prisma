@@ -72,9 +72,8 @@ model BotFeature {
   bot   Bot    @relation(fields: [botId], references: [id])
   botId String
 
-  key     BotFeatureType
-  enabled Boolean        @default(false) // All features are disabled by default, until manually started on dashboard
-  config  Json           @default("{}") // Feature-specific json config for the bot
+  key    BotFeatureType
+  config Json           @default("{}") // Feature-specific json config for the bot
 
   @@unique([botId, key])
 }

@@ -1,9 +1,7 @@
-export type BotConfigProviderConfigType = {
-  enabled: boolean; // TODO KO: should be ZOD format
-}
+import { RawZodSchema } from "./zod";
 
-export type BotFeatureProvider<ConfigType extends BotConfigProviderConfigType> = {
+export type BotFeatureProvider = {
   type: string; // BotFeatureType
   description: string;
-  configFormat: ConfigType;
+  configFormat: RawZodSchema;
 }

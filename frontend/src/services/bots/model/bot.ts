@@ -6,9 +6,9 @@ import { notifyDataSaved } from "@services/ui-ux/ui.service";
 import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
 import { BehaviorSubject, Subject } from "rxjs";
+import { BotFeature } from "../../features/model/bot-feature";
 import { setActiveBot } from "../bots.service";
 import { AiPrompt } from "./ai-prompt";
-import { BotFeature } from "./bot-feature";
 
 export class Bot {
   @Expose() public id: string;

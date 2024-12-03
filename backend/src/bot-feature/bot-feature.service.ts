@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { BotFeatureType } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
+import { deepMergeAndPrune } from "src/utils/deep-merge-prune";
 import { Bot } from "../bots/model/bot";
 import { AirdropSenderProvider } from "./features/airdrop-contest/airdrop-sender/airdrop-sender.feature";
 import { AirdropSnapshotProvider } from "./features/airdrop-contest/airdrop-snapshot/airdrop-snapshot.feature";
@@ -72,12 +73,14 @@ export class BotFeatureService {
   }
 
   /**
-   * Ensures all required bot features types are created in database for the given bot
+   * Ensures all required bot features types are created in database for the given bot.
+   * Also ensure to migrate all stored feature config, meaning that invalid properties (recently removed
+   * from the format) are getting deleted, and missing ones (recently added in format) get default values defined.
    */
   public async ensureBotRequiredFeatures(bot: Bot) {
     const requiredBotFeatureTypes = Object.values(BotFeatureType);
     for (const requiredBotFeatureType of requiredBotFeatureTypes) {
-      await this.prisma.botFeature.upsert({
+      const feature = await this.prisma.botFeature.upsert({
         where: {
           botId_key: {
             botId: bot.dbBot.id,
@@ -87,11 +90,22 @@ export class BotFeatureService {
         create: {
           bot: { connect: { id: bot.dbBot.id } },
           key: requiredBotFeatureType,
-          enabled: false,
           config: {}
         },
         update: {}
-      })
+      });
+
+      // Now ensure config quality
+      const provider = this.getFeatureProvider(feature.key);
+      const defaultConfig = provider.getDefaultConfig();
+
+      // Deep merge default config with current user config, and prune removed fields
+      const newConfig = deepMergeAndPrune(defaultConfig, feature.config)
+
+      await this.prisma.botFeature.update({
+        where: { id: feature.id },
+        data: { config: newConfig }
+      });
     }
   }
 }

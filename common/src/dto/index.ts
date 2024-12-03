@@ -8,3 +8,4 @@ export * from "./state";
 export * from "./twitter";
 export * from "./x-account";
 export * from "./x-post";
+export * from "./zod";

@@ -27,7 +27,7 @@ export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterF
     );
   }
 
-  protected getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
@@ -43,10 +43,6 @@ export class XRealNewsFilterFeature extends BotFeature<FeatureConfigType> {
 
   constructor(provider: XRealNewsFilterProvider, bot: Bot) {
     super(provider, bot, 10);
-  }
-
-  public isEnabled(): boolean {
-    return BotConfig.NewsSummaryBot.IsActive;
   }
 
   public scheduledExecution() {

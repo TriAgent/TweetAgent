@@ -4,7 +4,6 @@ import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
 import { Bot } from "src/bots/model/bot";
-import { BotConfig } from "src/config/bot-config";
 import { AppLogger } from "src/logs/app-logger";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { infer as zodInfer } from "zod";
@@ -26,7 +25,7 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
     );
   }
 
-  protected getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
@@ -48,10 +47,6 @@ export class XPostContestHandlerFeature extends BotFeature<FeatureConfigType> {
 
   constructor(provider: XPostContestHandlerProvider, bot: Bot) {
     super(provider, bot, 5);
-  }
-
-  public isEnabled(): boolean {
-    return BotConfig.AirdropContest.IsActive;
   }
 
   async studyReplyToXPost(post: XPostWithAccount): Promise<XPostReplyAnalysisResult> {

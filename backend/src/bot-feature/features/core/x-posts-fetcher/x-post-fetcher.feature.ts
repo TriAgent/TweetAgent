@@ -1,7 +1,7 @@
 import { BotFeatureType, OperationHistoryType } from '@prisma/client';
 import moment from 'moment';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
-import { BotFeatureProviderConfigBase, BotFeatureProvider } from 'src/bot-feature/model/bot-feature-provider';
+import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
 import { BotConfig } from 'src/config/bot-config';
 import { AppLogger } from 'src/logs/app-logger';
@@ -28,7 +28,7 @@ export class XPostsFetcherProvider extends BotFeatureProvider<XPostFetcherFeatur
     );
   }
 
-  protected getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day

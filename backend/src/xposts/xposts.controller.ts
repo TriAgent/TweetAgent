@@ -17,8 +17,6 @@ export class XPostsController {
     if (!bot)
       throw new HttpException(`Bot not found`, 404);
 
-    console.log("get post id ", postId)
-
     return this.xPosts.getXPostByTwitterPostId(bot, postId);
   }
 

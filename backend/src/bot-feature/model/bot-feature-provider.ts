@@ -4,7 +4,7 @@ import { z, infer as zodInfer } from "zod";
 import { BotFeature } from "./bot-feature";
 
 export const BotFeatureProviderConfigBase = z.object({
-  enabled: z.boolean().describe("xxxxxx")
+  enabled: z.boolean().describe("Whether to run this service or not")
 }).strict();
 
 export type BotFeatureConfigBase = zodInfer<typeof BotFeatureProviderConfigBase>;
@@ -21,7 +21,7 @@ export abstract class BotFeatureProvider<FeatureType extends BotFeature<any>, Co
     return this.instanceBuilder(bot);
   }
 
-  protected abstract getDefaultConfig(): Required<zodInfer<ConfigFormat>>;
+  public abstract getDefaultConfig(): Required<zodInfer<ConfigFormat>>;
 }
 
 export type AnyBotFeatureProvider = BotFeatureProvider<any, any>;

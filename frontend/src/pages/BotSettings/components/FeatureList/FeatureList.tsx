@@ -1,56 +1,95 @@
-import { Checkbox, FormControlLabel, Grid, Stack } from "@mui/material";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from "@mui/material";
 import { Bot } from "@services/bots/model/bot";
-import { BotFeature } from "@services/bots/model/bot-feature";
 import { friendlyFeatureKey } from "@services/features/features.service";
 import { useFeatureProviders } from "@services/features/hooks/useFeatureProviders";
+import { BotFeatureProvider } from "@services/features/model/bot-feature-provider";
 import { useBehaviorSubject } from "@services/ui-ux/hooks/useBehaviorSubject";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
+import { FeatureConfigEditor } from '../FeatureConfigEditor/FeatureConfigEditor';
 
 export const FeatureList: FC<{
   bot: Bot;
 }> = ({ bot }) => {
-  const features = useBehaviorSubject(bot.features$);
   const providers = useFeatureProviders();
-
-  console.log("providers", providers)
+  const [expandedAccordionId, setExpandedAccordionId] = useState<string>('');
 
   return <Stack direction="column" width="100%" pt={2}>
-    <Grid container>
-      {
-        features?.map((feature, i) => <FeatureCheckbox key={i} feature={feature} />)
-      }
-    </Grid>
+    {
+      providers?.map((provider, i) => <FeatureComponent
+        key={i}
+        bot={bot}
+        provider={provider}
+        expandedAccordionId={expandedAccordionId}
+        onAccordionChange={(isExpanded) => setExpandedAccordionId(isExpanded ? provider.type : undefined)} />)
+    }
   </Stack>
 }
 
-const FeatureCheckbox: FC<{
-  feature: BotFeature
-}> = ({ feature }) => {
-  const [enabled, setEnabled] = useState(feature.enabled);
+const FeatureComponent: FC<{
+  //feature: BotFeature;
+  bot: Bot;
+  provider: BotFeatureProvider;
+  expandedAccordionId: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onAccordionChange: (isExpanded: boolean) => void;
+}> = ({ bot, provider, expandedAccordionId, onAccordionChange }) => {
+  const features = useBehaviorSubject(bot.features$);
+  const feature = useMemo(() => features?.find(feature => feature.key === provider.type), [features, provider]);
   const name = useMemo(() => {
     return friendlyFeatureKey(feature?.key);
   }, [feature.key]);
+  //const [enabled, setEnabled] = useState(feature.enabled);
 
-  const handleValueChange = useCallback((checked: boolean) => {
+  /* const handleValueChange = useCallback((checked: boolean) => {
     feature.enabled = checked;
     feature.updateProperty("enabled");
     setEnabled(checked);
-  }, [feature]);
+  }, [feature]); */
 
   // For active bot changes
-  useEffect(() => {
-    setEnabled(feature.enabled);
-  }, [feature.enabled]);
+  // useEffect(() => {
+  //   setEnabled(feature.enabled);
+  // }, [feature.enabled]);
+
+  const handleConfigChange = useCallback((newConfig: any) => {
+    feature.config = newConfig;
+    feature.updateProperty("config");
+  }, [feature]);
+
+  const handleAccordionChange = useCallback((e: any, isExpanded: boolean) => {
+    onAccordionChange(isExpanded);
+  }, [onAccordionChange]);
+
+  if (!feature)
+    return null;
 
   return <>
-    <Grid item xs={6}>
+    <Accordion expanded={expandedAccordionId === feature.key} onChange={handleAccordionChange}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography style={{ textTransform: "capitalize", opacity: feature.config.enabled ? 1 : 0.5 }}>{name}</Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        {/* <Checkbox
+          //checked={enabled}
+          onChange={e => handleValueChange(e.target.checked)} /> */}
+        {/* <DebouncedTextField
+          multiline
+          label={feature.key}
+          defaultValue={feature.key}
+          style={{ width: "100%" }}
+          onChange={value => handleValueChange(feature, value)}
+        /> */}
+
+        <FeatureConfigEditor provider={provider} feature={feature} onChange={handleConfigChange} />
+      </AccordionDetails>
+    </Accordion>
+    {/* <Grid item xs={6}>
       <FormControlLabel
         control={
-          <Checkbox
-            checked={enabled}
-            onChange={e => handleValueChange(e.target.checked)} />
+          
         }
         label={name} />
-    </Grid>
+    </Grid> */}
   </>
 }

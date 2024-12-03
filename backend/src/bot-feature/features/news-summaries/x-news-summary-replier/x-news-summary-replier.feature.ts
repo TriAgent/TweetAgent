@@ -3,7 +3,6 @@ import { BotFeatureType } from "@prisma/client";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
 import { Bot } from "src/bots/model/bot";
-import { BotConfig } from "src/config/bot-config";
 import { AppLogger } from "src/logs/app-logger";
 import { xPostsService } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
@@ -33,7 +32,7 @@ export class XNewsSummaryReplierProvider extends BotFeatureProvider<XNewsSummary
     );
   }
 
-  protected getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
@@ -57,10 +56,6 @@ export class XNewsSummaryReplierFeature extends BotFeature<FeatureConfigType> {
 
   constructor(provider: XNewsSummaryReplierProvider, bot: Bot) {
     super(provider, bot, ProduceRepliesCheckDelaySec);
-  }
-
-  public isEnabled(): boolean {
-    return BotConfig.NewsSummaryBot.IsActive;
   }
 
   /**

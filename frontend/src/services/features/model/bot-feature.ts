@@ -8,7 +8,7 @@ export class BotFeature {
   @Expose() public id: string;
   @Expose() public botId: string;
   @Expose() public key: string;
-  @Expose() public enabled: boolean;
+  @Expose() public config: any;
 
   /**
    * Updates one of the root properties

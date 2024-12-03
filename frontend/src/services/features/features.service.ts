@@ -10,7 +10,7 @@ export const activeFeatureAction$ = new BehaviorSubject<ActiveFeature>(undefined
 export const botFeatureProviders$ = new BehaviorSubject<BotFeatureProvider[]>(undefined);
 
 const fetchBotFeatureProviders = async () => {  
-  const rawProviders = await apiGet<BotFeatureProviderDTO<any>[]>(`${backendUrl}/bot-features/providers`);
+  const rawProviders = await apiGet<BotFeatureProviderDTO[]>(`${backendUrl}/bot-features/providers`);
   if (rawProviders) {
     const providers = plainToInstance(BotFeatureProvider, rawProviders, {excludeExtraneousValues: true});
     console.log("Got feature providers:", providers);

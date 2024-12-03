@@ -4,7 +4,6 @@ import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
-import { BotConfig } from "src/config/bot-config";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma } from "src/services";
 import { infer as zodInfer } from "zod";
@@ -27,7 +26,7 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
     );
   }
 
-  protected getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
@@ -48,10 +47,6 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
 
   constructor(provider: XPostContestReposterProvider, bot: Bot) {
     super(provider, bot, 20);
-  }
-
-  public isEnabled(): boolean {
-    return BotConfig.AirdropContest.IsActive;
   }
 
   async scheduledExecution() {

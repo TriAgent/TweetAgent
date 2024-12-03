@@ -7,7 +7,6 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
-import { BotConfig } from "src/config/bot-config";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
@@ -35,7 +34,7 @@ export class XNewsSummaryWriterProvider extends BotFeatureProvider<XNewsSummaryW
     );
   }
 
-  protected getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
@@ -52,10 +51,6 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
 
   constructor(provider: XNewsSummaryWriterProvider, bot: Bot) {
     super(provider, bot, PostXSummaryDelaySec);
-  }
-
-  public isEnabled(): boolean {
-    return BotConfig.NewsSummaryBot.IsActive;
   }
 
   public scheduledExecution() {

@@ -57,6 +57,14 @@ export abstract class BotFeature<ConfigType extends BotFeatureConfigBase> {
   public updateLastExecutionTime() {
     this.lastExecutionTime = Date.now();
   }
+
+  /**
+   * Called by other services when some of the feature configurations gets modified, 
+   * for example from the dashboard.
+   */
+  public updateConfig(config: ConfigType) {
+    this.config = config;
+  }
 }
 
 export type AnyBotFeature = BotFeature<BotFeatureConfigBase>;

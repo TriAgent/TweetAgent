@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { BotFeatureProvider } from '@x-ai-wallet-bot/common';
+import { BotFeatureProvider, RawZodSchema } from '@x-ai-wallet-bot/common';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { BotFeatureService } from './bot-feature.service';
 
@@ -10,12 +10,12 @@ export class BotFeatureController {
   ) { }
 
   @Get('providers')
-  public async getBotFeatureProviders(): Promise<BotFeatureProvider<any>[]> {
+  public async getBotFeatureProviders(): Promise<BotFeatureProvider[]> {
     const providers = await this.botFeatureService.getFeatureProviders();
     return providers.map(fp => ({
       type: fp.type,
       description: fp.description,
-      configFormat: zodToJsonSchema(fp.configFormat)
+      configFormat: zodToJsonSchema(fp.configFormat) as RawZodSchema
     }));
   }
 }
