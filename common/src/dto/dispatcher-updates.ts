@@ -1,6 +1,7 @@
 import { ActiveFeature } from "./feature";
 import { Log } from "./log";
 import { State } from "./state";
+import { XPost } from "./x-post";
 
 export type DispatcherUpdate<Op, DataType> = {
   op: Op;
@@ -15,5 +16,10 @@ export type ReadyUpdate = DispatcherUpdate<"ready", null>;
 export type StateUpdate = DispatcherUpdate<"state", State>;
 
 export type LogUpdate = DispatcherUpdate<"log", Log>;
+
+/**
+ * Post created or modified
+ */
+export type XPostUpdate = DispatcherUpdate<"xpost", XPost>;
 
 export type ActiveFeatureUpdate = DispatcherUpdate<"active-feature", ActiveFeature>;

@@ -1,7 +1,7 @@
 import { StructuredTool, tool } from "@langchain/core/tools";
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
-import { prisma } from "src/services";
+import { xPostsService } from "src/services";
 import { z } from "zod";
 
 export const categorizeNewsTool = (logger: Logger, post: XPost): StructuredTool => {
@@ -9,10 +9,7 @@ export const categorizeNewsTool = (logger: Logger, post: XPost): StructuredTool 
     async ({ text, isNews }: { text: string, isNews: boolean }) => {
       logger.log(`Categorizing tweet as ${isNews ? "REAL NEWS" : "NOT REAL NEWS"}: ${text}`);
 
-      await prisma().xPost.update({
-        where: { id: post.id },
-        data: { isRealNews: isNews }
-      });
+      await xPostsService().updatePost(post.id, { isRealNews: isNews });
     },
     {
       name: "save_categorization",

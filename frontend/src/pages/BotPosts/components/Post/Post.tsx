@@ -1,5 +1,5 @@
 import { PostWriterModalContext } from "@components/modals/PostWriterModal/PostWriterModal";
-import { Check, Close, Comment, Repeat, Star } from "@mui/icons-material";
+import { Comment, Repeat, Star } from "@mui/icons-material";
 import { Icon, IconButton, Stack } from "@mui/material";
 import { useActiveBot } from "@services/bots/hooks/useActiveBot";
 import { usePostByXPostId } from "@services/posts/hooks/usePost";
@@ -7,7 +7,8 @@ import { XPost } from "@services/posts/model/x-post";
 import { formatDate } from "@utils/dates";
 import { FC, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { HeaderSecondaryLabel, HeaderUserNameLabel, PostSubInfo, PostTextContainer, QuotedPostContainer, RepliedToLabel } from "./Post.styles";
+import { PostTags } from "../PostTags/PostTags";
+import { HeaderSecondaryLabel, HeaderUserNameLabel, PostTextContainer, QuotedPostContainer, RepliedToLabel } from "./Post.styles";
 
 export const Post: FC<{
   post: XPost;
@@ -19,8 +20,6 @@ export const Post: FC<{
   const parentPost = usePostByXPostId(post.parentPostId);
   const quotedPost = usePostByXPostId(post.quotedPostId);
   const botIsAuthor = post.xAccountUserId === activeBot.twitterUserId;
-
-  console.log("quotedPost", post.quotedPostId, quotedPost)
 
   const handlePostClicked = useCallback((post: XPost) => {
     navigate(`/bot/posts/${post.id}`);
@@ -70,18 +69,7 @@ export const Post: FC<{
           <Repeat />
         </IconButton>
 
-        <Stack ml={5} alignItems="center">
-          <Icon>{post.wasReplyHandled ? <Check /> : <Close />}</Icon>
-          <PostSubInfo>{post.wasReplyHandled ? "Reply handled" : "Reply not handled"}</PostSubInfo>
-        </Stack>
-        <Stack alignItems="center">
-          <Icon>{!post.isSimulated ? <Check /> : <Close />}</Icon>
-          <PostSubInfo>{!post.isSimulated ? "Real post" : "Simulated post"}</PostSubInfo>
-        </Stack>
-        <Stack alignItems="center">
-          <Icon>{!post.isSimulated && post.publishedAt ? <Check /> : <Close />}</Icon>
-          <PostSubInfo>{!post.isSimulated && post.publishedAt ? "Published" : "Not published"}</PostSubInfo>
-        </Stack>
+        <PostTags post={post} />
       </Stack>
     }
   </Stack>

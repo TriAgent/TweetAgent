@@ -40,6 +40,7 @@ export class WebsocketProxy {
           // nothing 
           break;
         case "log":
+        case "xpost":
         case "active-feature":
           // case "state":
           //   const stateUpdate = message as StateUpdate;

@@ -2,7 +2,7 @@ import { BotFeatureType, Bot as DBBot, BotFeature as DBBotFeature } from "@prism
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { AppLogger } from "src/logs/app-logger";
 import { aiPromptsService, botFeatureService, botsService, xAccountsService } from "src/services";
-import { BotFeatureUpdate } from "../bots.service";
+import { BotFeatureUpdate, BotUpdate } from "../bots.service";
 
 /**
  * High level class helper on top of database's Bot type.
@@ -12,6 +12,7 @@ export class Bot {
   private logger = new AppLogger("Bot");
 
   private constructor(public dbBot: DBBot) {
+    botsService().onBotUpdate$.subscribe(e => this.handleBotUpdate(e));
     botsService().onBotFeatureUpdate$.subscribe(e => this.handleUpdatedFeatureConfig(e));
   }
 
@@ -54,6 +55,14 @@ export class Bot {
     const index = this.features.findIndex(f => f.provider.type === type);
     if (index >= 0)
       this.features.splice(index);
+  }
+
+  private async handleBotUpdate(e: BotUpdate) {
+    if (e.bot.id !== this.id)
+      return;
+
+    // Update reference to latest DB content (eg: twitter linked account)
+    this.dbBot = e.update;
   }
 
   /**

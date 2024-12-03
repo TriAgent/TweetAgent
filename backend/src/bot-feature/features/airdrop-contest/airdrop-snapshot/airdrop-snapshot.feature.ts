@@ -10,7 +10,8 @@ import { PostStats } from "src/xposts/model/post-stats";
 import { z, infer as zodInfer } from "zod";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  snapshotInterval: z.number().describe('Delay (seconds) between 2 airdrop snapshots'),
+  gatherStatsInterval: z.number().describe('Delay (seconds) after which we gather our quote post stats to how to split airdrop tokens')
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -28,7 +29,8 @@ export class AirdropSnapshotProvider extends BotFeatureProvider<AirdropSnapshotF
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
-      snapshotInterval: 24 * 60 * 60 // 1 per day
+      snapshotInterval: 24 * 60 * 60, // 1 per day
+      gatherStatsInterval: 7 * 24 * 60 * 60, // check results after 7 days
     }
   }
 }
@@ -47,14 +49,19 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
   }
 
   async scheduledExecution() {
-    // Ensure most recent airdrop is more than 24h ago
+    // No twitter account bound
+    if (!this.bot.dbBot.twitterUserId)
+      return;
+
+    // Ensure most recent airdrop is more than X time ago
+    const minSecondsSinceLastSnapshot = this.config.snapshotInterval;
     const mostRecentAirdrop = await prisma().contestAirdrop.findFirst({ orderBy: { createdAt: "desc" } });
-    if (mostRecentAirdrop && moment().diff(mostRecentAirdrop.createdAt, "hours") < BotConfig.AirdropContest.MinHoursBetweenAirdrops)
+    if (mostRecentAirdrop && moment().diff(mostRecentAirdrop.createdAt, "seconds") < minSecondsSinceLastSnapshot)
       return;
 
     // Get the list of contest posts (quote posts, not quoted) posted between 7 and 8 days ago
-    const eligibleEndDate = moment().subtract(BotConfig.AirdropContest.DaysBeforeStatCollection, "days");
-    const eligibleStartate = eligibleEndDate.clone().subtract(BotConfig.AirdropContest.MinHoursBetweenAirdrops, "hours");
+    const eligibleEndDate = moment().subtract(this.config.gatherStatsInterval, "seconds");
+    const eligibleStartate = eligibleEndDate.clone().subtract(minSecondsSinceLastSnapshot, "seconds");
     const eligiblePosts = await prisma().xPost.findMany({
       where: {
         botId: this.bot.id,

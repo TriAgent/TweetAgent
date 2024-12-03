@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { Bot as DBBot, XPost } from '@prisma/client';
+import { Bot as DBBot, Prisma, XPost } from '@prisma/client';
 import { XPostCreationDTO } from '@x-ai-wallet-bot/common';
 import moment from 'moment';
 import { BotsService } from 'src/bots/bots.service';
@@ -8,11 +8,24 @@ import { BotConfig } from 'src/config/bot-config';
 import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterService } from 'src/twitter/twitter.service';
+import { DispatcherService } from 'src/websockets/dispatcher.service';
 import { XAccountsService } from 'src/xaccounts/xaccounts.service';
 import { TweetV2 } from 'twitter-api-v2';
 import { v4 as uuidV4 } from "uuid";
 import { ConversationTree } from './model/conversation-tree';
 import { PostStats } from './model/post-stats';
+import { XPostWithAccount } from './model/xpost-with-account';
+
+export type OptionalPostCreationInputs = {
+  postId?: string;
+  publishRequestAt?: Date;
+  publishedAt?: Date;
+  isSimulated?: boolean;
+  parentPostId?: string;
+  quotedPostId?: string;
+  contestQuotedPostId?: string;
+  wasReplyHandled?: boolean;
+}
 
 /**
  * Service that provides generic features for X (twitter) posts management.
@@ -27,6 +40,7 @@ export class XPostsService {
     private prisma: PrismaService,
     private twitter: TwitterService,
     private xAccounts: XAccountsService,
+    private dispatcher: DispatcherService,
     @Inject(forwardRef(() => BotsService)) private botsService: BotsService
   ) { }
 
@@ -139,32 +153,24 @@ export class XPostsService {
       // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
       if (createdTweets && createdTweets.length > 0) {
         const rootTweet = createdTweets[0];
-        await this.prisma.xPost.update({
-          where: { id: postToSend.id },
-          data: {
-            bot: { connect: { id: bot.dbBot.id } },
-            text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
-            postId: rootTweet.postId,
-            publishedAt: new Date(),
-            xAccount: { connect: { userId: botXAccount.userId } },
-            wasReplyHandled: true // directly mark has handled post, as this is our own post
-          }
+        await this.updatePost(postToSend.id, {
+          bot: { connect: { id: bot.dbBot.id } },
+          text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
+          postId: rootTweet.postId,
+          publishedAt: new Date(),
+          xAccount: { connect: { userId: botXAccount.userId } },
+          wasReplyHandled: true // directly mark has handled post, as this is our own post
         });
 
         // Create child xPosts if needed
         let parentPostId = rootTweet.postId;
         for (var tweet of createdTweets.slice(1)) {
-          await this.prisma.xPost.create({
-            data: {
-              bot: { connect: { id: bot.dbBot.id } },
-              publishedAt: new Date(),
-              xAccount: { connect: { userId: botXAccount.userId } },
-              text: tweet.text,
-              postId: tweet.postId,
-              parentPostId: parentPostId,
-              wasReplyHandled: true, // directly mark has handled post, as this is our own post
-              isSimulated: postToSend.isSimulated
-            }
+          await this.createPost(bot.dbBot, botXAccount.userId, tweet.text, {
+            publishedAt: new Date(),
+            postId: tweet.postId,
+            parentPostId: parentPostId,
+            wasReplyHandled: true, // directly mark has handled post, as this is our own post
+            isSimulated: postToSend.isSimulated
           });
 
           parentPostId = tweet.postId;
@@ -176,11 +182,53 @@ export class XPostsService {
     }
   }
 
-  public async markAsReplied(xPost: XPost) {
-    await this.prisma.xPost.update({
-      where: { id: xPost.id },
-      data: { wasReplyHandled: true }
+  /**
+   * Creates a new post in database.
+   * Post is not split yes, can be longer than just one tweet. Will be split later
+   * when (if) publishing.
+   */
+  public async createPost(bot: DBBot, xAccountId: string, text: string, optValues?: OptionalPostCreationInputs): Promise<XPostWithAccount> {
+    const createData: Prisma.XPostCreateArgs["data"] = {
+      bot: { connect: { id: bot.id } },
+      xAccount: { connect: { userId: xAccountId } },
+      text: text
+    }
+
+    if (optValues?.postId) createData.postId = optValues?.postId;
+    if (optValues?.publishRequestAt) createData.publishRequestAt = optValues?.publishRequestAt;
+    if (optValues?.publishedAt) createData.publishedAt = optValues?.publishedAt;
+    if (optValues?.isSimulated) createData.isSimulated = optValues?.isSimulated;
+    if (optValues?.parentPostId) createData.parentPostId = optValues?.parentPostId;
+    if (optValues?.quotedPostId) createData.quotedPostId = optValues?.quotedPostId;
+    if (optValues?.contestQuotedPostId) createData.contestQuotedPost = { connect: { id: optValues?.contestQuotedPostId } };
+
+    const post = await this.prisma.xPost.create({
+      data: createData,
+      include: {
+        xAccount: true
+      }
     });
+
+    this.emitPostWSUpdate(post);
+
+    return post;
+  }
+
+  public async updatePost(id: string, data: Prisma.XPostUpdateArgs["data"]): Promise<XPostWithAccount> {
+    const updatedPost = await this.prisma.xPost.update({
+      where: { id },
+      data,
+      include: {
+        xAccount: true
+      }
+    });
+    this.emitPostWSUpdate(updatedPost);
+
+    return updatedPost;
+  }
+
+  public markAsReplied(xPost: XPost) {
+    return this.updatePost(xPost.id, { wasReplyHandled: true });
   }
 
   /**
@@ -207,18 +255,14 @@ export class XPostsService {
           const xAccount = await this.xAccounts.ensureXAccount(bot, post.author_id);
 
           // Save post to database
-          const dbPost = await this.prisma.xPost.create({
-            data: {
-              bot: { connect: { id: bot.dbBot.id } },
-              text: post.text,
-              xAccount: { connect: { userId: xAccount.userId } },
-              postId: post.id,
-              publishedAt: post.created_at,
-              parentPostId,
-              quotedPostId,
-              isSimulated: false // coming from X api
-            }
+          const dbPost = await this.createPost(bot.dbBot, xAccount.userId, post.text, {
+            postId: post.id,
+            publishedAt: new Date(post.created_at),
+            parentPostId,
+            quotedPostId,
+            isSimulated: false // coming from X api
           });
+
           newPosts.push(dbPost);
         }
       }
@@ -275,20 +319,16 @@ export class XPostsService {
    * on twitter posts/fetches.
    */
   public createManualPost(bot: DBBot, postCreationInput: XPostCreationDTO): Promise<XPost> {
-    return this.prisma.xPost.create({
-      data: {
-        bot: { connect: { id: bot.id } },
-        publishedAt: new Date(), // Considered as published
-        xAccount: { connect: { userId: postCreationInput.xAccountUserId } },
-        text: postCreationInput.text,
-        postId: `simulated-${uuidV4()}`,
-        isSimulated: true,
-        ...(postCreationInput.parentPostId && { parentPostId: postCreationInput.parentPostId }),
-        ...(postCreationInput.quotedPostId && { quotedPostId: postCreationInput.quotedPostId }),
-      },
-      include: {
-        xAccount: true
-      }
+    return this.createPost(bot, postCreationInput.xAccountUserId, postCreationInput.text, {
+      publishedAt: new Date(), // Considered as published
+      postId: `simulated-${uuidV4()}`,
+      isSimulated: true,
+      parentPostId: postCreationInput.parentPostId,
+      quotedPostId: postCreationInput.quotedPostId,
     });
+  }
+
+  public emitPostWSUpdate(post: XPostWithAccount) {
+    this.dispatcher.emitPost(post);
   }
 }

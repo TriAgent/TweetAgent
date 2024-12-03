@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { Log } from "@prisma/client";
-import { ActiveFeatureUpdate, DispatcherUpdate, LogType, LogUpdate, State, StateUpdate } from "@x-ai-wallet-bot/common";
+import { BotFeatureType, Log } from "@prisma/client";
+import { ActiveFeatureUpdate, DispatcherUpdate, LogType, LogUpdate, State, StateUpdate, XPostUpdate } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { Bot } from "src/bots/model/bot";
+import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { WebsocketsGateway } from "./websockets.gateway";
 
 /**
@@ -31,11 +32,21 @@ export class DispatcherService {
     this.emit<LogUpdate>(`log`, { op: "log", data: logDto });
   }
 
+  public emitPost(post: XPostWithAccount) {
+    const postDto = {
+      ...post,
+      createdAt: post.createdAt.toISOString(),
+      publishRequestAt: post.publishRequestAt?.toISOString(),
+      publishedAt: post.publishedAt?.toISOString(),
+    };
+    this.emit<XPostUpdate>(`xpost`, { op: "xpost", data: postDto });
+  }
+
   public emitMostRecentFeatureAction(bot: Bot, feature: AnyBotFeature, method: string) {
     this.emit<ActiveFeatureUpdate>(`log`, {
       op: "active-feature", data: {
         botId: bot.id,
-        key: feature.provider.type,
+        key: BotFeatureType[feature.provider.type as keyof BotFeatureType],
         method,
         date: moment().toISOString()
       }

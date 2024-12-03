@@ -1,24 +1,21 @@
 BOTS / FEATURES rework:
-- ability to customize PER BOT feature CONFIG:
-  - eg: delay for airdrop snapshot to happen
-  - delay for elected posts to happen
-  - TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
+- bug: "enabled" features are not checked after page reload
+- show post tags for "contest post"
+- websockets for "new post" + update posts list with this post if relevant
+
+- short term goal:
+  - be able to create posts manually and quickly see dev bot airdrop results.
+
 - TBD: menu to show airdrop contests? (list of elected posts? airdrop transactions? reposted posts?)
-- TBD: show "for contest" on posts?
-- TBD: show "is contest repost" on posts?
-- TBD: show post "published" or not (so we can see unpublished posts too)
 
 P2:
+- TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
 - posts list : pagination and auto fetch more
 - ability to define introduction text to features and display them on UI
 - bug: X fetcher should not try to auth if no twitter account bound
-- bug: after twitter auth. backend bot db instance not updated with twitter auth info
 - bug: bot list name not changing when bot name changes in settings
 - don't call xpost.create from everywhere: centralize one method in xposts service
-- bot features: load all features even if disabled, instead of loading on demand?
-- websockets for "new post" + update posts list with this post if relevant
 - move env setting "publish on x" as a UI bot setting
-- UI: save and restore last used bot
 
 AIRDROPS:
 - New features: 

@@ -10,7 +10,7 @@ import { Bot } from "src/bots/model/bot";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
-import { aiPromptsService, langchainService, prisma } from "src/services";
+import { aiPromptsService, langchainService, xPostsService } from "src/services";
 import { infer as zodInfer } from "zod";
 import { botPersonalityPromptChunk } from "../../../../bots/model/prompt-parts/news-summary";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
@@ -111,20 +111,14 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
    */
   private async createNewsSummaryForX(tweetContent: string, docs: SummaryDocument[]): Promise<void> {
     // Create draft
-    const dbPost = await prisma().xPost.create({
-      data: {
-        publishRequestAt: new Date(),
-        text: tweetContent,
-        xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
-        bot: { connect: { id: this.bot.dbBot.id } },
-      }
+    const dbPost = await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, tweetContent, {
+      publishRequestAt: new Date(),
     });
 
     // Mark source posts as used/summarized
-    await prisma().xPost.updateMany({
-      where: { id: { in: docs.map(d => d.metadata.id) } },
-      data: { summarizedById: dbPost.id }
-    });
+    for (const id of docs.map(d => d.metadata.id)) {
+      await xPostsService().updatePost(id, { summarizedById: dbPost.id });
+    }
   }
 }
 

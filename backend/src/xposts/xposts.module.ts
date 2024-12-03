@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { BotsModule } from 'src/bots/bots.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { TwitterModule } from 'src/twitter/twitter.module';
+import { WebsocketsModule } from 'src/websockets/websockets.module';
 import { XaccountsModule } from 'src/xaccounts/xaccounts.module';
 import { XPostsController } from './xposts.controller';
 import { XPostsService } from './xposts.service';
@@ -17,6 +18,7 @@ import { XPostsService } from './xposts.service';
     PrismaModule,
     TwitterModule,
     XaccountsModule,
+    WebsocketsModule,
     forwardRef(() => BotsModule)
   ],
   controllers: [

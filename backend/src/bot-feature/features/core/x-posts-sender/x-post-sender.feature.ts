@@ -16,7 +16,7 @@ export class XPostsSenderProvider extends BotFeatureProvider<XPostSenderFeature,
   constructor() {
     super(
       BotFeatureType.Core_XPostsSender,
-      `Send our pending posts/replies to X`,
+      `Sends our pending posts/replies to X`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostSenderFeature(this, bot)
     );

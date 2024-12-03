@@ -4,6 +4,7 @@ import { ArrowBack } from "@mui/icons-material";
 import { Divider, IconButton, List, ListItem, Stack } from "@mui/material";
 import { useActiveBot } from "@services/bots/hooks/useActiveBot";
 import { XPost } from "@services/posts/model/x-post";
+import { onPostUpdate$ } from "@services/posts/posts.service";
 import { XAccount } from "@x-ai-wallet-bot/common";
 import { FC, useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -28,14 +29,31 @@ const BotPosts: FC = () => {
     });
   }, [activeBot, postId]);
 
+  // useEffect(() => {
+  //   const sub = activeBot?.onNewPost$.subscribe(post => {
+  //     if (post.parentPostId == rootPost?.postId)
+  //       setPosts([post, ...posts]);
+  //   });
+
+  //   return () => sub?.unsubscribe();
+  // }, [activeBot, posts, rootPost]);
+
+  // React on new post or post content update
   useEffect(() => {
-    const sub = activeBot?.onNewPost$.subscribe(post => {
-      if (post.parentPostId == rootPost?.postId)
-        setPosts([post, ...posts]);
+    const sub = onPostUpdate$.subscribe(newPost => {
+      // Only handle posts for current bot
+      if (newPost.botId !== activeBot.id)
+        return;
+
+      // Delete post from current list if existing. Then re-add in any case.
+      const newPosts: XPost[] = posts?.filter(p => p.id !== newPost.id);
+      newPosts.push(newPost);
+      newPosts.sort((p1, p2) => p2.createdAt.getTime() - p1.createdAt.getTime());
+      setPosts(newPosts);
     });
 
     return () => sub?.unsubscribe();
-  }, [activeBot, posts, rootPost]);
+  })
 
   return (
     <>

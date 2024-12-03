@@ -25,7 +25,10 @@ export const Logs: FC = () => {
 
   return (
     <div ref={logsRef} style={{ backgroundColor: '#242424', height: "100%", overflowY: "auto", padding: 10 }}>
-      <Console logs={logs} variant="dark" />
+      <Console logs={logs} variant="dark" styles={{
+        LOG_COLOR: "#fff",
+        BASE_FONT_SIZE: 14
+      }} />
     </div>
   )
 }

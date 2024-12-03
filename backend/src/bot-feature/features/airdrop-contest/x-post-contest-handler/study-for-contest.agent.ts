@@ -1,10 +1,10 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
-import { aiPromptsService, langchainService, prisma, xPostsService } from "src/services";
+import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
+import { aiPromptsService, langchainService, xPostsService } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
 import { contestHandlerStateAnnotation } from "./x-post-contest-handler.feature";
-import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 
 /**
  * Determines if the post is worth being part of the airdrop contest or not, 
@@ -86,12 +86,9 @@ export const studyForContestAgent = (feature: AnyBotFeature, logger: Logger, pos
     }
 
     // Save worth for contest info into post.
-    await prisma().xPost.update({
-      where: { id: postEvaluatedForContest.id },
-      data: {
-        worthForAirdropContest: state.isWorthForContest,
-        contestMentioningPost: { connect: { id: targetMentioningPost.id } }
-      }
+    await xPostsService().updatePost(postEvaluatedForContest.id, {
+      worthForAirdropContest: state.isWorthForContest,
+      contestMentioningPost: { connect: { id: targetMentioningPost.id } }
     });
 
     return state;

@@ -1,8 +1,8 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
+import { isNullOrUndefined } from "@x-ai-wallet-bot/common";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { aiPromptsService, langchainService } from "src/services";
-import { isNullOrUndefined } from "src/utils/is-null-or-undefined";
 import { z } from "zod";
 import { updateAirdropAddressTool } from "./update-airdrop-address.tool";
 import { airdropAddressStateAnnotation } from "./x-post-airdrop-address.feature";

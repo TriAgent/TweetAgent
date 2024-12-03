@@ -12,6 +12,14 @@ const allowedBotUpdateKeys = ["name"];
 const allowedPromptUpdateKeys = ["text"];
 const allowedFeatureUpdateKeys = ["config"];
 
+/**
+ * One of the bot properties has been updated
+ */
+export type BotUpdate = {
+  bot: Bot;
+  update: DBBot;
+}
+
 export type BotFeatureUpdate = {
   bot: Bot;
   updatedKey: string;
@@ -25,6 +33,7 @@ export class BotsService implements OnApplicationBootstrap {
   private bots: Bot[] = [];
 
   public onNewBot$ = new Subject<Bot>();
+  public onBotUpdate$ = new Subject<BotUpdate>();
   public onBotFeatureUpdate$ = new Subject<BotFeatureUpdate>();
 
   constructor(
@@ -75,17 +84,24 @@ export class BotsService implements OnApplicationBootstrap {
     return this.bots.find(bot => bot.dbBot.id === id);
   }
 
-  public updateBot(bot: BotDTO, key: string) {
+  public async updateBot(bot: BotDTO, key: string) {
     if (!(allowedBotUpdateKeys.includes(key)))
       throw new HttpException(`Not allowed to update field bot property ${key}`, 403);
 
     const updateData: Prisma.BotUpdateArgs["data"] = {};
     updateData[key] = bot[key];
 
-    return this.prisma.bot.update({
+    const updatedBot = await this.prisma.bot.update({
       where: { id: bot.id },
       data: updateData
     });
+
+    this.onBotUpdate$.next({
+      bot: this.getBotById(bot.id),
+      update: updatedBot
+    })
+
+    return updatedBot;
   }
 
   public listBotPrompts(bot: DBBot): Promise<AIPrompt[]> {

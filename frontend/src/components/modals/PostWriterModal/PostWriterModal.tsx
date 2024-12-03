@@ -47,7 +47,6 @@ export const PostWriterModal: FC<Omit<ModalProps, "children"> & {
           {/* Show parent post preview at the top is this is for a reply */}
           {isReply && <Post post={originPost} showActionBar={false} />}
           <NewPostField title={title} mode={writeMode} width={400} onPost={handleCreatePost} />
-
           {/* For quoted posts, show post preview after the new post text */}
           {isQuote && <Post post={originPost} showActionBar={false} />}
         </Stack>

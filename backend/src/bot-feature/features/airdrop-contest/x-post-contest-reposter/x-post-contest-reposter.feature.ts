@@ -5,7 +5,7 @@ import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { AppLogger } from "src/logs/app-logger";
-import { prisma } from "src/services";
+import { prisma, xPostsService } from "src/services";
 import { infer as zodInfer } from "zod";
 import { electBestPostForContestAgent } from "./elect-best-post-for-contest.agent";
 import { writePostQuoteContentAgent } from "./write-post-quote-content.agent";
@@ -80,24 +80,16 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
 
       // Schedule the post
       this.logger.log("Scheduling new X reply post");
-      await prisma().xPost.create({
-        data: {
-          bot: { connect: { id: this.bot.dbBot.id } },
-          publishRequestAt: new Date(),
-          text: result.reply,
-          xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
-          quotedPostId: result.electedPost.postId, // twitter id
-          contestQuotedPost: { connect: { id: result.electedPost.id } },
-          isSimulated: result.electedPost.isSimulated
-        }
+      await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, result.reply, {
+        isSimulated: result.electedPost.isSimulated,
+        publishRequestAt: new Date(),
+        quotedPostId: result.electedPost.postId,
+        contestQuotedPostId: result.electedPost.id
       });
 
       // Mark user's source post as handled for the contest so we don't try to use it any more.
-      await prisma().xPost.update({
-        where: { id: result.electedPost.id },
-        data: {
-          quotedForAirdropContestAt: new Date()
-        }
+      await xPostsService().updatePost(result.electedPost.id, {
+        quotedForAirdropContestAt: new Date()
       });
     }
   }

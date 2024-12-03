@@ -70,26 +70,9 @@ const FeatureComponent: FC<{
         <Typography style={{ textTransform: "capitalize", opacity: feature.config.enabled ? 1 : 0.5 }}>{name}</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        {/* <Checkbox
-          //checked={enabled}
-          onChange={e => handleValueChange(e.target.checked)} /> */}
-        {/* <DebouncedTextField
-          multiline
-          label={feature.key}
-          defaultValue={feature.key}
-          style={{ width: "100%" }}
-          onChange={value => handleValueChange(feature, value)}
-        /> */}
-
+        <Typography style={{ marginBottom: 20 }}>{provider.description}</Typography>
         <FeatureConfigEditor provider={provider} feature={feature} onChange={handleConfigChange} />
       </AccordionDetails>
     </Accordion>
-    {/* <Grid item xs={6}>
-      <FormControlLabel
-        control={
-          
-        }
-        label={name} />
-    </Grid> */}
   </>
 }

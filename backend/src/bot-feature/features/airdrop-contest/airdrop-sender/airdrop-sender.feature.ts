@@ -7,7 +7,7 @@ import { BotConfig } from "src/config/bot-config";
 import { Chain, SupportedChains } from "src/config/chain-config";
 import airdropABI from "src/contracts/airdrop.json";
 import { AppLogger } from "src/logs/app-logger";
-import { prisma } from "src/services";
+import { prisma, xPostsService } from "src/services";
 import { tokenToContractValue } from "src/utils/tokens";
 import { infer as zodInfer } from "zod";
 
@@ -160,15 +160,10 @@ export class AirdropSenderFeature extends BotFeature<FeatureConfigType> {
     const transactionUrl = chain.explorerTransactionUrl(transactionId);
     const text = `Just sent you a few tokens to thank you for this contribution. Transaction can be found here: ${transactionUrl}`;
 
-    await prisma().xPost.create({
-      data: {
-        publishRequestAt: new Date(),
-        text,
-        xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
-        bot: { connect: { id: this.bot.dbBot.id } },
-        parentPostId: mentioningPost.postId,
-        isSimulated: mentioningPost.isSimulated
-      }
+    await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, text, {
+      parentPostId: mentioningPost.postId,
+      isSimulated: mentioningPost.isSimulated,
+      publishRequestAt: new Date()
     });
   }
 }

@@ -1,12 +1,19 @@
+import { PostTag } from "@services/features/feature-handler";
+import { featureHandlers } from "@services/features/features.service";
 import type { XAccount } from "@x-ai-wallet-bot/common";
 import { Expose, Type } from "class-transformer";
+import { flatten } from "lodash";
 
 export class XPost {
   @Expose() public id: string;
+
   @Expose() @Type(() => Date) public createdAt: Date;
   @Expose() @Type(() => Date) public publishRequestAt?: Date;
   @Expose() @Type(() => Date) public publishedAt?: Date;
+  
   @Expose() public botId: string;
+  @Expose() public xAccount: XAccount;
+  @Expose() public xAccountUserId: string;
 
   // Raw X data
   @Expose() public text: string; // Core post content
@@ -16,7 +23,9 @@ export class XPost {
 
   @Expose() public isSimulated: boolean;
   @Expose() public wasReplyHandled: boolean;
+  @Expose() public worthForAirdropContest?: boolean;
 
-  @Expose() public xAccount: XAccount;
-  @Expose() public xAccountUserId: string;
+  public getTags(): PostTag[] {
+    return flatten(featureHandlers.map(h => h.getPostTags(this)));
+  }
 }

@@ -10,6 +10,7 @@ export const activeBot$ = new BehaviorSubject<Bot>(undefined);
 
 export const setActiveBot = (bot:Bot) => {
   activeBot$.next(bot);
+  localStorage.setItem("active-bot-id", bot?.id);
 }
 
 export const fetchBots = async (): Promise<Bot[]> => {
@@ -22,7 +23,13 @@ export const fetchBots = async (): Promise<Bot[]> => {
 
   bots$.next(bots);
 
-  setActiveBot(bots?.[0]); // TMP DEV
+  // Restore previously used bot as active bot
+  const storedBotId = localStorage.getItem("active-bot-id");
+  const botToRestore = bots?.find(bot => bot.id === storedBotId)
+  if (botToRestore)
+    setActiveBot(botToRestore);
+  else
+    setActiveBot(bots?.[0]);
 
   return bots;
 }

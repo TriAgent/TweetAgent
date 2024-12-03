@@ -16,6 +16,8 @@ export type XPost = {
 
   xAccount: XAccount;
   xAccountUserId: string;
+
+  worthForAirdropContest?: boolean;
 }
 
 /**

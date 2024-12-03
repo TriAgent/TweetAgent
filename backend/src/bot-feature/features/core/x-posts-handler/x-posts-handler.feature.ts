@@ -20,7 +20,7 @@ export class XPostsHandlerProvider extends BotFeatureProvider<XPostsHandlerFeatu
   constructor() {
     super(
       BotFeatureType.Core_XPostsHandler,
-      `Handle unanswered third party posts and generate replies when possible.`,
+      `Handles unanswered third party posts and generate replies when possible.`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostsHandlerFeature(this, bot)
     );
@@ -98,17 +98,10 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
         // Schedule a post
         this.logger.log(`Scheduling new X reply post: ${fullReply}`);
 
-        console.log("this.bot.dbBot.twitterUserId", this.bot.dbBot.twitterUserId)
-
-        await prisma().xPost.create({
-          data: {
-            bot: { connect: { id: this.bot.dbBot.id } },
-            publishRequestAt: new Date(),
-            text: fullReply,
-            xAccount: { connect: { userId: this.bot.dbBot.twitterUserId } },
-            parentPostId: xPost.postId,
-            isSimulated: xPost.isSimulated
-          }
+        await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, fullReply, {
+          isSimulated: xPost.isSimulated,
+          publishRequestAt: new Date(),
+          parentPostId: xPost.postId,
         });
       }
     }

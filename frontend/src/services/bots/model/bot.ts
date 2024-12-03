@@ -2,6 +2,7 @@ import { apiGet, apiPost, apiPut } from "@services/api-base";
 import { backendUrl } from "@services/backend/backend";
 import { PostChildren } from "@services/posts/model/post-thread";
 import { XPost } from "@services/posts/model/x-post";
+import { onPostUpdate$ } from "@services/posts/posts.service";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
 import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
@@ -29,6 +30,11 @@ export class Bot {
       this.fetchPrompts(),
       this.fetchFeatureConfigs()
     ]);
+
+    onPostUpdate$.subscribe(post => {
+      if (post.botId === this.id)
+        this.onNewPost$.next(post);
+    })
   }
 
   /**
@@ -125,7 +131,6 @@ export class Bot {
       return null;
 
     const post = plainToInstance(XPost, rawPost, { excludeExtraneousValues: true });
-    this.onNewPost$.next(post);
 
     return post;
   }
