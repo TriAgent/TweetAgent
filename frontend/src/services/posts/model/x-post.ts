@@ -24,6 +24,7 @@ export class XPost {
   @Expose() public isSimulated: boolean;
   @Expose() public wasReplyHandled: boolean;
   @Expose() public worthForAirdropContest?: boolean;
+  @Expose() public contestQuotedPostId?:string;
 
   public getTags(): PostTag[] {
     return flatten(featureHandlers.map(h => h.getPostTags(this)));

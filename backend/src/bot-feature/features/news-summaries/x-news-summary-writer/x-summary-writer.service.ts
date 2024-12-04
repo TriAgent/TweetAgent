@@ -112,7 +112,7 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
   private async createNewsSummaryForX(tweetContent: string, docs: SummaryDocument[]): Promise<void> {
     // Create draft
     const dbPost = await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, tweetContent, {
-      publishRequestAt: new Date(),
+      publishRequestAt: new Date()
     });
 
     // Mark source posts as used/summarized

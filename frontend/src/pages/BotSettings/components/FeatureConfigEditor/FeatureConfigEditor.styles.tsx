@@ -14,7 +14,7 @@ export const SectionIntro = styled(Typography)({
 });
 
 export const DescriptionLabel = styled(Typography)({
-  fontSize: 11,
+  fontSize: 13,
   opacity: 0.7
 });
 

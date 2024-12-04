@@ -69,7 +69,7 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
         contestQuotedPost: {
           worthForAirdropContest: true // took part in the airdrop contest
         },
-        PostContestAirdrop: null, // Not yet in an airdrop
+        postAirdrop: null, // Not yet in an airdrop
         AND: [
           { publishedAt: { gte: eligibleStartate.toDate() } },
           { publishedAt: { lt: eligibleEndDate.toDate() } }
@@ -94,7 +94,20 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
     // Gather stats for all eligible posts (force fetch twitter api)
     const postsInfo: PostInfo[] = [];
     for (const eligiblePost of eligiblePosts) {
-      const stats = await xPostsService().getLatestPostStats(this.bot, eligiblePost.postId!);
+      let stats: PostStats;
+
+      if (!eligiblePost.isSimulated)
+        stats = await xPostsService().getLatestPostStats(this.bot, eligiblePost.postId!);
+      else {
+        // If post is simulated, use arbitrary stats
+        stats = {
+          impressionCount: 30,
+          likeCount: 5,
+          commentCount: 2,
+          rtCount: 3
+        };
+      }
+
       postsInfo.push({
         post: eligiblePost,
         stats, weight: 0, score: 0, tokenAmount: 0
@@ -125,7 +138,8 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
         totalTokenAmount: BotConfig.AirdropContest.TokenAmountPerAirdrop,
         chain: BotConfig.AirdropContest.Chain.id,
         tokenAddress: BotConfig.AirdropContest.Token.address,
-        evaluatedPostsCount: eligiblePosts.length
+        evaluatedPostsCount: eligiblePosts.length,
+        bot: { connect: { id: this.bot.id } }
       }
     });
 

@@ -3,10 +3,14 @@ import { FeatureHandler, PostTag } from "../feature-handler";
 
 export class XPostContestHandler extends FeatureHandler {
   public getPostTags(post: XPost): PostTag[] {
+    const tags: PostTag[] = [];
 
     if (post.worthForAirdropContest)
-      return [{label: "Worth for airdrop contest", type: "success"}]
+      tags.push({label: "Worth for airdrop contest", type: "success"});
 
-    return [];
+    if (post.contestQuotedPostId)
+      tags.push({label: "Quote for contest", type: "success"});
+
+    return tags;
   }
 }

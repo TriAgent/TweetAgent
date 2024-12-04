@@ -9,6 +9,7 @@ const BotsList = lazy(() => import("../pages/BotsList/BotsList"));
 const BotSettings = lazy(() => import("../pages/BotSettings/BotSettings"));
 const BotPrompts = lazy(() => import("../pages/BotPrompts/BotPrompts"));
 const BotPosts = lazy(() => import("../pages/BotPosts/BotPosts"));
+const BotAirdrops = lazy(() => import("../pages/BotAirdrops/BotAirdrops"));
 
 export const Routing = () => {
   const router = createBrowserRouter(
@@ -21,6 +22,7 @@ export const Routing = () => {
           <Route path="/bot/prompts" element={<BotPrompts />} />
           <Route path="/bot/posts/:postId" element={<BotPosts />} />
           <Route path="/bot/posts" element={<BotPosts />} />
+          <Route path="/bot/airdrops" element={<BotAirdrops />} />
         </Route>
       </Route>
     )

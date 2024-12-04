@@ -167,11 +167,17 @@ export class TwitterService {
 
   public async fetchSinglePost(bot: Bot, postId: string): Promise<TweetV2> {
     const client = await this.auth.getAuthorizedClientForBot(bot);
-    const result = await client.v2.singleTweet(postId, {
-      'tweet.fields': TweetFields
-    });
 
-    return result?.data;
+    try {
+      const result = await client.v2.singleTweet(postId, {
+        'tweet.fields': TweetFields
+      });
+
+      return result?.data;
+    }
+    catch (e) {
+      return this.handleTwitterApiError("Fetch single post", e);
+    }
   }
 
   public async fetchAccountByUserId(bot: Bot, userId: string): Promise<UserV2> {

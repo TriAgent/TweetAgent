@@ -28,6 +28,7 @@ model Bot {
   botFeatures BotFeature[]
   posts       XPost[]
   logs        Log[]
+  airdrops    ContestAirdrop[]
 }
 
 // Prompts for AI requests
@@ -89,8 +90,8 @@ model XAccount {
 
   updatedAt DateTime @default(now())
 
-  PostContestAirdrop PostContestAirdrop[]
-  XPost              XPost[]
+  postAirdrops PostContestAirdrop[]
+  posts        XPost[]
 }
 
 // Post retrieved from X. 
@@ -141,14 +142,14 @@ model XPost {
   quotedForAirdropContestAt DateTime? // If this post got elected to be RT/quoted by our account, that's the date at which the post was created/scheduled
   contestMentioningPost     XPost?    @relation(name: "ContestMentioningPost", fields: [contestMentioningPostId], references: [id]) // Post that mentioned this post (that is worthForAirdropContest) so this is how we detected it. Used to reward mentioning users about influencers posts in addition to their own content.
   contestMentioningPostId   String?   @unique
-  contestMentioedPost       XPost?    @relation(name: "ContestMentioningPost")
+  contestMentionedPost      XPost?    @relation(name: "ContestMentioningPost")
 
   // Specific to: airdrop contest (our bot quote post)
   contestQuotedPost   XPost?  @relation(name: "ContestQuotedPost", fields: [contestQuotedPostId], references: [id]) // Database user post that got quoted by this bot post, for the airdrop contest
   contestQuotedPostId String? @unique
   contestQuotedByPost XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
 
-  PostContestAirdrop PostContestAirdrop? // Potential airdrop this post got involved into. Only one airdrop possible.
+  postAirdrop PostContestAirdrop? // Potential airdrop this post got involved into. Only one airdrop possible.
 
   @@unique([botId, postId])
 }
@@ -178,6 +179,9 @@ model ContestAirdrop {
   createdAt    DateTime  @default(now())
   transferedAt DateTime? // Date at which the chain token transfer has been completed
 
+  bot   Bot    @relation(fields: [botId], references: [id])
+  botId String
+
   totalTokenAmount Decimal // Total number of tokens distributed (human readable format)
   chain            String // eg: base_sepolia_testnet
   tokenAddress     String // eg: USDT contract address on base
@@ -185,7 +189,7 @@ model ContestAirdrop {
   // Internal stats
   evaluatedPostsCount Int // Number of quote posts considered for this airdrop distribution
 
-  PostContestAirdrop PostContestAirdrop[]
+  postAirdrops PostContestAirdrop[]
 }
 
 enum ContestAirdropTargetUser {

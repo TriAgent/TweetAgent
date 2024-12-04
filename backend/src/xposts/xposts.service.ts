@@ -169,7 +169,6 @@ export class XPostsService {
             publishedAt: new Date(),
             postId: tweet.postId,
             parentPostId: parentPostId,
-            wasReplyHandled: true, // directly mark has handled post, as this is our own post
             isSimulated: postToSend.isSimulated
           });
 
@@ -197,10 +196,26 @@ export class XPostsService {
     if (optValues?.postId) createData.postId = optValues?.postId;
     if (optValues?.publishRequestAt) createData.publishRequestAt = optValues?.publishRequestAt;
     if (optValues?.publishedAt) createData.publishedAt = optValues?.publishedAt;
-    if (optValues?.isSimulated) createData.isSimulated = optValues?.isSimulated;
     if (optValues?.parentPostId) createData.parentPostId = optValues?.parentPostId;
     if (optValues?.quotedPostId) createData.quotedPostId = optValues?.quotedPostId;
     if (optValues?.contestQuotedPostId) createData.contestQuotedPost = { connect: { id: optValues?.contestQuotedPostId } };
+    if (optValues?.wasReplyHandled) createData.wasReplyHandled = optValues?.wasReplyHandled;
+
+    if (optValues?.isSimulated) {
+      if (optValues?.postId)
+        throw new Error(`Don't provide postId value for simulated posts. It's defined automatically`);
+
+      createData.isSimulated = optValues?.isSimulated;
+
+      // Overwrite a few data when simulating posts.
+      createData.postId = `simulated-${uuidV4()}`
+      createData.publishRequestAt = new Date();
+      createData.publishedAt = new Date();
+    }
+
+    // If publishing account is our bot, write the bot as handled, no matter what
+    if (bot.twitterUserId === xAccountId)
+      createData.wasReplyHandled = true;
 
     const post = await this.prisma.xPost.create({
       data: createData,
@@ -320,8 +335,6 @@ export class XPostsService {
    */
   public createManualPost(bot: DBBot, postCreationInput: XPostCreationDTO): Promise<XPost> {
     return this.createPost(bot, postCreationInput.xAccountUserId, postCreationInput.text, {
-      publishedAt: new Date(), // Considered as published
-      postId: `simulated-${uuidV4()}`,
       isSimulated: true,
       parentPostId: postCreationInput.parentPostId,
       quotedPostId: postCreationInput.quotedPostId,

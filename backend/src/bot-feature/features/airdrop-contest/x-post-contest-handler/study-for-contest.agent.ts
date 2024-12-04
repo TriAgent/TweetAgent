@@ -30,8 +30,10 @@ export const studyForContestAgent = (feature: AnyBotFeature, logger: Logger, pos
     }
 
     // Make sure the root has not been evaluated (worth) to true or false yet (should be null)
-    if (postEvaluatedForContest.worthForAirdropContest !== null)
+    if (postEvaluatedForContest.worthForAirdropContest !== null) {
+      logger.warn(`Target post already evaluated for contest. Skipping`);
       return state;
+    }
 
     // Make sure the root is not our own bot post
     if (postEvaluatedForContest.xAccountUserId === feature.bot.dbBot.twitterUserId)
@@ -53,7 +55,7 @@ export const studyForContestAgent = (feature: AnyBotFeature, logger: Logger, pos
     const targetMentioningPost = post;
 
     // Invoke command, execute all tools, and get structured json response.
-    const { structuredResponse } = await langchainService().fullyInvoke({
+    const { structuredResponse, responseMessage } = await langchainService().fullyInvoke({
       messages: [
         ["system", await aiPromptsService().get(feature.bot, "airdrop-contest/study-for-contest")]
       ],
@@ -65,6 +67,12 @@ export const studyForContestAgent = (feature: AnyBotFeature, logger: Logger, pos
         reason: z.string().describe("The reason why you think the post is worth for the airdrop contest or not")
       })
     });
+
+    if (!structuredResponse) {
+      logger.error(`Failed to get a structured response while evaluating post for airdrop contest`);
+      logger.error(responseMessage);
+      return state;
+    }
 
     // TODO: change the reply to let user know he should not forget to send his airdrop address too, if not sent yet.
 

@@ -6,12 +6,12 @@ import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-featur
 import { Bot } from "src/bots/model/bot";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma, xPostsService } from "src/services";
-import { infer as zodInfer } from "zod";
+import { z, infer as zodInfer } from "zod";
 import { electBestPostForContestAgent } from "./elect-best-post-for-contest.agent";
 import { writePostQuoteContentAgent } from "./write-post-quote-content.agent";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  quoteInterval: z.number().describe('Min delay (in seconds) between 2 rt/quotes of contest posts')
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -20,7 +20,7 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
   constructor() {
     super(
       BotFeatureType.AirdropContest_XPostContestReposter,
-      `RTs user posts from time to time, for the airdrop contest`,
+      `Quotes user posts from time to time, for the airdrop contest`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostContestReposterFeature(this, bot)
     );
@@ -29,7 +29,7 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      quoteInterval: 1 * 60 * 60 // 1 hour
     }
   }
 }
@@ -59,7 +59,7 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
       orderBy: { createdAt: "desc" }
     });
 
-    if (mostRecentContestQuote && moment().diff(mostRecentContestQuote.createdAt, "minutes") < 60)
+    if (mostRecentContestQuote && moment().diff(mostRecentContestQuote.createdAt, "seconds") < this.config.quoteInterval)
       return;
 
     this.logger.log(`Post contest reposter scheduled execution`);

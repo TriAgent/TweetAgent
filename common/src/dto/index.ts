@@ -1,5 +1,6 @@
 export * from "./ai-prompt";
 export * from "./bot";
+export * from "./contest-airdrop";
 export * from "./dispatcher-updates";
 export * from "./feature";
 export * from "./feature-provider";

@@ -11,6 +11,7 @@ import { WebsocketsModule } from './websockets/websockets.module';
 import { XaccountsModule } from './xaccounts/xaccounts.module';
 import { XPostsModule } from './xposts/xposts.module';
 import { BotFeatureModule } from './bot-feature/bot-feature.module';
+import { ContestAirdropModule } from './contest-airdrop/contest-airdrop.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { BotFeatureModule } from './bot-feature/bot-feature.module';
     BotsModule,
     LogsModule,
     WebsocketsModule,
-    BotFeatureModule
+    BotFeatureModule,
+    ContestAirdropModule
   ]
 })
 export class AppModule { }

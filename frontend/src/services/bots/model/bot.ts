@@ -4,7 +4,7 @@ import { PostChildren } from "@services/posts/model/post-thread";
 import { XPost } from "@services/posts/model/x-post";
 import { onPostUpdate$ } from "@services/posts/posts.service";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, ContestAirdrop, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
 import { BehaviorSubject, Subject } from "rxjs";
 import { BotFeature } from "../../features/model/bot-feature";
@@ -119,6 +119,13 @@ export class Bot {
   }
 
   public async createPost(text: string, xAccount: XAccountDTO, parentPostId?: string, quotedPostId?: string): Promise<XPost> {
+    // Special case for comments - to simulate X, we need to make sure the bot is mentionned in the comment text.
+    if (parentPostId) {
+      const botMention = `@${this.twitterUserScreenName}`;
+      if (!text.includes(botMention)) 
+        text = `${botMention} ${text.trim()}`;
+    }
+
     const postCreationInput: XPostCreationDTO = {
       text,
       xAccountUserId: xAccount.userId,
@@ -133,5 +140,15 @@ export class Bot {
     const post = plainToInstance(XPost, rawPost, { excludeExtraneousValues: true });
 
     return post;
+  }
+
+  public async fetchAirdrops() {
+    const rawAirdrops = await apiGet<ContestAirdrop[]>(`${backendUrl}/bots/${this.id}/airdrops`);
+    if (rawAirdrops) {
+      console.log("Got airdrops:", rawAirdrops);
+      return rawAirdrops;
+    }
+
+    return null;
   }
 }
