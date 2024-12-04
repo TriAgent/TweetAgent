@@ -1,20 +1,17 @@
-- Airdrops page:
-  - link to transaction on explorer
-    - requires chain info: chain friendly name, tx url, wallet url, token info (symbol, address)
-  - link to receiving wallet on explorer
-  - link to token on explorer
-  - link to X account page
-  - stats
-
 - New UI menu for XAccounts (global)
-- airdrop sender: "really send tokens" (save in DB for each post "to be sent" or not) - so we can simulate.
 - airdrops in ELA
 
+- airdrop sender feature: "really send tokens" (save in DB for each post "to be sent" or not) - so we can simulate.
+- TBD: make the root bot schedule be a root "feature" so we can configure it from UI as well (iteration interval etc)?
+
 P2:
+- group features into categories and display categoeis on UI to see clearer.
 - Ability to totally enable/disable a whole bot
 - Give readable titles to feature providers
 - TBD: move prompts into features?
 - TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
+
+P3:
 - posts list : pagination and auto fetch more
 - bug: X fetcher should not try to auth if no twitter account bound
 - bug: bot list name not changing when bot name changes in settings

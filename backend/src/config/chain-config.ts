@@ -1,28 +1,4 @@
-
-export type Token = {
-  name: string; // eg: "USDTEST"
-  symbol: string; // eg: "UTT"
-  address: string;
-  decimals: number; // token contract decimals encoding - eg: 18
-}
-
-export type Chain = {
-  id: string; // unique among all chains
-  type: "EVM";
-  chainId: number;
-  rpcUrl: string;
-  tokens: Token[];
-  contracts: {
-    airdrop: string;
-  };
-  explorerTransactionUrl: (transactionId: string) => string;
-}
-
-const standardEVMExplorerTransactionUrl = (explorerUrl: string): Chain["explorerTransactionUrl"] => {
-  return (transactionId: string) => {
-    return `${explorerUrl}/tx/${transactionId}`;
-  }
-}
+import { Chain, Token } from "@x-ai-wallet-bot/common";
 
 export const findChainToken = (chain: Chain, tokenSymbol: string): Token => {
   const token = chain.tokens.find(t => t.symbol === tokenSymbol);
@@ -34,6 +10,7 @@ export const findChainToken = (chain: Chain, tokenSymbol: string): Token => {
 
 export const BaseSepolia: Chain = {
   id: "base_sepolia_testnet",
+  friendlyName: "Sepolia Testnet",
   type: "EVM",
   chainId: 84532,
   rpcUrl: "https://sepolia.base.org",
@@ -43,7 +20,9 @@ export const BaseSepolia: Chain = {
   contracts: {
     airdrop: "0xA10580A9863beA50923A587fBda54EFC19184099"
   },
-  explorerTransactionUrl: standardEVMExplorerTransactionUrl("https://sepolia.basescan.org")
+  explorerTransactionUrl: "https://sepolia.basescan.org/tx/{transaction}",
+  explorerWalletUrl: "https://sepolia.basescan.org/address/{walletAddress}",
+  explorerTokenUrl: "https://sepolia.basescan.org/token/{tokenAddress}"
 }
 
 export const SupportedChains = [

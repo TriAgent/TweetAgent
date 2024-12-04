@@ -8,7 +8,10 @@ export class ContestAirdropService {
 
   public async getRecentAirdropsWithTransactions(bot: DBBot) {
     const airdrops = await this.prisma.contestAirdrop.findMany({
-      where: {},
+      where: {
+        botId: bot.id,
+        evaluatedPostsCount: { gt: 0 }
+      },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {

@@ -1,25 +1,62 @@
-import { Grid } from "@mui/material";
+import { RouterLink } from "@components/base/RouterLink/RouterLink";
+import { Grid, Stack } from "@mui/material";
 import { Post } from "@pages/BotPosts/components/Post/Post";
+import { ContestAirdrop } from "@services/airdrops/model/contest-airdrop";
 import { PostContestAirdrop } from "@services/airdrops/model/post-contest-airdrop";
+import { useChain } from "@services/chains/hooks/useChain";
 import { formatAddress } from "@utils/formatAddress";
 import { FC } from "react";
-import { TransferContainer } from "./AirdropTransfer.styles";
+import { InfoLabel, InfoRow, TransferContainer } from "./AirdropTransfer.styles";
 
 export const AirdropTransfer: FC<{
   postContestAirdrop: PostContestAirdrop;
-}> = ({ postContestAirdrop }) => {
-  console.log(postContestAirdrop)
+  airdrop: ContestAirdrop;
+}> = ({ airdrop, postContestAirdrop }) => {
+  const chain = useChain(airdrop.chain);
+  const token = chain?.tokens.find(t => t.address === airdrop.tokenAddress);
+
   return <TransferContainer>
     <Grid container>
       <Grid item xs={3}>
-        <div>{postContestAirdrop.tokenAmount} tokens</div>
-        <div>@{postContestAirdrop.winningXAccount.userScreenName} ({postContestAirdrop.targetUser})</div>
-        <div>{formatAddress(postContestAirdrop.airdropAddress, [6, 4])}</div>
-        <div>Transaction {formatAddress(postContestAirdrop.transactionId, [6, 4])}</div>
-        <div>{postContestAirdrop.impressionCount} views</div>
-        <div>{postContestAirdrop.likeCount} likes</div>
-        <div>{postContestAirdrop.rtCount} RTs</div>
-        <div>{postContestAirdrop.commentCount} comments</div>
+        <InfoRow>
+          <InfoLabel>Amount</InfoLabel>
+          {postContestAirdrop.tokenAmount} {token?.symbol}
+        </InfoRow>
+        <InfoRow>
+          <InfoLabel>{postContestAirdrop.targetUser}</InfoLabel>
+          <RouterLink to={`https://x.com/${postContestAirdrop.winningXAccount.userScreenName}`} target="_blank">@{postContestAirdrop.winningXAccount.userScreenName}</RouterLink>
+        </InfoRow>
+        <InfoRow>
+          <InfoLabel>Receiver</InfoLabel>
+          <RouterLink to={chain?.explorerWalletUrl.replace("{walletAddress}", postContestAirdrop.airdropAddress)} target="_blank">
+            {formatAddress(postContestAirdrop.airdropAddress, [6, 4])}
+          </RouterLink>
+        </InfoRow>
+        <InfoRow>
+          <InfoLabel>Transaction</InfoLabel>
+          <RouterLink to={chain?.explorerTransactionUrl.replace("{transaction}", postContestAirdrop.transactionId)} target="_blank">
+            {formatAddress(postContestAirdrop.transactionId, [6, 4])}
+          </RouterLink>
+        </InfoRow>
+        {/* Stats */}
+        <Stack mt={1}>
+          <InfoRow>
+            <InfoLabel>Views</InfoLabel>
+            {postContestAirdrop.impressionCount}
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Likes</InfoLabel>
+            {postContestAirdrop.likeCount}
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>RTs</InfoLabel>
+            {postContestAirdrop.rtCount}
+          </InfoRow>
+          <InfoRow>
+            <InfoLabel>Comments</InfoLabel>
+            {postContestAirdrop.commentCount}
+          </InfoRow>
+        </Stack>
       </Grid>
       <Grid item xs={9}>
         <Post post={postContestAirdrop.quotePost} showActionBar={false} />

@@ -1,10 +1,11 @@
 import { BotFeatureType, XPost } from "@prisma/client";
+import { Chain } from "@x-ai-wallet-bot/common";
 import { Contract, ContractTransactionReceipt, ContractTransactionResponse, JsonRpcProvider, Wallet } from 'ethers';
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { BotConfig } from "src/config/bot-config";
-import { Chain, SupportedChains } from "src/config/chain-config";
+import { SupportedChains } from "src/config/chain-config";
 import airdropABI from "src/contracts/airdrop.json";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma, xPostsService } from "src/services";
@@ -157,7 +158,7 @@ export class AirdropSenderFeature extends BotFeature<FeatureConfigType> {
   }
 
   private async sendAirdroppedReply(mentioningPost: XPost, chain: Chain, transactionId: string) {
-    const transactionUrl = chain.explorerTransactionUrl(transactionId);
+    const transactionUrl = chain.explorerTransactionUrl.replace("{transaction}", transactionId);
     const text = `Just sent you a few tokens to thank you for this contribution. Transaction can be found here: ${transactionUrl}`;
 
     await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, text, {

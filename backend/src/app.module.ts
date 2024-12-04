@@ -12,6 +12,7 @@ import { XaccountsModule } from './xaccounts/xaccounts.module';
 import { XPostsModule } from './xposts/xposts.module';
 import { BotFeatureModule } from './bot-feature/bot-feature.module';
 import { ContestAirdropModule } from './contest-airdrop/contest-airdrop.module';
+import { ChainModule } from './chain/chain.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { ContestAirdropModule } from './contest-airdrop/contest-airdrop.module';
     LogsModule,
     WebsocketsModule,
     BotFeatureModule,
-    ContestAirdropModule
+    ContestAirdropModule,
+    ChainModule
   ]
 })
 export class AppModule { }
