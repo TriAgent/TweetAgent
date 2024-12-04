@@ -116,7 +116,7 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
    */
   private async produceAggregatedXReply(replyAnalysisResults: XPostReplyAnalysisResult[]): Promise<string> {
     const graph = new StateGraph(replyAggregatorStateAnnotation)
-      .addNode("agent", produceAggregatedReplyAgent(this, replyAnalysisResults))
+      .addNode("agent", produceAggregatedReplyAgent(this.logger, this, replyAnalysisResults))
       .addEdge(START, "agent")
       .addEdge("agent", END)
 

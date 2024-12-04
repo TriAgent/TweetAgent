@@ -14,7 +14,9 @@ export class ContestAirdropService {
       include: {
         postAirdrops: {
           include: {
-            quotePost: true,
+            quotePost: {
+              include: { xAccount: true }
+            },
             winningXAccount: true
           }
         }

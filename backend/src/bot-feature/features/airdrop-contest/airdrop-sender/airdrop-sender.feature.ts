@@ -69,7 +69,7 @@ export class AirdropSenderFeature extends BotFeature<FeatureConfigType> {
     if (!unsentAirdrop)
       return; // Nothing to airdrop for now
 
-    this.logger.log(`Sending tokens on chain for airdrop ${unsentAirdrop.id}, ${unsentAirdrop.totalTokenAmount} total tokens`);
+    this.logger.log(`Checking if tokens have to be sent on chain for airdrop ${unsentAirdrop.id}, ${unsentAirdrop.totalTokenAmount} total tokens`);
 
     // Get the list of unsent packets for this airdrop (could have crashed in the middle)
     const postAirdrops = await prisma().postContestAirdrop.findMany({

@@ -227,7 +227,7 @@ model PostContestAirdrop {
 
   weight Float // Weight of this post among other posts of the same airdrop
 
-  @@unique([contestAirdropId, quotePostId, targetUser])
+  @@unique([contestAirdropId, quotePostId, winningXAccountUserId, targetUser])
 }
 
 enum LogType {

@@ -190,6 +190,7 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
   }
 
   private async createPostAirdrop(airdrop: ContestAirdrop, postInfo: PostInfo, targetUser: ContestAirdropTargetUser, airdropAddress: string, tokenAmount: number) {
+    console.log("postInfo", postInfo)
     await prisma().postContestAirdrop.create({
       data: {
         airdrop: { connect: { id: airdrop.id } },

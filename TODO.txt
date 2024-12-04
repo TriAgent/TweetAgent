@@ -1,4 +1,11 @@
-- Continue menu to show airdrops: all post transactions inside + show quote post preview
+- Airdrops page:
+  - link to transaction on explorer
+    - requires chain info: chain friendly name, tx url, wallet url, token info (symbol, address)
+  - link to receiving wallet on explorer
+  - link to token on explorer
+  - link to X account page
+  - stats
+
 - New UI menu for XAccounts (global)
 - airdrop sender: "really send tokens" (save in DB for each post "to be sent" or not) - so we can simulate.
 - airdrops in ELA

@@ -1,10 +1,11 @@
+import { ContestAirdrop } from "@services/airdrops/model/contest-airdrop";
 import { apiGet, apiPost, apiPut } from "@services/api-base";
 import { backendUrl } from "@services/backend/backend";
 import { PostChildren } from "@services/posts/model/post-thread";
 import { XPost } from "@services/posts/model/x-post";
 import { onPostUpdate$ } from "@services/posts/posts.service";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, ContestAirdrop, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, ContestAirdrop as ContestAirdropDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
 import { BehaviorSubject, Subject } from "rxjs";
 import { BotFeature } from "../../features/model/bot-feature";
@@ -142,11 +143,11 @@ export class Bot {
     return post;
   }
 
-  public async fetchAirdrops() {
-    const rawAirdrops = await apiGet<ContestAirdrop[]>(`${backendUrl}/bots/${this.id}/airdrops`);
+  public async fetchAirdrops():Promise<ContestAirdrop[]> {
+    const rawAirdrops = await apiGet<ContestAirdropDTO[]>(`${backendUrl}/bots/${this.id}/airdrops`);
     if (rawAirdrops) {
       console.log("Got airdrops:", rawAirdrops);
-      return rawAirdrops;
+      return rawAirdrops.map(ra => plainToInstance(ContestAirdrop, ra, {excludeExtraneousValues: true}));
     }
 
     return null;
