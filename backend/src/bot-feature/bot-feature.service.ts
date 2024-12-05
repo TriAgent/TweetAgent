@@ -9,7 +9,7 @@ import { XPostAirdropAddressProvider } from "./features/airdrop-contest/x-post-a
 import { XPostContestHandlerProvider } from "./features/airdrop-contest/x-post-contest-handler/x-post-contest-handler.feature";
 import { XPostContestReposterProvider } from "./features/airdrop-contest/x-post-contest-reposter/x-post-contest-reposter.feature";
 import { XNewsSummaryReplierProvider } from "./features/news-summaries/x-news-summary-replier/x-news-summary-replier.feature";
-import { XNewsSummaryWriterProvider } from "./features/news-summaries/x-news-summary-writer/x-summary-writer.service";
+import { XNewsSummaryWriterProvider } from "./features/news-summaries/x-news-summary-writer/x-summary-writer.feature";
 import { XRealNewsFilterProvider } from "./features/news-summaries/x-real-news-filter/x-real-news-filter.service";
 import { RootFeatureProvider } from "./features/root.feature";
 import { XPostsFetcherProvider } from "./features/x-core/x-posts-fetcher/x-post-fetcher.feature";

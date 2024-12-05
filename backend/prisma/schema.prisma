@@ -152,7 +152,7 @@ model XPost {
   contestQuotedPostId String? @unique
   contestQuotedByPost XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
 
-  postAirdrop PostContestAirdrop? // Potential airdrop this post got involved into. Only one airdrop possible.
+  postAirdrops PostContestAirdrop[] // Potential post airdrops this post got involved into. 0-2 possible (none vs airdrop to authord and/or mentionner).
 
   @@unique([botId, postId])
 }
@@ -200,7 +200,7 @@ enum ContestAirdropTargetUser {
   Mentioner
 }
 
-// One entry per receiving post per airdrop
+// 1 or 2 entries (author+mentioner) per receiving post per airdrop
 model PostContestAirdrop {
   id        String   @unique @default(uuid())
   createdAt DateTime @default(now())
@@ -215,12 +215,13 @@ model PostContestAirdrop {
   tokenAmount    Decimal // Same token as in the ContestAirdrop entry, human readable amount
 
   quotePost   XPost  @relation(fields: [quotePostId], references: [id]) // Our quoted Post that RTed user's post
-  quotePostId String @unique
+  quotePostId String
 
   targetUser ContestAirdropTargetUser // Which user is receiving the airdrop for this post? As both author and mentioner can get some
 
-  transactionId String? // Chain transaction ID
-  transferedAt  DateTime? // Date at which the chain token transfer has been completed
+  shouldSendOnChain Boolean   @default(false) // Whether to really send this airdrop on chain or not. Use false to be able to test airdrops without spending tokens.
+  transactionId     String? // Chain transaction ID
+  transferedAt      DateTime? // Date at which the chain token transfer has been completed
 
   // Post stats at the time of snapshot
   commentCount    Int
@@ -230,7 +231,7 @@ model PostContestAirdrop {
 
   weight Float // Weight of this post among other posts of the same airdrop
 
-  @@unique([contestAirdropId, quotePostId, winningXAccountUserId, targetUser])
+  @@unique([quotePostId, winningXAccountUserId, airdropAddress, targetUser])
 }
 
 enum LogType {

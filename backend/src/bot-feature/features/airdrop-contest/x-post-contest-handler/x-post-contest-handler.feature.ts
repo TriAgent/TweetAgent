@@ -30,8 +30,7 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      enabled: true
     }
   }
 }

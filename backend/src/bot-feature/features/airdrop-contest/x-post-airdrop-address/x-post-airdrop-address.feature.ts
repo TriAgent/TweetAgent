@@ -30,7 +30,7 @@ export class XPostAirdropAddressProvider extends BotFeatureProvider<XPostAirdrop
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
+      enabled: true,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
     }
   }

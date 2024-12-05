@@ -19,6 +19,7 @@ export class PostContestAirdrop implements RefactoredInterface {
 
   @Expose() targetUser: string; // Which user is receiving the airdrop for this post? As both author and mentioner can get some
 
+  @Expose() shouldSendOnChain: boolean;
   @Expose() transactionId?: string;// Chain transaction ID
   @Expose() @Type(() => Date) transferedAt?: Date; // Date at which the chain token transfer has been completed
 

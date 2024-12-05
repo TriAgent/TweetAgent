@@ -63,10 +63,6 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
   }
 
   private async checkUnhandledPosts() {
-    // Need a linked X account even for test bots
-    if (!this.bot.dbBot.twitterUserId)
-      return;
-
     this.logger.log("Checking unhandled posts to potentially create replies");
 
     // Find the first post eligible for a reply analysis. ie posts that have not been handled yet.

@@ -1,23 +1,17 @@
-- add a root feature to run others
-  - Make the root bot schedule be a root "feature" so we can configure it from UI as well (iteration interval etc)
-  - Ability to totally enable/disable a whole bot
-- feature dependencies:
-  - list of feature keys a feature depends on.
-  - backend should no allow to enable/disable if dependencies not met (enabled, but also "can enable" - eg: post fetched cannot run if twitter not bound)
-- rename Core to XCore 
-  - Give readable titles to feature providers
+- BUG?: "Hi @xainews31460 what's up today?" gets a reply by the summary news replier.
+  => Convert the news replier into a generic replier and keep this behaviour, this is good.
+- Ability to totally enable/disable a whole bot from the root feature?
 - prompts:
     - move into features (remove disk template files)
     - add "personnality" prompts to feature configs too
 - New UI menu for XAccounts (global)
-- News summaries: setting to choose where to publish: simulated output or not
-  - Then re-enable news summaries in Dev bot to see if all working
 - Airdrop sender feature: "really send tokens" (save in DB for each post "to be sent" or not) - so we can simulate.
 - esc support
   - airdrop ELA (ESC ok) - 1000 ELA / month
 - Deploy new bot to prod
 
 P3:
+- Ability to configure X accounts to get news from, from UI (store in summary news feature)
 - posts list : pagination and auto fetch more
 - bug: X fetcher should not try to auth if no twitter account bound
 - bug: bot list name not changing when bot name changes in settings

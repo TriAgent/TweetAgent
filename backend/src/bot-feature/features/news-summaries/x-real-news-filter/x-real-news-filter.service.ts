@@ -24,7 +24,7 @@ export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterF
       BotFeatureGroupType.NewsSummaries,
       BotFeatureType.NewsSummaries_XRealNewsFilter,
       `Post real news classifier`,
-      `Cclassifies posts as real news or not (used by the news summary writer).`,
+      `Classifies posts as real news or not (used by the news summary writer).`,
       FeatureConfigFormat,
       (bot: Bot) => new XRealNewsFilterFeature(this, bot)
     );
@@ -32,7 +32,7 @@ export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterF
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
+      enabled: true,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
     }
   }

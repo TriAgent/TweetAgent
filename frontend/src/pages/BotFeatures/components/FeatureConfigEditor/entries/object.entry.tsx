@@ -36,10 +36,10 @@ export
       }
     }, [handleChange, newValue]);
 
-    return <Stack>{
-      Object.keys(inputFormat.properties).map((prop, i) => <Stack key={i}>
-        <DescriptionLabel>{inputFormat.properties[prop].description}</DescriptionLabel>
+    return <Stack gap={2}>{
+      Object.keys(inputFormat.properties).map((prop, i) => <Stack key={i} direction="row" alignItems="center" gap={4}>
         {childComponent(prop, inputFormat.properties[prop])}
+        <DescriptionLabel>{inputFormat.properties[prop].description}</DescriptionLabel>
       </Stack>
       )
     }

@@ -12,7 +12,8 @@ import { z, infer as zodInfer } from "zod";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
   snapshotInterval: z.number().describe('Delay (seconds) between 2 airdrop snapshots'),
-  gatherStatsInterval: z.number().describe('Delay (seconds) after which we gather our quote post stats to how to split airdrop tokens')
+  gatherStatsInterval: z.number().describe('Delay (seconds) after which we gather our quote post stats to how to split airdrop tokens'),
+  sendOnChain: z.boolean().describe('Whether to really send tokens on chain, or to keep this airdrop as a local simulation')
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -31,9 +32,10 @@ export class AirdropSnapshotProvider extends BotFeatureProvider<AirdropSnapshotF
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
+      enabled: true,
       snapshotInterval: 24 * 60 * 60, // 1 per day
       gatherStatsInterval: 7 * 24 * 60 * 60, // check results after 7 days
+      sendOnChain: false
     }
   }
 }
@@ -72,7 +74,7 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
         contestQuotedPost: {
           worthForAirdropContest: true // took part in the airdrop contest
         },
-        postAirdrop: null, // Not yet in an airdrop
+        postAirdrops: { none: {} }, // Not yet in an airdrop
         AND: [
           { publishedAt: { gte: eligibleStartate.toDate() } },
           { publishedAt: { lt: eligibleEndDate.toDate() } }
@@ -150,9 +152,11 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
     let airdroppedPostCount = 0; // Number of posts that really got tokens (have address)
     for (const postInfo of postsInfo) {
       // Address of the relevant contest post
-      const authorAirdropAddress = postInfo.post.contestQuotedPost.xAccount.airdropAddress;
+      const winningAuthorAccount = postInfo.post.contestQuotedPost.xAccount;
+      const authorAirdropAddress = winningAuthorAccount.airdropAddress;
       // Address of the user that mentioned our bot to make us notice the quoted post
-      const mentionerAirdropAddress = postInfo.post.contestQuotedPost.contestMentioningPost?.xAccount.airdropAddress;
+      const winningMentionerAccount = postInfo.post.contestQuotedPost.contestMentioningPost?.xAccount;
+      const mentionerAirdropAddress = winningMentionerAccount?.airdropAddress;
 
       // If the mentioning user did not provide his airdrop address, we just don't distribute any token to him or to the quoted post owner.
       if (!mentionerAirdropAddress) {
@@ -180,10 +184,10 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
       this.logger.log(`Mentioner gets ${tokensForMentioner} tokens at ${mentionerAirdropAddress}`);
 
       if (authorAirdropAddress && tokensForAuthor)
-        await this.createPostAirdrop(airdrop, postInfo, ContestAirdropTargetUser.Author, authorAirdropAddress, tokensForAuthor);
+        await this.createPostAirdrop(airdrop, postInfo, ContestAirdropTargetUser.Author, authorAirdropAddress, tokensForAuthor, winningAuthorAccount);
 
       if (tokensForMentioner)
-        await this.createPostAirdrop(airdrop, postInfo, ContestAirdropTargetUser.Mentioner, mentionerAirdropAddress, tokensForMentioner);
+        await this.createPostAirdrop(airdrop, postInfo, ContestAirdropTargetUser.Mentioner, mentionerAirdropAddress, tokensForMentioner, winningMentionerAccount);
 
       distributedTokens += tokensForAuthor + tokensForMentioner;
       airdroppedPostCount++;
@@ -192,18 +196,19 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
     this.logger.log(`Distributed ${distributedTokens} tokens for ${airdroppedPostCount} posts.`);
   }
 
-  private async createPostAirdrop(airdrop: ContestAirdrop, postInfo: PostInfo, targetUser: ContestAirdropTargetUser, airdropAddress: string, tokenAmount: number) {
-    console.log("postInfo", postInfo)
+  private async createPostAirdrop(airdrop: ContestAirdrop, postInfo: PostInfo, targetUser: ContestAirdropTargetUser, airdropAddress: string, tokenAmount: number, winningAccount: XAccount) {
     await prisma().postContestAirdrop.create({
       data: {
         airdrop: { connect: { id: airdrop.id } },
         quotePost: { connect: { id: postInfo.post.id } },
-        winningXAccount: { connect: { userId: postInfo.post.xAccountUserId } },
+        winningXAccount: { connect: { userId: winningAccount.userId } },
 
         targetUser,
         airdropAddress,
         tokenAmount: tokenAmount,
         weight: postInfo.weight,
+
+        shouldSendOnChain: this.config.sendOnChain,
 
         // Stats
         impressionCount: postInfo.stats.impressionCount,

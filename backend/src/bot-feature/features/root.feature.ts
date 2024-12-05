@@ -29,8 +29,7 @@ export class RootFeatureProvider extends BotFeatureProvider<RootFeature, typeof 
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      enabled: true
     }
   }
 }
@@ -41,7 +40,6 @@ export class RootFeature extends BotFeature<FeatureConfigType> {
   }
 
   public async scheduledExecution() {
-
     let activeFeatures = await this.bot.getActiveFeatures();
     // Execute everything except this root feature itself.
     activeFeatures = activeFeatures.filter(feature => feature.provider.type !== this.provider.type);

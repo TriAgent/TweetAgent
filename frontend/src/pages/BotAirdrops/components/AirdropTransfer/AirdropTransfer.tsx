@@ -34,9 +34,18 @@ export const AirdropTransfer: FC<{
         </InfoRow>
         <InfoRow>
           <InfoLabel>Transaction</InfoLabel>
-          <RouterLink to={chain?.explorerTransactionUrl.replace("{transaction}", postContestAirdrop.transactionId)} target="_blank">
-            {formatAddress(postContestAirdrop.transactionId, [6, 4])}
-          </RouterLink>
+          {
+            postContestAirdrop.transactionId &&
+            <RouterLink to={chain?.explorerTransactionUrl.replace("{transaction}", postContestAirdrop.transactionId)} target="_blank">
+              {formatAddress(postContestAirdrop.transactionId, [6, 4])}
+            </RouterLink>
+          }
+          {
+            !postContestAirdrop.transactionId && postContestAirdrop.shouldSendOnChain && "Unsent"
+          }
+          {
+            !postContestAirdrop.transactionId && !postContestAirdrop.shouldSendOnChain && "Simulated"
+          }
         </InfoRow>
         {/* Stats */}
         <Stack mt={1}>

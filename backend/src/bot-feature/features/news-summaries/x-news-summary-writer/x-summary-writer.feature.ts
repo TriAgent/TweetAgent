@@ -12,15 +12,14 @@ import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } f
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
 import { aiPromptsService, langchainService, xPostsService } from "src/services";
-import { infer as zodInfer } from "zod";
+import { z, infer as zodInfer } from "zod";
 import { botPersonalityPromptChunk } from "../../../../bots/model/prompt-parts/news-summary";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
 
 const PostXSummaryDelaySec = 1 * 60 * 60; // 1 hour
-//const MinTimeBetweenXPosts = PostXSummaryDelaySec; // Used by retries when posts have failed to publish. Not more frequently than this delay for posts.
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  simulatedSummaries: z.boolean().describe('If true, summary news remain in database and are never published to X')
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -39,8 +38,8 @@ export class XNewsSummaryWriterProvider extends BotFeatureProvider<XNewsSummaryW
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      enabled: true,
+      simulatedSummaries: true
     }
   }
 }
@@ -115,7 +114,8 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
   private async createNewsSummaryForX(tweetContent: string, docs: SummaryDocument[]): Promise<void> {
     // Create draft
     const dbPost = await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, tweetContent, {
-      publishRequestAt: new Date()
+      publishRequestAt: new Date(),
+      isSimulated: this.config.simulatedSummaries
     });
 
     // Mark source posts as used/summarized

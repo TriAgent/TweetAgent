@@ -43,6 +43,7 @@ export type PostContestAirdrop = {
 
   targetUser: ContestAirdropTargetUser; // Which user is receiving the airdrop for this post? As both author and mentioner can get some
 
+  shouldSendOnChain: boolean;
   transactionId?: string;// Chain transaction ID
   transferedAt?: string; // Date at which the chain token transfer has been completed
 

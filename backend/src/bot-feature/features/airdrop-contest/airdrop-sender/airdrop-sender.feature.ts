@@ -78,7 +78,8 @@ export class AirdropSenderFeature extends BotFeature<FeatureConfigType> {
     const postAirdrops = await prisma().postContestAirdrop.findMany({
       where: {
         contestAirdropId: unsentAirdrop.id,
-        transferedAt: null
+        transferedAt: null,
+        shouldSendOnChain: true
       },
       include: {
         quotePost: {
