@@ -1,5 +1,6 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureType } from "@prisma/client";
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
@@ -18,7 +19,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContestHandlerFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_XPostContestHandler,
+      `X posts handler`,
       `Classifies upcoming X posts as eligible for the airdrop contest or not`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostContestHandlerFeature(this, bot)
@@ -51,6 +54,10 @@ export class XPostContestHandlerFeature extends BotFeature<FeatureConfigType> {
 
   async studyReplyToXPost(post: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
     this.logger.log("Studying reply to X post");
+
+    // Don't reply to ourself
+    if (post.xAccountUserId === this.bot.dbBot.twitterUserId)
+      return null;
 
     const graph = new StateGraph(contestHandlerStateAnnotation)
       .addNode("StudyForContest", studyForContestAgent(this, this.logger, post))

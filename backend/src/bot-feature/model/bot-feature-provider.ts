@@ -2,16 +2,19 @@ import { BotFeatureType } from "@prisma/client";
 import { Bot } from "src/bots/model/bot";
 import { z, infer as zodInfer } from "zod";
 import { BotFeature } from "./bot-feature";
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 
 export const BotFeatureProviderConfigBase = z.object({
-  enabled: z.boolean().describe("Whether to run this service or not")
+  enabled: z.boolean().describe("Whether to run this feature or not")
 }).strict();
 
 export type BotFeatureConfigBase = zodInfer<typeof BotFeatureProviderConfigBase>;
 
 export abstract class BotFeatureProvider<FeatureType extends BotFeature<any>, ConfigFormat extends typeof BotFeatureProviderConfigBase> {
   constructor(
+    public groupType: BotFeatureGroupType,
     public type: BotFeatureType,
+    public title: string,
     public description: string,
     public configFormat: ConfigFormat, // Zod config 
     private instanceBuilder: (bot: Bot) => FeatureType

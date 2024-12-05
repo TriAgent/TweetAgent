@@ -13,6 +13,7 @@ import { replyAgent } from "./reply.agent";
 
 const ProduceRepliesCheckDelaySec = 60; // 1 minute - interval between loops that check if a reply has to be produced
 
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { infer as zodInfer } from "zod";
 
@@ -25,7 +26,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XNewsSummaryReplierProvider extends BotFeatureProvider<XNewsSummaryReplierFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.NewsSummaries,
       BotFeatureType.NewsSummaries_XNewsSummaryReplier,
+      `X posts handler`,
       `Write replies to users posts following our news summary posts`,
       FeatureConfigFormat,
       (bot: Bot) => new XNewsSummaryReplierFeature(this, bot)
@@ -63,6 +66,10 @@ export class XNewsSummaryReplierFeature extends BotFeature<FeatureConfigType> {
    * and try to answer them.
    */
   async studyReplyToXPost?(xPost: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
+    // Don't reply to ourself
+    if (xPost.xAccountUserId === this.bot.dbBot.twitterUserId)
+      return null;
+
     // Get conversation thread for this post. If not a conversation we started with a news post,
     // don't reply here.
     const conversation = await xPostsService().getParentConversation(this.bot, xPost.postId);

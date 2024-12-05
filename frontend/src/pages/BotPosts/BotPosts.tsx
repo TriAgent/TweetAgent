@@ -1,4 +1,3 @@
-import { PageTitle } from "@components/base/PageTitle/PageTitle";
 import { PostWriterModalProvider } from "@components/modals/PostWriterModal/PostWriterModal";
 import { ArrowBack } from "@mui/icons-material";
 import { Divider, IconButton, List, ListItem, Stack } from "@mui/material";
@@ -29,15 +28,6 @@ const BotPosts: FC = () => {
     });
   }, [activeBot, postId]);
 
-  // useEffect(() => {
-  //   const sub = activeBot?.onNewPost$.subscribe(post => {
-  //     if (post.parentPostId == rootPost?.postId)
-  //       setPosts([post, ...posts]);
-  //   });
-
-  //   return () => sub?.unsubscribe();
-  // }, [activeBot, posts, rootPost]);
-
   // React on new post or post content update
   useEffect(() => {
     const sub = onPostUpdate$.subscribe(newPost => {
@@ -59,9 +49,6 @@ const BotPosts: FC = () => {
     <>
       <PostWriterModalProvider>
         <Stack direction="column" style={{ width: 600 }}>
-          <Stack direction="row" alignItems="center" gap={2}>
-            <PageTitle>Posts</PageTitle>
-          </Stack>
           {rootPost &&
             <Stack gap={2} alignItems="flex-start">
               <IconButton onClick={() => window.history.back()}>

@@ -1,5 +1,6 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureType } from "@prisma/client";
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
@@ -18,7 +19,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XPostAirdropAddressProvider extends BotFeatureProvider<XPostAirdropAddressFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_XPostAirdropAddress,
+      `Airdrop address collector`,
       `Collects user airdrop addresses from X posts and acknowledges with a reply when successfully handled`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostAirdropAddressFeature(this, bot)

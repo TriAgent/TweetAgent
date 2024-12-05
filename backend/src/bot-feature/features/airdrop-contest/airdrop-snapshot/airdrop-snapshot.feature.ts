@@ -1,4 +1,5 @@
 import { BotFeatureType, ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@prisma/client";
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
@@ -19,8 +20,10 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class AirdropSnapshotProvider extends BotFeatureProvider<AirdropSnapshotFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_AirdropSnapshot,
-      `Elects best posts (that were elected for the airdrop earlier) and dispatches airdrop tokens to authors`,
+      `Snapshots`,
+      `Dispatches airdrop tokens to authors of best 'for contest' posts, at regular intervals, but without transfering them yet`,
       FeatureConfigFormat,
       (bot: Bot) => new AirdropSnapshotFeature(this, bot)
     );

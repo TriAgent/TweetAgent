@@ -4,7 +4,6 @@ import { PageTitle } from "@components/base/PageTitle/PageTitle";
 import { Stack } from "@mui/material";
 import { useActiveBot } from "@services/bots/hooks/useActiveBot";
 import { FC, useCallback, useMemo } from "react";
-import { FeatureList } from "./components/FeatureList/FeatureList";
 import { TwitterSettings } from "./components/TwitterSettings/TwitterSettings";
 
 export const BotSettings: FC = () => {
@@ -22,14 +21,10 @@ export const BotSettings: FC = () => {
   return (
     <>
       <Stack direction="column" alignItems="flex-start" >
-        <PageTitle>Bot settings</PageTitle>
-        <Stack direction="column" gap={2}>
-          <div>{activeBot.id}</div>
-          <DebouncedTextField label="Name" defaultValue={defaultName} onChange={handleNameChange} />
-        </Stack>
-        <Stack direction="column" mt={2} width="100%">
-          <PageSubtitle>Features</PageSubtitle>
-          <FeatureList bot={activeBot} />
+        <PageTitle>{activeBot.name} / {activeBot.id}</PageTitle>
+        <Stack direction="column" gap={2} mt={2}>
+          <PageSubtitle>Base settings</PageSubtitle>
+          <DebouncedTextField label="Edit bot name" defaultValue={defaultName} onChange={handleNameChange} />
         </Stack>
         <Stack direction="column" mt={2} width="100%">
           <PageSubtitle>Twitter / X</PageSubtitle>

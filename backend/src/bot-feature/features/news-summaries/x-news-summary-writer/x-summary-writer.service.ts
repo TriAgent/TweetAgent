@@ -3,6 +3,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnablePassthrough, RunnableSequence } from "@langchain/core/runnables";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { BotFeatureType } from "@prisma/client";
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
@@ -27,7 +28,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XNewsSummaryWriterProvider extends BotFeatureProvider<XNewsSummaryWriterFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.NewsSummaries,
       BotFeatureType.NewsSummaries_XNewsSummaryWriter,
+      `Summary writer`,
       `From time to time, write news summary from cached news posts, and publish to X`,
       FeatureConfigFormat,
       (bot: Bot) => new XNewsSummaryWriterFeature(this, bot)

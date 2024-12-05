@@ -1,5 +1,6 @@
 import { Annotation, BaseChannel, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureType } from "@prisma/client";
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
@@ -19,7 +20,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XPostsHandlerProvider extends BotFeatureProvider<XPostsHandlerFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
-      BotFeatureType.Core_XPostsHandler,
+      BotFeatureGroupType.XCore,
+      BotFeatureType.X_PostsHandler,
+      `Root handler for upcoming X posts`,
       `Handles unanswered third party posts and generate replies when possible.`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostsHandlerFeature(this, bot)
@@ -70,7 +73,6 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
     const xPost = await prisma().xPost.findFirst({
       where: {
         botId: this.bot.id,
-        xAccountUserId: { not: this.bot.dbBot.twitterUserId },
         wasReplyHandled: false
       },
       include: { xAccount: true }
@@ -107,7 +109,7 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
 
     // No matter if we could generate a reply or not, mark as reply as 
     // handled, so we don't try to handle it again later. A missed reply is better than being stuck forever.
-    await xPostsService().markAsReplied(xPost);
+    await xPostsService().markReplyHandled(xPost);
   }
 
   /**

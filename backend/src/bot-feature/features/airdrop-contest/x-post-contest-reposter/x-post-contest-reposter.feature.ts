@@ -1,5 +1,6 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureType, XPost } from "@prisma/client";
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
@@ -19,7 +20,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XPostContestReposterProvider extends BotFeatureProvider<XPostContestReposterFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_XPostContestReposter,
+      `X posts reposter`,
       `Quotes user posts from time to time, for the airdrop contest`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostContestReposterFeature(this, bot)

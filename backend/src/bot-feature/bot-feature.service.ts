@@ -8,12 +8,13 @@ import { AirdropSnapshotProvider } from "./features/airdrop-contest/airdrop-snap
 import { XPostAirdropAddressProvider } from "./features/airdrop-contest/x-post-airdrop-address/x-post-airdrop-address.feature";
 import { XPostContestHandlerProvider } from "./features/airdrop-contest/x-post-contest-handler/x-post-contest-handler.feature";
 import { XPostContestReposterProvider } from "./features/airdrop-contest/x-post-contest-reposter/x-post-contest-reposter.feature";
-import { XPostsFetcherProvider } from "./features/core/x-posts-fetcher/x-post-fetcher.feature";
-import { XPostsHandlerProvider } from "./features/core/x-posts-handler/x-posts-handler.feature";
-import { XPostsSenderProvider } from "./features/core/x-posts-sender/x-post-sender.feature";
 import { XNewsSummaryReplierProvider } from "./features/news-summaries/x-news-summary-replier/x-news-summary-replier.feature";
 import { XNewsSummaryWriterProvider } from "./features/news-summaries/x-news-summary-writer/x-summary-writer.service";
 import { XRealNewsFilterProvider } from "./features/news-summaries/x-real-news-filter/x-real-news-filter.service";
+import { RootFeatureProvider } from "./features/root.feature";
+import { XPostsFetcherProvider } from "./features/x-core/x-posts-fetcher/x-post-fetcher.feature";
+import { XPostsHandlerProvider } from "./features/x-core/x-posts-handler/x-posts-handler.feature";
+import { XPostsSenderProvider } from "./features/x-core/x-posts-sender/x-post-sender.feature";
 import { AnyBotFeature } from "./model/bot-feature";
 import { AnyBotFeatureProvider } from "./model/bot-feature-provider";
 
@@ -27,6 +28,8 @@ export class BotFeatureService {
 
   public registerFeatureProviders() {
     this.featureProviders = [
+      // Root
+      new RootFeatureProvider(),
       // Core
       new XPostsFetcherProvider(),
       new XPostsHandlerProvider(),

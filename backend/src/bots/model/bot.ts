@@ -25,9 +25,9 @@ export class Bot {
     await botFeatureService().ensureBotRequiredFeatures(bot);
     await aiPromptsService().ensureBotRequiredPrompts(bot);
 
-    const featureConfigs = await bot.getAllDBFeatures();
-    for (const featureConfig of featureConfigs) {
-      await bot.newFeatureFromDBFeature(featureConfig);
+    const features = await bot.getAllDBFeatures();
+    for (const feature of features) {
+      await bot.newFeatureFromDBFeature(feature);
     }
 
     return bot;
@@ -43,6 +43,10 @@ export class Bot {
 
   public getActiveFeatures(): AnyBotFeature[] {
     return this.features;
+  }
+
+  public getFeatureByType(type: BotFeatureType) {
+    return this.features.find(feature => feature.provider.type === type);
   }
 
   private async newFeatureFromDBFeature(dbFeature: DBBotFeature) {

@@ -1,3 +1,10 @@
+export enum BotFeatureGroupType {
+  Root = 'Root',
+  XCore = 'XCore',
+  AirdropContest = 'AirdropContest',
+  NewsSummaries = 'NewsSummaries'
+}
+
 export enum BotFeatureType {
   Core_XPostsFetcher = 'Core_XPostsFetcher',
   Core_XPostsHandler = 'Core_XPostsHandler',

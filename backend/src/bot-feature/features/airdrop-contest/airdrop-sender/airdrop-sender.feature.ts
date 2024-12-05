@@ -1,5 +1,5 @@
 import { BotFeatureType, XPost } from "@prisma/client";
-import { Chain } from "@x-ai-wallet-bot/common";
+import { BotFeatureGroupType, Chain } from "@x-ai-wallet-bot/common";
 import { Contract, ContractTransactionReceipt, ContractTransactionResponse, JsonRpcProvider, Wallet } from 'ethers';
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
@@ -25,7 +25,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class AirdropSenderProvider extends BotFeatureProvider<AirdropSenderFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_AirdropSender,
+      `Blockchain transaction sender`,
       `Sends airdrop tokens on chain`,
       FeatureConfigFormat,
       (bot: Bot) => new AirdropSenderFeature(this, bot)

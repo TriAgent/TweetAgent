@@ -242,7 +242,7 @@ export class XPostsService {
     return updatedPost;
   }
 
-  public markAsReplied(xPost: XPost) {
+  public markReplyHandled(xPost: XPost) {
     return this.updatePost(xPost.id, { wasReplyHandled: true });
   }
 

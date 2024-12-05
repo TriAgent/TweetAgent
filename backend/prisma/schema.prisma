@@ -46,10 +46,13 @@ model AIPrompt {
 }
 
 enum BotFeatureType {
-  // Core
-  Core_XPostsFetcher
-  Core_XPostsHandler
-  Core_XPostsSender
+  // Root
+  Root
+
+  // X core
+  X_PostsFetcher
+  X_PostsHandler
+  X_PostsSender
 
   // Airdrop contest
   AirdropContest_AirdropSender

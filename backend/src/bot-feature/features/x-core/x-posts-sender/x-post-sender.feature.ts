@@ -1,4 +1,5 @@
 import { BotFeatureType } from '@prisma/client';
+import { BotFeatureGroupType } from '@x-ai-wallet-bot/common';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
@@ -15,8 +16,10 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XPostsSenderProvider extends BotFeatureProvider<XPostSenderFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
-      BotFeatureType.Core_XPostsSender,
-      `Sends our pending posts/replies to X`,
+      BotFeatureGroupType.XCore,
+      BotFeatureType.X_PostsSender,
+      `Post sender`,
+      `Sends our unpublished posts (in database - from our bot) to X through X api`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostSenderFeature(this, bot)
     );

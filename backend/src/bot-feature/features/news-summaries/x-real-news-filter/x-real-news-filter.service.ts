@@ -8,6 +8,7 @@ import { AppLogger } from "src/logs/app-logger";
 import { prisma, xAccountsService } from "src/services";
 import { categorizeNewsAgent } from "./categorize-news.agent";
 
+import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { infer as zodInfer } from "zod";
 
@@ -20,8 +21,10 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
+      BotFeatureGroupType.NewsSummaries,
       BotFeatureType.NewsSummaries_XRealNewsFilter,
-      `Browses recent posts from followed X news accounts, and classifies posts as real news or not (used by the news summary writer).`,
+      `Post real news classifier`,
+      `Cclassifies posts as real news or not (used by the news summary writer).`,
       FeatureConfigFormat,
       (bot: Bot) => new XRealNewsFilterFeature(this, bot)
     );

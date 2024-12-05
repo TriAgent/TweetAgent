@@ -1,15 +1,21 @@
+- add a root feature to run others
+  - Make the root bot schedule be a root "feature" so we can configure it from UI as well (iteration interval etc)
+  - Ability to totally enable/disable a whole bot
+- feature dependencies:
+  - list of feature keys a feature depends on.
+  - backend should no allow to enable/disable if dependencies not met (enabled, but also "can enable" - eg: post fetched cannot run if twitter not bound)
+- rename Core to XCore 
+  - Give readable titles to feature providers
+- prompts:
+    - move into features (remove disk template files)
+    - add "personnality" prompts to feature configs too
 - New UI menu for XAccounts (global)
-- airdrops in ELA
-
-- airdrop sender feature: "really send tokens" (save in DB for each post "to be sent" or not) - so we can simulate.
-- TBD: make the root bot schedule be a root "feature" so we can configure it from UI as well (iteration interval etc)?
-
-P2:
-- group features into categories and display categoeis on UI to see clearer.
-- Ability to totally enable/disable a whole bot
-- Give readable titles to feature providers
-- TBD: move prompts into features?
-- TBD: where should news summaries be published? simulated or not (could be mix of simulated posts or not)
+- News summaries: setting to choose where to publish: simulated output or not
+  - Then re-enable news summaries in Dev bot to see if all working
+- Airdrop sender feature: "really send tokens" (save in DB for each post "to be sent" or not) - so we can simulate.
+- esc support
+  - airdrop ELA (ESC ok) - 1000 ELA / month
+- Deploy new bot to prod
 
 P3:
 - posts list : pagination and auto fetch more
@@ -18,15 +24,6 @@ P3:
 - TBD: move env setting "publish on x" as a UI bot setting
 
 AIRDROPS:
-- New features: 
-  - Backend:
-      - apis:
-        - copy ai prompts from another bot
-        - reset ai prompts to default
-- airdrop ELA (ESC ok) - 1000 ELA / month
-- tests:
-  - mention in the contest post content
-  - mention as a reply (not as quote)
 - other ideas:
   - support for NFT airdrops?
   - daily announcement of what token/amount is going to be done (also to remind to share posts)?
@@ -35,7 +32,6 @@ AIRDROPS:
 - deploy new bot version to prod (double check bot name/account)
 
 NEWS SUMMARiES:
-
 - Hashtags:
   - agent to extract keywords from bot posts, so we can add # (hashtag) in front of some of them
   - extract news post hashtags and provide them as metadata to post loader when building summary. Writer agent might use some of them in the summary post. 
@@ -62,8 +58,3 @@ NEWS SUMMARiES:
   - Knowledge base of vector documents from recent blog posts, query by similar words
   - Build, a EVM smart contract
   - Sign and deploy a EVM smart contract
-
-
-POTENTIAL EXTENSIONS:
-- distinct feature set running for each different bot.
-- distinct feature configuration for each feature-bot (eg: 2 bots not fetching same posts to build news summaries).

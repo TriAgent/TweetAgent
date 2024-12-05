@@ -1,4 +1,5 @@
 import { BotFeatureType, OperationHistoryType } from '@prisma/client';
+import { BotFeatureGroupType } from '@x-ai-wallet-bot/common';
 import moment from 'moment';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
@@ -21,7 +22,9 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 export class XPostsFetcherProvider extends BotFeatureProvider<XPostFetcherFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
-      BotFeatureType.Core_XPostsFetcher,
+      BotFeatureGroupType.XCore,
+      BotFeatureType.X_PostsFetcher,
+      `Post fetcher`,
       `Fetches and caches X Posts`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostFetcherFeature(this, bot)

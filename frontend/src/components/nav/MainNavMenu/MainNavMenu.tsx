@@ -37,6 +37,7 @@ export const MainNavMenu: FC = () => {
         title: "Selected Bot",
         items: [
           { title: "Settings", path: `/bot/settings` },
+          { title: "Features", path: `/bot/features` },
           { title: "Prompts", path: `/bot/prompts` },
           { title: "Posts", path: `/bot/posts` },
           { title: "Airdrops", path: `/bot/airdrops` },

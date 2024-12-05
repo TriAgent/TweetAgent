@@ -4,7 +4,7 @@ import { notifyDataSaved } from "@services/ui-ux/ui.service";
 import { BotFeature as BotFeatureDTO, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain } from "class-transformer";
 
-export class BotFeature {
+export class BotFeature implements BotFeatureDTO {
   @Expose() public id: string;
   @Expose() public botId: string;
   @Expose() public key: BotFeatureType;

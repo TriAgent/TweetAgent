@@ -7,6 +7,7 @@ import { Navigate, Route, RouterProvider, createBrowserRouter, createRoutesFromE
 const DefaultLayout = lazy(() => import("../layouts/DefaultLayout/DefaultLayout"));
 const BotsList = lazy(() => import("../pages/BotsList/BotsList"));
 const BotSettings = lazy(() => import("../pages/BotSettings/BotSettings"));
+const BotFeatures = lazy(() => import("../pages/BotFeatures/BotFeatures"));
 const BotPrompts = lazy(() => import("../pages/BotPrompts/BotPrompts"));
 const BotPosts = lazy(() => import("../pages/BotPosts/BotPosts"));
 const BotAirdrops = lazy(() => import("../pages/BotAirdrops/BotAirdrops"));
@@ -19,6 +20,7 @@ export const Routing = () => {
           <Route index element={<Navigate to="/bots" replace />} />
           <Route path="/bots" element={<BotsList />} />
           <Route path="/bot/settings" element={<BotSettings />} />
+          <Route path="/bot/features" element={<BotFeatures />} />
           <Route path="/bot/prompts" element={<BotPrompts />} />
           <Route path="/bot/posts/:postId" element={<BotPosts />} />
           <Route path="/bot/posts" element={<BotPosts />} />

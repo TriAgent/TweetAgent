@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
+import { BotFeatureType } from "@prisma/client";
 import { AppLogger } from "src/logs/app-logger";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { runEverySeconds } from "src/utils/run-every-seconds";
@@ -21,25 +22,19 @@ export class BotsRunnerService {
   public async run() {
     this.logger.log("Bot runner is starting");
 
-    runEverySeconds(() => this.executeBots(), 5);
+    runEverySeconds(() => this.executeRootFeatures(), 5);
   }
 
   /**
    * Sequencially executes recurring execution methods of bots features.
    */
-  private async executeBots() {
+  private async executeRootFeatures() {
     for (const bot of this.botsService.getBots()) {
-      const activeFeatures = await bot.getActiveFeatures();
+      const rootFeature = bot.getFeatureByType(BotFeatureType.Root);
 
-      for (const feature of activeFeatures) {
-        if (feature.canExecuteNow()) {
-          this.dispatcherService.emitMostRecentFeatureAction(bot, feature, "scheduledExecution");
-
-          await feature.scheduledExecution();
-          feature.updateLastExecutionTime();
-
-          this.dispatcherService.emitMostRecentFeatureAction(bot, feature, undefined);
-        }
+      if (rootFeature.canExecuteNow()) {
+        await rootFeature.scheduledExecution();
+        rootFeature.updateLastExecutionTime();
       }
     }
   }

@@ -13,7 +13,9 @@ export class BotFeatureController {
   public async getBotFeatureProviders(): Promise<BotFeatureProvider[]> {
     const providers = await this.botFeatureService.getFeatureProviders();
     return providers.map(fp => ({
+      groupType: fp.groupType,
       type: fp.type,
+      title: fp.title,
       description: fp.description,
       configFormat: zodToJsonSchema(fp.configFormat) as RawZodSchema
     }));
