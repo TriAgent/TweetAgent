@@ -1,11 +1,11 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { XAccount } from '@prisma/client';
 import { Bot } from 'src/bots/model/bot';
+import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterService } from 'src/twitter/twitter.service';
 import { UserV2 } from 'twitter-api-v2';
 import { fakeAccounts } from './model/fake-accounts';
-import { AppLogger } from 'src/logs/app-logger';
 
 
 @Injectable()
@@ -103,6 +103,10 @@ export class XAccountsService implements OnApplicationBootstrap {
         update: {}
       });
     }
+  }
+
+  public listAllAccounts() {
+    return this.prisma.xAccount.findMany({});
   }
 
   public listFakeAccounts() {

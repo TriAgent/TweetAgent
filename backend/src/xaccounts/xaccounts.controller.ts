@@ -7,6 +7,11 @@ export class XAccountsController {
     private xaccounts: XAccountsService
   ) { }
 
+  @Get()
+  public getAllAccounts() {
+    return this.xaccounts.listAllAccounts();
+  }
+
   @Get('fake')
   public listFakeAccounts() {
     return this.xaccounts.listFakeAccounts();

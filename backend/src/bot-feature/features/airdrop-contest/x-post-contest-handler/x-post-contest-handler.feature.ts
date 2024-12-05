@@ -21,7 +21,7 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
     super(
       BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_XPostContestHandler,
-      `X posts handler`,
+      `Post handler`,
       `Classifies upcoming X posts as eligible for the airdrop contest or not`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostContestHandlerFeature(this, bot)

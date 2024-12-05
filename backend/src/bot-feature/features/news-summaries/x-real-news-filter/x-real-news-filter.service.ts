@@ -23,7 +23,7 @@ export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterF
     super(
       BotFeatureGroupType.NewsSummaries,
       BotFeatureType.NewsSummaries_XRealNewsFilter,
-      `Post real news classifier`,
+      `Real news classifier`,
       `Classifies posts as real news or not (used by the news summary writer).`,
       FeatureConfigFormat,
       (bot: Bot) => new XRealNewsFilterFeature(this, bot)

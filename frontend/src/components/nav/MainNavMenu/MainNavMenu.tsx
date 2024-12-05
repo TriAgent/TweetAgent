@@ -28,6 +28,7 @@ export const MainNavMenu: FC = () => {
         title: "Global",
         items: [
           { title: "Bots", path: "/bots" },
+          { title: "X accounts", path: "/xaccounts" },
         ]
       }
     ];

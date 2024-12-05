@@ -4,7 +4,6 @@ import { XPostCreationDTO } from '@x-ai-wallet-bot/common';
 import moment from 'moment';
 import { BotsService } from 'src/bots/bots.service';
 import { Bot } from 'src/bots/model/bot';
-import { BotConfig } from 'src/config/bot-config';
 import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TwitterService } from 'src/twitter/twitter.service';
@@ -143,41 +142,36 @@ export class XPostsService {
     if (!postToSend)
       return;
 
-    if (BotConfig.X.PublishPosts) {
-      this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
-      const bot = this.botsService.getBotById(postToSend.botId);
-      const createdTweets = await this.twitter.publishTweet(bot, postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
+    this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
+    const bot = this.botsService.getBotById(postToSend.botId);
+    const createdTweets = await this.twitter.publishTweet(bot, postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
 
-      const botXAccount = await this.xAccounts.ensureXAccount(bot, bot.dbBot.twitterUserId);
+    const botXAccount = await this.xAccounts.ensureXAccount(bot, bot.dbBot.twitterUserId);
 
-      // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
-      if (createdTweets && createdTweets.length > 0) {
-        const rootTweet = createdTweets[0];
-        await this.updatePost(postToSend.id, {
-          bot: { connect: { id: bot.dbBot.id } },
-          text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
-          postId: rootTweet.postId,
+    // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
+    if (createdTweets && createdTweets.length > 0) {
+      const rootTweet = createdTweets[0];
+      await this.updatePost(postToSend.id, {
+        bot: { connect: { id: bot.dbBot.id } },
+        text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
+        postId: rootTweet.postId,
+        publishedAt: new Date(),
+        xAccount: { connect: { userId: botXAccount.userId } },
+        wasReplyHandled: true // directly mark has handled post, as this is our own post
+      });
+
+      // Create child xPosts if needed
+      let parentPostId = rootTweet.postId;
+      for (var tweet of createdTweets.slice(1)) {
+        await this.createPost(bot.dbBot, botXAccount.userId, tweet.text, {
           publishedAt: new Date(),
-          xAccount: { connect: { userId: botXAccount.userId } },
-          wasReplyHandled: true // directly mark has handled post, as this is our own post
+          postId: tweet.postId,
+          parentPostId: parentPostId,
+          isSimulated: postToSend.isSimulated
         });
 
-        // Create child xPosts if needed
-        let parentPostId = rootTweet.postId;
-        for (var tweet of createdTweets.slice(1)) {
-          await this.createPost(bot.dbBot, botXAccount.userId, tweet.text, {
-            publishedAt: new Date(),
-            postId: tweet.postId,
-            parentPostId: parentPostId,
-            isSimulated: postToSend.isSimulated
-          });
-
-          parentPostId = tweet.postId;
-        }
+        parentPostId = tweet.postId;
       }
-    }
-    else {
-      this.logger.warn(`Not publishing pending X post, disabled by configuration`);
     }
   }
 

@@ -6,6 +6,7 @@ import { Navigate, Route, RouterProvider, createBrowserRouter, createRoutesFromE
 // Lazily load for all app layouts and pages, to increase overall loading speed / reduce memory footprint
 const DefaultLayout = lazy(() => import("../layouts/DefaultLayout/DefaultLayout"));
 const BotsList = lazy(() => import("../pages/BotsList/BotsList"));
+const XAccounts = lazy(() => import("../pages/XAccounts/XAccounts"));
 const BotSettings = lazy(() => import("../pages/BotSettings/BotSettings"));
 const BotFeatures = lazy(() => import("../pages/BotFeatures/BotFeatures"));
 const BotPrompts = lazy(() => import("../pages/BotPrompts/BotPrompts"));
@@ -19,6 +20,7 @@ export const Routing = () => {
         <Route path="/" element={<DefaultLayout />}>
           <Route index element={<Navigate to="/bots" replace />} />
           <Route path="/bots" element={<BotsList />} />
+          <Route path="/xaccounts" element={<XAccounts />} />
           <Route path="/bot/settings" element={<BotSettings />} />
           <Route path="/bot/features" element={<BotFeatures />} />
           <Route path="/bot/prompts" element={<BotPrompts />} />

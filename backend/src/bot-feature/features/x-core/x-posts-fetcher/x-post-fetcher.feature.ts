@@ -8,13 +8,14 @@ import { BotConfig } from 'src/config/bot-config';
 import { AppLogger } from 'src/logs/app-logger';
 import { operationHistoryService, twitterService, xPostsService } from 'src/services';
 import { TweetV2 } from 'twitter-api-v2';
-import { infer as zodInfer } from "zod";
+import { z, infer as zodInfer } from "zod";
 
 const FetchXTargetAccountPostsDelaySec = 1 * 60; // Don't call the api more than once every N minutes
 const FetchXMentionPostsDelaySec = 1 * 60;
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  fetchNewsAccountsPosts: z.boolean().describe('Whether to fetch posts written on X by some accounts we follow, so we can for example summarize their posts later'),
+  fetchPostsMentioningUs: z.boolean().describe('Whether to fetch all posts that mention our bot name')
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -34,7 +35,8 @@ export class XPostsFetcherProvider extends BotFeatureProvider<XPostFetcherFeatur
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      fetchNewsAccountsPosts: true,
+      fetchPostsMentioningUs: true
     }
   }
 }
@@ -52,10 +54,12 @@ export class XPostFetcherFeature extends BotFeature<FeatureConfigType> {
 
   public async scheduledExecution() {
     // Fetch posts from some targeted accounts
-    await this.fetchLatestTargetAccountPosts();
+    if (this.config.fetchNewsAccountsPosts)
+      await this.fetchLatestTargetAccountPosts();
 
     // Fetch posts we are mentioned in
-    await this.fetchLatestMentionPosts();
+    if (this.config.fetchPostsMentioningUs)
+      await this.fetchLatestMentionPosts();
   }
 
   private async fetchLatestTargetAccountPosts() {

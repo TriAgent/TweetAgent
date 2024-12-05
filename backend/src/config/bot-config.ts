@@ -56,8 +56,5 @@ export const BotConfig = {
     Chain: BaseSepolia,
     Token: findChainToken(BaseSepolia, "UTT"),
     WalletPrivateKey: process.env.AIRDROP_WALLET_PRIVATE_KEY
-  },
-  X: {
-    PublishPosts: process.env.PUBLISH_X_POSTS === "1"
   }
 }

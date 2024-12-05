@@ -22,7 +22,7 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
     super(
       BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_XPostContestReposter,
-      `X posts reposter`,
+      `Post reposter`,
       `Quotes user posts from time to time, for the airdrop contest`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostContestReposterFeature(this, bot)

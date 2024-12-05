@@ -28,7 +28,7 @@ export class XNewsSummaryReplierProvider extends BotFeatureProvider<XNewsSummary
     super(
       BotFeatureGroupType.NewsSummaries,
       BotFeatureType.NewsSummaries_XNewsSummaryReplier,
-      `X posts handler`,
+      `Post handler`,
       `Write replies to users posts following our news summary posts`,
       FeatureConfigFormat,
       (bot: Bot) => new XNewsSummaryReplierFeature(this, bot)

@@ -27,7 +27,7 @@ export class AirdropSenderProvider extends BotFeatureProvider<AirdropSenderFeatu
     super(
       BotFeatureGroupType.AirdropContest,
       BotFeatureType.AirdropContest_AirdropSender,
-      `Blockchain transaction sender`,
+      `On chain transaction sender`,
       `Sends airdrop tokens on chain`,
       FeatureConfigFormat,
       (bot: Bot) => new AirdropSenderFeature(this, bot)
