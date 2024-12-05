@@ -1,5 +1,5 @@
 import { END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
-import { BotFeatureType, XPost } from "@prisma/client";
+import { XPost } from "@prisma/client";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { Bot } from "src/bots/model/bot";
@@ -8,7 +8,7 @@ import { AppLogger } from "src/logs/app-logger";
 import { prisma, xAccountsService } from "src/services";
 import { categorizeNewsAgent } from "./categorize-news.agent";
 
-import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
+import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { infer as zodInfer } from "zod";
 

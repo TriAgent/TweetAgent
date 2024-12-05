@@ -1,4 +1,5 @@
-import { BotFeatureType, Bot as DBBot, BotFeature as DBBotFeature } from "@prisma/client";
+import { Bot as DBBot, BotFeature as DBBotFeature } from "@prisma/client";
+import { BotFeatureType } from "@x-ai-wallet-bot/common";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { AppLogger } from "src/logs/app-logger";
 import { aiPromptsService, botFeatureService, botsService, xAccountsService } from "src/services";
@@ -50,7 +51,7 @@ export class Bot {
   }
 
   private async newFeatureFromDBFeature(dbFeature: DBBotFeature) {
-    const feature = await botFeatureService().newFromKey(this, dbFeature.key);
+    const feature = await botFeatureService().newFromKey(this, dbFeature.type as BotFeatureType);
     feature.updateConfig(dbFeature.config as any);
     this.features.push(feature);
   }
@@ -76,7 +77,7 @@ export class Bot {
     if (e.bot.id !== this.id)
       return;
 
-    const feature = this.features.find(f => f.provider.type === e.update.key);
+    const feature = this.features.find(f => f.provider.type === e.update.type);
 
     if (e.updatedKey === "config") {
       feature.updateConfig(e.update.config as any);

@@ -45,27 +45,27 @@ model AIPrompt {
   @@unique([key, botId])
 }
 
-enum BotFeatureType {
-  // Root
-  Root
+// enum BotFeatureType {
+//   // Root
+//   Root
 
-  // X core
-  X_PostsFetcher
-  X_PostsHandler
-  X_PostsSender
+//   // X core
+//   X_PostsFetcher
+//   X_PostsHandler
+//   X_PostsSender
+//   X_PostsGenericReplier
 
-  // Airdrop contest
-  AirdropContest_AirdropSender
-  AirdropContest_AirdropSnapshot
-  AirdropContest_XPostAirdropAddress
-  AirdropContest_XPostContestHandler
-  AirdropContest_XPostContestReposter
+//   // Airdrop contest
+//   AirdropContest_AirdropSender
+//   AirdropContest_AirdropSnapshot
+//   AirdropContest_XPostAirdropAddress
+//   AirdropContest_XPostContestHandler
+//   AirdropContest_XPostContestReposter
 
-  // News summary
-  NewsSummaries_XNewsSummaryReplier
-  NewsSummaries_XNewsSummaryWriter
-  NewsSummaries_XRealNewsFilter
-}
+//   // News summary
+//   NewsSummaries_XNewsSummaryWriter
+//   NewsSummaries_XRealNewsFilter
+// }
 
 // List of bot features for every bot.
 // Also includes feature configuration for the bot.
@@ -76,10 +76,10 @@ model BotFeature {
   bot   Bot    @relation(fields: [botId], references: [id])
   botId String
 
-  key    BotFeatureType
-  config Json           @default("{}") // Feature-specific json config for the bot
+  type   String // BotFeatureType
+  config Json   @default("{}") // Feature-specific json config for the bot
 
-  @@unique([botId, key])
+  @@unique([botId, type])
 }
 
 // Third party X account to map usernames with user ids

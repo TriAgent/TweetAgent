@@ -1,27 +1,28 @@
 export enum BotFeatureGroupType {
-  Root = 'Root',
+  Core = 'Core',
   XCore = 'XCore',
   AirdropContest = 'AirdropContest',
   NewsSummaries = 'NewsSummaries'
 }
 
 export enum BotFeatureType {
-  Core_XPostsFetcher = 'Core_XPostsFetcher',
-  Core_XPostsHandler = 'Core_XPostsHandler',
-  Core_XPostsSender = 'Core_XPostsSender',
+  Core_RootScheduler = 'Core_RootScheduler',
+  Core_GenericReplier = 'Core_GenericReplier',
+  XCore_PostFetcher = 'XCore_PostFetcher',
+  XCore_PostHandler = 'XCore_PostHandler',
+  XCore_PostsSender = 'XCore_PostsSender',
   AirdropContest_AirdropSender = 'AirdropContest_AirdropSender',
   AirdropContest_AirdropSnapshot = 'AirdropContest_AirdropSnapshot',
   AirdropContest_XPostAirdropAddress = 'AirdropContest_XPostAirdropAddress',
   AirdropContest_XPostContestHandler = 'AirdropContest_XPostContestHandler',
   AirdropContest_XPostContestReposter = 'AirdropContest_XPostContestReposter',
-  NewsSummaries_XNewsSummaryReplier = 'NewsSummaries_XNewsSummaryReplier',
   NewsSummaries_XNewsSummaryWriter = 'NewsSummaries_XNewsSummaryWriter',
   NewsSummaries_XRealNewsFilter = 'NewsSummaries_XRealNewsFilter'
 };
 
 export type BotFeature = {
   id: string;
-  key: BotFeatureType;
+  type: BotFeatureType;
   botId: string;
 
   config: any; // json custom config specific to each feature

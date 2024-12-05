@@ -1,6 +1,6 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import { BotFeatureType, XPost } from "@prisma/client";
-import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
+import { XPost } from "@prisma/client";
+import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
@@ -31,7 +31,7 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
+      enabled: true,
       quoteInterval: 1 * 60 * 60 // 1 hour
     }
   }

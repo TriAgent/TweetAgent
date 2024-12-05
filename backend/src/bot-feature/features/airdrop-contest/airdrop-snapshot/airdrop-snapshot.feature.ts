@@ -1,5 +1,5 @@
-import { BotFeatureType, ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@prisma/client";
-import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
+import { ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@prisma/client";
+import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";

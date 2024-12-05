@@ -1,8 +1,7 @@
-import { BotFeatureType } from "@prisma/client";
+import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { Bot } from "src/bots/model/bot";
 import { z, infer as zodInfer } from "zod";
 import { BotFeature } from "./bot-feature";
-import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
 
 export const BotFeatureProviderConfigBase = z.object({
   enabled: z.boolean().describe("Whether to run this feature or not")

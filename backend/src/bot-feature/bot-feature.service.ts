@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { BotFeatureType } from "@prisma/client";
+import { BotFeatureType } from "@x-ai-wallet-bot/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { deepMergeAndPrune } from "src/utils/deep-merge-prune";
 import { Bot } from "../bots/model/bot";
@@ -8,10 +8,10 @@ import { AirdropSnapshotProvider } from "./features/airdrop-contest/airdrop-snap
 import { XPostAirdropAddressProvider } from "./features/airdrop-contest/x-post-airdrop-address/x-post-airdrop-address.feature";
 import { XPostContestHandlerProvider } from "./features/airdrop-contest/x-post-contest-handler/x-post-contest-handler.feature";
 import { XPostContestReposterProvider } from "./features/airdrop-contest/x-post-contest-reposter/x-post-contest-reposter.feature";
-import { XNewsSummaryReplierProvider } from "./features/news-summaries/x-news-summary-replier/x-news-summary-replier.feature";
+import { GenericReplierProvider } from "./features/core/generic-replier/generic-replier.feature";
+import { RootSchedulerFeatureProvider } from "./features/core/root-scheduler/root-scheduler.feature";
 import { XNewsSummaryWriterProvider } from "./features/news-summaries/x-news-summary-writer/x-summary-writer.feature";
 import { XRealNewsFilterProvider } from "./features/news-summaries/x-real-news-filter/x-real-news-filter.service";
-import { RootFeatureProvider } from "./features/root.feature";
 import { XPostsFetcherProvider } from "./features/x-core/x-posts-fetcher/x-post-fetcher.feature";
 import { XPostsHandlerProvider } from "./features/x-core/x-posts-handler/x-posts-handler.feature";
 import { XPostsSenderProvider } from "./features/x-core/x-posts-sender/x-post-sender.feature";
@@ -29,7 +29,7 @@ export class BotFeatureService {
   public registerFeatureProviders() {
     this.featureProviders = [
       // Root
-      new RootFeatureProvider(),
+      new RootSchedulerFeatureProvider(),
       // Core
       new XPostsFetcherProvider(),
       new XPostsHandlerProvider(),
@@ -42,7 +42,7 @@ export class BotFeatureService {
       new XPostContestHandlerProvider(),
       // News summaries
       new XRealNewsFilterProvider(),
-      new XNewsSummaryReplierProvider(),
+      new GenericReplierProvider(),
       new XNewsSummaryWriterProvider(),
     ]
   }
@@ -85,21 +85,21 @@ export class BotFeatureService {
     for (const requiredBotFeatureType of requiredBotFeatureTypes) {
       const feature = await this.prisma.botFeature.upsert({
         where: {
-          botId_key: {
+          botId_type: {
             botId: bot.dbBot.id,
-            key: requiredBotFeatureType
+            type: requiredBotFeatureType
           }
         },
         create: {
           bot: { connect: { id: bot.dbBot.id } },
-          key: requiredBotFeatureType,
+          type: requiredBotFeatureType,
           config: {}
         },
         update: {}
       });
 
       // Now ensure config quality
-      const provider = this.getFeatureProvider(feature.key);
+      const provider = this.getFeatureProvider(feature.type as BotFeatureType);
       const defaultConfig = provider.getDefaultConfig();
 
       // Deep merge default config with current user config, and prune removed fields

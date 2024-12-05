@@ -1,5 +1,4 @@
-import { BotFeatureType } from '@prisma/client';
-import { BotFeatureGroupType } from '@x-ai-wallet-bot/common';
+import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
@@ -15,15 +14,15 @@ type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 /**
  * We use a root feature so we can configure a few settings for the whole bot.
  */
-export class RootFeatureProvider extends BotFeatureProvider<RootFeature, typeof FeatureConfigFormat> {
+export class RootSchedulerFeatureProvider extends BotFeatureProvider<RootSchedulerFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
-      BotFeatureGroupType.Root,
-      BotFeatureType.Root,
+      BotFeatureGroupType.Core,
+      BotFeatureType.Core_RootScheduler,
       `Root scheduler`,
       `Root feature that schedules all other features`,
       FeatureConfigFormat,
-      (bot: Bot) => new RootFeature(this, bot)
+      (bot: Bot) => new RootSchedulerFeature(this, bot)
     );
   }
 
@@ -34,8 +33,8 @@ export class RootFeatureProvider extends BotFeatureProvider<RootFeature, typeof 
   }
 }
 
-export class RootFeature extends BotFeature<FeatureConfigType> {
-  constructor(provider: RootFeatureProvider, bot: Bot) {
+export class RootSchedulerFeature extends BotFeature<FeatureConfigType> {
+  constructor(provider: RootSchedulerFeatureProvider, bot: Bot) {
     super(provider, bot, 5);
   }
 

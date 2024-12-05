@@ -1,6 +1,5 @@
 import { Annotation, BaseChannel, END, START, StateGraph } from "@langchain/langgraph";
-import { BotFeatureType } from "@prisma/client";
-import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
+import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
@@ -21,7 +20,7 @@ export class XPostsHandlerProvider extends BotFeatureProvider<XPostsHandlerFeatu
   constructor() {
     super(
       BotFeatureGroupType.XCore,
-      BotFeatureType.X_PostsHandler,
+      BotFeatureType.XCore_PostHandler,
       `Root handler for upcoming X posts`,
       `Handles unanswered third party posts and generate replies when possible.`,
       FeatureConfigFormat,
@@ -31,7 +30,7 @@ export class XPostsHandlerProvider extends BotFeatureProvider<XPostsHandlerFeatu
 
   public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
     return {
-      enabled: false,
+      enabled: true,
       //snapshotInterval: 24 * 60 * 60 // 1 per day
     }
   }

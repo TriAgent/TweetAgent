@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { BotFeatureType, Log } from "@prisma/client";
-import { ActiveFeatureUpdate, DispatcherUpdate, LogType, LogUpdate, State, StateUpdate, XPostUpdate } from "@x-ai-wallet-bot/common";
+import { Log } from "@prisma/client";
+import { ActiveFeatureUpdate, BotFeatureType, DispatcherUpdate, LogType, LogUpdate, State, StateUpdate, XPostUpdate } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { Bot } from "src/bots/model/bot";
@@ -46,7 +46,7 @@ export class DispatcherService {
     this.emit<ActiveFeatureUpdate>(`log`, {
       op: "active-feature", data: {
         botId: bot.id,
-        key: BotFeatureType[feature.provider.type as keyof BotFeatureType],
+        key: feature.provider.type as BotFeatureType,
         method,
         date: moment().toISOString()
       }

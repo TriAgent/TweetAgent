@@ -1,5 +1,5 @@
-import { BotFeatureType, XPost } from "@prisma/client";
-import { BotFeatureGroupType, Chain } from "@x-ai-wallet-bot/common";
+import { XPost } from "@prisma/client";
+import { BotFeatureGroupType, BotFeatureType, Chain } from "@x-ai-wallet-bot/common";
 import { Contract, ContractTransactionReceipt, ContractTransactionResponse, JsonRpcProvider, Wallet } from 'ethers';
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";

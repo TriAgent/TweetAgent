@@ -1,5 +1,4 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import { BotFeatureType } from "@prisma/client";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
 import { Bot } from "src/bots/model/bot";
@@ -13,25 +12,24 @@ import { replyAgent } from "./reply.agent";
 
 const ProduceRepliesCheckDelaySec = 60; // 1 minute - interval between loops that check if a reply has to be produced
 
-import { BotFeatureGroupType } from "@x-ai-wallet-bot/common";
+import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
 import { infer as zodInfer } from "zod";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
 
-export class XNewsSummaryReplierProvider extends BotFeatureProvider<XNewsSummaryReplierFeature, typeof FeatureConfigFormat> {
+export class GenericReplierProvider extends BotFeatureProvider<GenericReplierFeature, typeof FeatureConfigFormat> {
   constructor() {
     super(
-      BotFeatureGroupType.NewsSummaries,
-      BotFeatureType.NewsSummaries_XNewsSummaryReplier,
-      `Post handler`,
-      `Write replies to users posts following our news summary posts`,
+      BotFeatureGroupType.Core,
+      BotFeatureType.Core_GenericReplier,
+      `Generic replier`,
+      `Write generic replies to users posts for all interactions with us`,
       FeatureConfigFormat,
-      (bot: Bot) => new XNewsSummaryReplierFeature(this, bot)
+      (bot: Bot) => new GenericReplierFeature(this, bot)
     );
   }
 
@@ -52,28 +50,26 @@ export let replierStateAnnotation = Annotation.Root({
 });
 
 /**
- * This feature generates replies to X users that posted in reply to our news summary posts.
+ * This feature generates replies to X users that posted by mentioning us.
  */
-export class XNewsSummaryReplierFeature extends BotFeature<FeatureConfigType> {
-  private logger = new AppLogger("NewsSummaryReplier", this.bot);
+export class GenericReplierFeature extends BotFeature<FeatureConfigType> {
+  private logger = new AppLogger("GenericReplier", this.bot);
 
-  constructor(provider: XNewsSummaryReplierProvider, bot: Bot) {
+  constructor(provider: GenericReplierProvider, bot: Bot) {
     super(provider, bot, ProduceRepliesCheckDelaySec);
   }
 
   /**
-   * Checks if some new replies have been sent to us as a reply to our news summaries,
-   * and try to answer them.
+   * Checks if some new replies have been sent to us as and try to answer them.
    */
   async studyReplyToXPost?(xPost: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
     // Don't reply to ourself
     if (xPost.xAccountUserId === this.bot.dbBot.twitterUserId)
       return null;
 
-    // Get conversation thread for this post. If not a conversation we started with a news post,
-    // don't reply here.
+    // Get conversation thread for this post. 
     const conversation = await xPostsService().getParentConversation(this.bot, xPost.postId);
-    if (!conversation || conversation.length === 0 || conversation[0].botId != this.bot.dbBot.id)
+    if (!conversation || conversation.length === 0)
       return;
 
     this.logger.log("Building X reply for post:");

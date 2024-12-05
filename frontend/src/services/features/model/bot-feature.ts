@@ -7,7 +7,7 @@ import { Expose, instanceToPlain } from "class-transformer";
 export class BotFeature implements BotFeatureDTO {
   @Expose() public id: string;
   @Expose() public botId: string;
-  @Expose() public key: BotFeatureType;
+  @Expose() public type: BotFeatureType;
   @Expose() public config: any;
 
   /**

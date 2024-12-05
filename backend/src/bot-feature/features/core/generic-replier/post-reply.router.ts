@@ -1,9 +1,9 @@
 import { StructuredTool } from "@langchain/core/tools";
 import { END } from "@langchain/langgraph";
 import { XPost } from "@prisma/client";
+import { replierStateAnnotation } from "./generic-replier.feature";
 import { ReplierNode } from "./model/replier-node";
 import { TweetTrait } from "./model/tweet-trait";
-import { replierStateAnnotation } from "./x-news-summary-replier.feature";
 
 /**
  * Based on tweet traits, decide to reply or not

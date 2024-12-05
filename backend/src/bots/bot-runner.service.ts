@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { BotFeatureType } from "@prisma/client";
+import { BotFeatureType } from "@x-ai-wallet-bot/common";
 import { AppLogger } from "src/logs/app-logger";
 import { TwitterAuthService } from "src/twitter/twitter-auth.service";
 import { runEverySeconds } from "src/utils/run-every-seconds";
@@ -30,7 +30,7 @@ export class BotsRunnerService {
    */
   private async executeRootFeatures() {
     for (const bot of this.botsService.getBots()) {
-      const rootFeature = bot.getFeatureByType(BotFeatureType.Root);
+      const rootFeature = bot.getFeatureByType(BotFeatureType.Core_RootScheduler);
 
       if (rootFeature.canExecuteNow()) {
         await rootFeature.scheduledExecution();

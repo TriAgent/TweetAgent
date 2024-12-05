@@ -62,7 +62,7 @@ const FeatureComponent: FC<{
   onAccordionChange: (isExpanded: boolean) => void;
 }> = ({ bot, provider, expandedAccordionId, onAccordionChange }) => {
   const features = useBehaviorSubject(bot.features$);
-  const feature = useMemo(() => features?.find(feature => feature.key === provider.type), [features, provider]);
+  const feature = useMemo(() => features?.find(feature => feature.type === provider.type), [features, provider]);
 
   const handleConfigChange = useCallback((newConfig: any) => {
     feature.config = newConfig;
@@ -77,7 +77,7 @@ const FeatureComponent: FC<{
     return null;
 
   return <>
-    <Accordion expanded={expandedAccordionId === feature.key} onChange={handleAccordionChange}>
+    <Accordion expanded={expandedAccordionId === feature.type} onChange={handleAccordionChange}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography style={{ opacity: feature.config.enabled ? 1 : 0.5 }}>{provider?.title}</Typography>
       </AccordionSummary>

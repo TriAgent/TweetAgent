@@ -136,7 +136,7 @@ export class BotsService implements OnApplicationBootstrap {
   public listBotFeatures(bot: DBBot): Promise<BotFeature[]> {
     return this.prisma.botFeature.findMany({
       where: { botId: bot.id },
-      orderBy: { key: "asc" }
+      orderBy: { type: "asc" }
     });
   }
 

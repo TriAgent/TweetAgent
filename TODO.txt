@@ -1,16 +1,14 @@
-- BUG?: "Hi @xainews31460 what's up today?" gets a reply by the summary news replier.
-  => Convert the news replier into a generic replier and keep this behaviour, this is good.
 - prompts:
     - move into features (remove disk template files)
     - add "personnality" prompts to feature configs too
 - esc support
   - airdrop ELA (ESC ok) - 1000 ELA / month
+- bug: newly bound twitter account not used until backend restart
 - Deploy new bot to prod
 
 P3:
 - Ability to configure X accounts to get news from, from UI (store in summary news feature)
 - posts list : pagination and auto fetch more
-- bug: X fetcher should not try to auth if no twitter account bound
 - bug: bot list name not changing when bot name changes in settings
 
 AIRDROPS:

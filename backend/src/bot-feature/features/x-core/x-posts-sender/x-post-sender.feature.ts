@@ -1,5 +1,4 @@
-import { BotFeatureType } from '@prisma/client';
-import { BotFeatureGroupType } from '@x-ai-wallet-bot/common';
+import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
@@ -17,7 +16,7 @@ export class XPostsSenderProvider extends BotFeatureProvider<XPostSenderFeature,
   constructor() {
     super(
       BotFeatureGroupType.XCore,
-      BotFeatureType.X_PostsSender,
+      BotFeatureType.XCore_PostsSender,
       `Post sender`,
       `Sends our unpublished posts (in database - from our bot) to X through X api`,
       FeatureConfigFormat,

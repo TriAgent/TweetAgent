@@ -22,6 +22,9 @@ export class TwitterService {
    * @param accounts twitter accounts without trailing @
    */
   public async fetchAuthorsPosts(bot: Bot, accounts: string[], notBefore: Moment): Promise<TweetV2[]> {
+    if (!this.handleAccountBoundToBot(bot))
+      return null;
+
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
     // X API limitation: make sure start time is not older than a week ago
@@ -52,6 +55,9 @@ export class TwitterService {
   }
 
   public async fetchPostsMentioningOurAccount(bot: Bot, notBefore: Moment): Promise<TweetV2[]> {
+    if (!this.handleAccountBoundToBot(bot))
+      return null;
+
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
     // X API limitation: make sure start time is not older than a week ago
@@ -88,6 +94,9 @@ export class TwitterService {
    * Returns the created post ids (in conversation order)
    */
   public async publishTweet(bot: Bot, tweetContent: string, inReplyToTweetId?: string, quoteTweetId?: string): Promise<{ postId: string, text: string }[]> {
+    if (!this.handleAccountBoundToBot(bot))
+      return null;
+
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
     // Split content if larger than 280 chars
@@ -133,6 +142,9 @@ export class TwitterService {
    * Iteratively fetches parent posts (beginning of conversation) from the given post.
    */
   public async fetchParentPosts(bot: Bot, postId: string): Promise<TweetV2[]> {
+    if (!this.handleAccountBoundToBot(bot))
+      return null;
+
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
     const conversation: any[] = [];
@@ -166,6 +178,9 @@ export class TwitterService {
   }
 
   public async fetchSinglePost(bot: Bot, postId: string): Promise<TweetV2> {
+    if (!this.handleAccountBoundToBot(bot))
+      return null;
+
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
     try {
@@ -181,6 +196,9 @@ export class TwitterService {
   }
 
   public async fetchAccountByUserId(bot: Bot, userId: string): Promise<UserV2> {
+    if (!this.handleAccountBoundToBot(bot))
+      return null;
+
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
     try {
@@ -199,6 +217,9 @@ export class TwitterService {
   }
 
   public async fetchAccountByUserName(bot: Bot, userScreenName: string): Promise<UserV2> {
+    if (!this.handleAccountBoundToBot(bot))
+      return null;
+
     const client = await this.auth.getAuthorizedClientForBot(bot);
 
     try {
@@ -226,6 +247,14 @@ export class TwitterService {
     }
 
     return null;
+  }
+
+  private handleAccountBoundToBot(bot: Bot): boolean {
+    if (!bot.dbBot.twitterUserId) {
+      this.logger.warn(`ensureXAccount(): no twitter account linked to this bot yet!`);
+      return false;
+    }
+    return true;
   }
 
   // public async fetchSelfMentions(notBefore: Moment): Promise<TweetV2[]> {
