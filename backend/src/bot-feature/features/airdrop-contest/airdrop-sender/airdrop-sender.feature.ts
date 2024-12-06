@@ -6,7 +6,7 @@ import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigT
 import { Bot } from "src/bots/model/bot";
 import { BotConfig } from "src/config/bot-config";
 import { SupportedChains } from "src/config/chain-config";
-import airdropABI from "src/contracts/airdrop.json";
+import { abi as airdropABI } from "src/contracts/TokenBatchTransfer.json";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma, xPostsService } from "src/services";
 import { tokenToContractValue } from "src/utils/tokens";
@@ -128,7 +128,13 @@ export class AirdropSenderFeature extends BotFeature<FeatureConfigType> {
     if (postAirdrops.length > 0) {
       // Send tokens on chain
       try {
-        const tx: ContractTransactionResponse = await this.airdropContract.batchTransfer(airdropAddresses, airdropAmounts);
+        // Depending on target token, use native or ERC20.
+        let tx: ContractTransactionResponse;
+        if (token.address)
+          tx = await this.airdropContract.batchTransfer(airdropAddresses, airdropAmounts);
+        else
+          tx = await this.airdropContract.batchTransferNative(airdropAddresses, airdropAmounts);
+
         this.logger.log(`Publishing transaction on chain. Transaction ID: ${tx?.hash}`);
 
         // Wait for block confirmation

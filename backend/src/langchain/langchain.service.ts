@@ -85,7 +85,6 @@ export class LangchainService implements OnModuleInit {
           ChatPromptTemplate.fromMessages(messageHistory),
           model,
         ] as any); // dirty as any because of headache with from() typing (first input type etc)
-        console.log(messageHistory)
         responseMessage = await chain.invoke(invocationParams); // NOTE: using "" instead of "" to avoid text.replace is not a function when using vector stores
 
         // Save this preliminary/final message to history
@@ -102,6 +101,7 @@ export class LangchainService implements OnModuleInit {
 
       if (structuredOutput && !structuredResponse) {
         this.logger.error(`LLM invocation expected a structured response but did not get one. Got this response instead:`);
+        this.logger.error(messageHistory);
         this.logger.error(responseMessage);
       }
 

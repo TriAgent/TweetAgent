@@ -117,6 +117,7 @@ export class XPostsService {
     const mostRecentlyPublishedPost = await this.prisma.xPost.findFirst({
       where: {
         publishRequestAt: { not: null },
+        isSimulated: false,
         AND: [
           { publishedAt: { not: null } },
           // TODO: replace code below with a "publish not before date" field in database, to be more generic
@@ -188,8 +189,6 @@ export class XPostsService {
     }
 
     if (optValues?.postId) createData.postId = optValues?.postId;
-    if (optValues?.publishRequestAt) createData.publishRequestAt = optValues?.publishRequestAt;
-    if (optValues?.publishedAt) createData.publishedAt = optValues?.publishedAt;
     if (optValues?.parentPostId) createData.parentPostId = optValues?.parentPostId;
     if (optValues?.quotedPostId) createData.quotedPostId = optValues?.quotedPostId;
     if (optValues?.contestQuotedPostId) createData.contestQuotedPost = { connect: { id: optValues?.contestQuotedPostId } };
@@ -205,6 +204,11 @@ export class XPostsService {
       createData.postId = `simulated-${uuidV4()}`
       createData.publishRequestAt = new Date();
       createData.publishedAt = new Date();
+    }
+    else {
+      // Only set when not simulated
+      if (optValues?.publishRequestAt) createData.publishRequestAt = optValues?.publishRequestAt;
+      if (optValues?.publishedAt) createData.publishedAt = optValues?.publishedAt;
     }
 
     // If publishing account is our bot, write the bot as handled, no matter what

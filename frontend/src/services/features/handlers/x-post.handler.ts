@@ -15,10 +15,10 @@ export class XPostHandler extends FeatureHandler {
     else
       tags.push({label: "Real X post", type: "success"});
 
-    if (!post.isSimulated && post.publishedAt)
-      tags.push({label: "Published on X", type: "success"});
+    if (post.publishedAt)
+      tags.push({label: "Published", type: "success"});
     else
-      tags.push({label: "Not published on X", type: "warning"});
+      tags.push({label: "Not published", type: "warning"});
 
     return tags;
   }

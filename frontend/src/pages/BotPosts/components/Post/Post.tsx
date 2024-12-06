@@ -47,7 +47,7 @@ export const Post: FC<{
       <div onClick={() => handlePostClicked(post)} style={{ cursor: "pointer" }}>{post.text}</div>
       {
         parentPost &&
-        <RepliedToLabel onClick={() => handlePostClicked(parentPost)}>Replied to @{parentPost.xAccount.userName} about {parentPost.text.substring(0, 30)}...</RepliedToLabel>
+        <RepliedToLabel onClick={() => handlePostClicked(parentPost)}>Replied to {parentPost.xAccount.userName} (@{parentPost.xAccount.userScreenName}) about: {parentPost.text.substring(0, 30)}...</RepliedToLabel>
       }
       {/* Quoted post, if any */}
       {

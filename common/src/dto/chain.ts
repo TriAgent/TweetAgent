@@ -3,7 +3,7 @@ export type Token = {
   name: string; // eg: "USDTEST"
   symbol: string; // eg: "UTT"
   address: string;
-  decimals: number; // token contract decimals encoding - eg: 18
+  decimals: number; // token contract decimals encoding - eg: 18 
 }
 
 export type Chain = {

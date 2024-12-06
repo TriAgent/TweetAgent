@@ -37,6 +37,7 @@ const DefaultLayout = () => {
           height: `${bottomBarHeight}px`,
           bgcolor: 'grey.800',
           color: 'white',
+          zIndex: 1,
           boxSizing: 'border-box',
         }}
       >

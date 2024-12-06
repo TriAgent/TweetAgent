@@ -1,5 +1,5 @@
 import { join } from "path";
-import { BaseSepolia, findChainToken } from "./chain-config";
+import { ElastosTestnet, findChainToken } from "./chain-config";
 
 export const BotConfig = {
   AiPrompts: {
@@ -16,11 +16,11 @@ export const BotConfig = {
     }
   },
   AirdropContest: {
-    TokenAmountPerAirdrop: 100, // eg: 100 usdt every 24h, total, dispatched between all winning posts
+    TokenAmountPerAirdrop: 10, // eg: 100 usdt every 24h, total, dispatched between all winning posts
 
     // Chain related
-    Chain: BaseSepolia,
-    Token: findChainToken(BaseSepolia, "UTT"),
+    Chain: ElastosTestnet,
+    Token: findChainToken(ElastosTestnet, "tELA"),
     WalletPrivateKey: process.env.AIRDROP_WALLET_PRIVATE_KEY
   }
 }

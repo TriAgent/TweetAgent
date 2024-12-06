@@ -1,12 +1,13 @@
-- show "not real news" reason in logs - too many NOT real news for now
 - esc support
   - airdrop ELA (ESC ok) - 1000 ELA / month
 - Deploy new bot to prod
 
 P2:
-- Ability to configure X accounts to get news from, from UI (store in summary news feature)
+- post sender feature: configurable min delay between posts
+- WS event for new airdrops + refresh on UI
 
 P3:
+- Ability to configure X accounts to get news from, from UI (store in summary news feature)
 - posts list : pagination and auto fetch more
 - bug: bot list name not changing when bot name changes in settings
 
