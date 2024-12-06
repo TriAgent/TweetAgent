@@ -5,20 +5,24 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
-import { aiPromptsService, langchainService, xPostsService } from "src/services";
+import { langchainService, xPostsService } from "src/services";
 import { z, infer as zodInfer } from "zod";
 import { botPersonalityPromptChunk } from "../../../../bots/model/prompt-parts/news-summary";
+import { createNewsSummary } from "./default-prompts";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
 
 const PostXSummaryDelaySec = 1 * 60 * 60; // 1 hour
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  simulatedSummaries: z.boolean().describe('If true, summary news remain in database and are never published to X')
+  simulatedSummaries: z.boolean().describe('If true, summary news remain in database and are never published to X'),
+  _prompts: z.object({
+    createNewsSummary: z.string()
+  })
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -35,10 +39,13 @@ export class XNewsSummaryWriterProvider extends BotFeatureProvider<XNewsSummaryW
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true,
-      simulatedSummaries: true
+      simulatedSummaries: true,
+      _prompts: {
+        createNewsSummary
+      }
     }
   }
 }
@@ -80,7 +87,7 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
         ["system", botPersonalityPromptChunk()],
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
-        ["system", await aiPromptsService().get(this.bot, "news-summaries/create-news-summary")]
+        ["system", this.config._prompts.createNewsSummary]
       ]);
 
       const model = langchainService().getModel(); // high temperature for more random output

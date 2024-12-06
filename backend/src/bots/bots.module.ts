@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AiPromptsModule } from 'src/ai-prompts/ai-prompts.module';
+import { BotFeatureService } from 'src/bot-feature/bot-feature.service';
 import { LangchainModule } from 'src/langchain/langchain.module';
 import { OperationHistoryModule } from 'src/operation-history/operation-history.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
@@ -10,7 +10,6 @@ import { XPostsModule } from 'src/xposts/xposts.module';
 import { BotsRunnerService } from './bot-runner.service';
 import { BotsController } from './bots.controller';
 import { BotsService } from './bots.service';
-import { BotFeatureService } from 'src/bot-feature/bot-feature.service';
 
 @Module({
   controllers: [
@@ -23,7 +22,6 @@ import { BotFeatureService } from 'src/bot-feature/bot-feature.service';
   ],
   imports: [
     PrismaModule,
-    AiPromptsModule,
     OperationHistoryModule,
     XPostsModule,
     XaccountsModule,

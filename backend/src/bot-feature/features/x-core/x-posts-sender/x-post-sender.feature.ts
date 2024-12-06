@@ -1,6 +1,6 @@
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
 import { AppLogger } from 'src/logs/app-logger';
 import { xPostsService } from 'src/services';
@@ -24,7 +24,7 @@ export class XPostsSenderProvider extends BotFeatureProvider<XPostSenderFeature,
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day

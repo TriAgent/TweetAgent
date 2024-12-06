@@ -1,17 +1,20 @@
 import { Annotation, BaseChannel, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
 import { Bot } from "src/bots/model/bot";
 import { standardStringAnnotationReducer } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma, wsDispatcherService, xPostsService } from "src/services";
-import { infer as zodInfer } from "zod";
+import { z, infer as zodInfer } from "zod";
 import { produceAggregatedReplyAgent } from "./aggregated-reply.agent";
+import { produceAggregatedReply } from "./default-prompts";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  _prompts: z.object({
+    produceAggregatedReply: z.string()
+  })
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -28,10 +31,12 @@ export class XPostsHandlerProvider extends BotFeatureProvider<XPostsHandlerFeatu
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      _prompts: {
+        produceAggregatedReply
+      }
     }
   }
 }

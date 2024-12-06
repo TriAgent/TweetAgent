@@ -1,4 +1,3 @@
-import { AiPromptsService } from "./ai-prompts/ai-prompts.service";
 import { BotFeatureService } from "./bot-feature/bot-feature.service";
 import { BotsService } from "./bots/bots.service";
 import { LangchainService } from "./langchain/langchain.service";
@@ -33,10 +32,6 @@ export const twitterService = (): TwitterService => {
 
 export const twitterAuthService = (): TwitterAuthService => {
   return app.get(TwitterAuthService);
-}
-
-export const aiPromptsService = (): AiPromptsService => {
-  return app.get(AiPromptsService);
 }
 
 export const botsService = (): BotsService => {

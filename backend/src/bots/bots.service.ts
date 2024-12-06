@@ -2,7 +2,6 @@ import { forwardRef, HttpException, Inject, Injectable, OnApplicationBootstrap }
 import { AIPrompt, BotFeature, Bot as DBBot, Prisma } from '@prisma/client';
 import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureDTO } from "@x-ai-wallet-bot/common";
 import { Subject } from 'rxjs';
-import { AiPromptsService } from 'src/ai-prompts/ai-prompts.service';
 import { Bot } from 'src/bots/model/bot';
 import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -38,7 +37,6 @@ export class BotsService implements OnApplicationBootstrap {
 
   constructor(
     private prisma: PrismaService,
-    private aiPrompts: AiPromptsService,
     @Inject(forwardRef(() => BotsRunnerService)) private runner: BotsRunnerService
   ) { }
 
@@ -61,9 +59,6 @@ export class BotsService implements OnApplicationBootstrap {
 
     const bot = await Bot.newFromPrisma(dbBot);
     this.bots.push(bot);
-
-    // Create all default prompts for the bot
-    await this.aiPrompts.ensureBotRequiredPrompts(bot);
 
     this.onNewBot$.next(bot);
 

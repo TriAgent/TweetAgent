@@ -1,9 +1,10 @@
 import { TextField } from "@mui/material";
 import { useDebounceInput } from "@services/ui-ux/hooks/useDebounceInput";
-import { CSSProperties, forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import { CSSProperties, forwardRef, HTMLInputTypeAttribute, useCallback, useEffect, useImperativeHandle, useState } from "react";
 
 type Props = {
   label: string;
+  type?: HTMLInputTypeAttribute;
   defaultValue?: string;
   multiline?: boolean;
   minRows?: number; // for multline only
@@ -14,7 +15,7 @@ type Props = {
   style?: CSSProperties;
 };
 
-export const DebouncedTextField = forwardRef<{ clear: () => void }, Props>(({ label, defaultValue = "", onChange, multiline = false, minRows = 1, maxRows = 100, debounceTime = 1000, style }, ref) => {
+export const DebouncedTextField = forwardRef<{ clear: () => void }, Props>(({ label, type = "text", defaultValue = "", onChange, multiline = false, minRows = 1, maxRows = 100, debounceTime = 1000, style }, ref) => {
   const [value, setValue] = useState(defaultValue);
 
   useImperativeHandle(ref, () => ({
@@ -33,6 +34,7 @@ export const DebouncedTextField = forwardRef<{ clear: () => void }, Props>(({ la
     multiline={multiline}
     minRows={minRows}
     maxRows={maxRows}
+    type={type}
     value={value || ""}
     style={style}
     onChange={e => { setValue(e.target.value); inputSubject.next(e.target.value) }}

@@ -3,16 +3,21 @@ import { XPost } from "@prisma/client";
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma, xPostsService } from "src/services";
 import { z, infer as zodInfer } from "zod";
+import { electBestPostForContest, writePostQuoteContent } from "./default-prompts";
 import { electBestPostForContestAgent } from "./elect-best-post-for-contest.agent";
 import { writePostQuoteContentAgent } from "./write-post-quote-content.agent";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  quoteInterval: z.number().describe('Min delay (in seconds) between 2 rt/quotes of contest posts')
+  quoteInterval: z.number().describe('Min delay (in seconds) between 2 rt/quotes of contest posts'),
+  _prompts: z.object({
+    electBestPostForContest: z.string(),
+    writePostQuoteContent: z.string()
+  })
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -29,10 +34,14 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true,
-      quoteInterval: 1 * 60 * 60 // 1 hour
+      quoteInterval: 1 * 60 * 60, // 1 hour
+      _prompts: {
+        electBestPostForContest,
+        writePostQuoteContent
+      }
     }
   }
 }

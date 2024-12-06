@@ -2,7 +2,7 @@ import { ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@pris
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { BotConfig } from "src/config/bot-config";
 import { AppLogger } from "src/logs/app-logger";
@@ -30,7 +30,7 @@ export class AirdropSnapshotProvider extends BotFeatureProvider<AirdropSnapshotF
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true,
       snapshotInterval: 24 * 60 * 60, // 1 per day

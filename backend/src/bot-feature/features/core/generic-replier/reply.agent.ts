@@ -1,19 +1,18 @@
 import { BaseMessageLike } from "@langchain/core/messages";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { XPost } from "@prisma/client";
-import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { botPersonalityPromptChunk } from "src/bots/model/prompt-parts/news-summary";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { AppLogger } from "src/logs/app-logger";
-import { aiPromptsService, langchainService, xPostsService } from "src/services";
+import { langchainService, xPostsService } from "src/services";
 import { z } from "zod";
-import { replierStateAnnotation } from "./generic-replier.feature";
+import { GenericReplierFeature, replierStateAnnotation } from "./generic-replier.feature";
 import { TweetTrait } from "./model/tweet-trait";
 
 /**
  * Generate a reply based on tweet traits
  */
-export const replyAgent = (feature: AnyBotFeature, reply: XPost) => {
+export const replyAgent = (feature: GenericReplierFeature, reply: XPost) => {
   return async (state: typeof replierStateAnnotation.State) => {
     const logger = new AppLogger("ReplyAgent", feature.bot);
 
@@ -32,10 +31,10 @@ export const replyAgent = (feature: AnyBotFeature, reply: XPost) => {
       return state;
 
     const guidelineRules = {
-      [TweetTrait.Pricing]: await aiPromptsService().get(feature.bot, "news-summaries/reply-to-news-reply-tweet-traits/pricing"),
-      [TweetTrait.Question]: await aiPromptsService().get(feature.bot, "news-summaries/reply-to-news-reply-tweet-traits/question"),
-      [TweetTrait.Cheerful]: await aiPromptsService().get(feature.bot, "news-summaries/reply-to-news-reply-tweet-traits/cheerful"),
-      [TweetTrait.Opinion]: await aiPromptsService().get(feature.bot, "news-summaries/reply-to-news-reply-tweet-traits/opinion")
+      [TweetTrait.Pricing]: feature.config._prompts.replyClassificationTraitPricing,
+      [TweetTrait.Question]: feature.config._prompts.replyClassificationTraitQuestion,
+      [TweetTrait.Cheerful]: feature.config._prompts.replyClassificationTraitCheerful,
+      [TweetTrait.Opinion]: feature.config._prompts.replyClassificationTraitOpinion
     }
 
     const replyGuidelines = state.tweetTraits
@@ -45,7 +44,7 @@ export const replyAgent = (feature: AnyBotFeature, reply: XPost) => {
       .join("\n"); // Skip lines and make as string
 
     const REQUEST_TEMPLATE = `
-      ${await aiPromptsService().get(feature.bot, "news-summaries/reply-to-news-reply")}
+      ${feature.config._prompts.replyToNews}
 
       [Guidelines]
       ${replyGuidelines}

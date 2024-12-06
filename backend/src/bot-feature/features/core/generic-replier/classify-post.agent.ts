@@ -1,15 +1,14 @@
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { XPost } from "@prisma/client";
-import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
-import { aiPromptsService, langchainService } from "src/services";
+import { langchainService } from "src/services";
 import { z } from "zod";
-import { replierStateAnnotation } from "./generic-replier.feature";
+import { GenericReplierFeature, replierStateAnnotation } from "./generic-replier.feature";
 import { TweetTrait } from "./model/tweet-trait";
 
 /**
  * Determines tweet traits and stores traits in the global state
  */
-export const classifyPostAgent = (feature: AnyBotFeature, reply: XPost) => {
+export const classifyPostAgent = (feature: GenericReplierFeature, reply: XPost) => {
   return async (state: typeof replierStateAnnotation.State) => {
     const traitSchema = z.object({
       traits: z
@@ -24,7 +23,7 @@ export const classifyPostAgent = (feature: AnyBotFeature, reply: XPost) => {
 
     // No actual user message, everything is in the system prompt.
     const prompt = ChatPromptTemplate.fromMessages([
-      ["system", await aiPromptsService().get(feature.bot, "news-summaries/classify-post")]
+      ["system", feature.config._prompts.classifyPost]
     ]);
 
     const response = await prompt.pipe(model).invoke({ tweetContent: reply.text });

@@ -2,7 +2,7 @@ import { XPost } from "@prisma/client";
 import { BotFeatureGroupType, BotFeatureType, Chain } from "@x-ai-wallet-bot/common";
 import { Contract, ContractTransactionReceipt, ContractTransactionResponse, JsonRpcProvider, Wallet } from 'ethers';
 import { BotFeature } from "src/bot-feature/model/bot-feature";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { BotConfig } from "src/config/bot-config";
 import { SupportedChains } from "src/config/chain-config";
@@ -10,7 +10,7 @@ import airdropABI from "src/contracts/airdrop.json";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma, xPostsService } from "src/services";
 import { tokenToContractValue } from "src/utils/tokens";
-import { infer as zodInfer } from "zod";
+import { z, infer as zodInfer } from "zod";
 
 // const wallet = Wallet.createRandom();
 // console.log('Address:', wallet.address);
@@ -34,7 +34,7 @@ export class AirdropSenderProvider extends BotFeatureProvider<AirdropSenderFeatu
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       //snapshotInterval: 24 * 60 * 60 // 1 per day

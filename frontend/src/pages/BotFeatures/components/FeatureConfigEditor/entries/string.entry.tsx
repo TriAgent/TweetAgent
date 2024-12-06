@@ -1,24 +1,27 @@
 import { DebouncedTextField } from "@components/base/DebouncedTextField/DebouncedTextField";
+import { camelNicify } from "@utils/camelNicify";
 import { FC, useState } from "react";
 import { OnInputChangeHandler } from "../FeatureConfigEditor";
 
-export const NumberEntry: FC<{
+export const StringEntry: FC<{
   label: string;
-  value: number;
+  value: string;
+  multiline?: boolean;
   onValueChange: OnInputChangeHandler;
-}> = ({ label, value, onValueChange }) => {
-  const [newValue, setNewValue] = useState<number>(value);
+}> = ({ label, value, multiline = true, onValueChange }) => {
+  const [newValue, setNewValue] = useState<string>(value);
 
   const handleChange = (val: string) => {
-    const newOutput = parseInt(val);
-    setNewValue(newOutput);
-    onValueChange(newOutput);
+    setNewValue(val);
+    onValueChange(val);
   }
 
   return <DebouncedTextField
-    label={label}
-    type="number"
+    label={camelNicify(label)}
+    type="text"
+    multiline={multiline}
     defaultValue={String(newValue)}
     onChange={handleChange}
+    style={{ width: "100%" }}
   />
 }

@@ -24,48 +24,11 @@ model Bot {
   twitterAccessToken    String? // X access token for this user, after web/pin authorization
   twitterAccessSecret   String? // X secret token for this user, after web/pin authorization
 
-  aiPrompts   AIPrompt[]
   botFeatures BotFeature[]
   posts       XPost[]
   logs        Log[]
   airdrops    ContestAirdrop[]
 }
-
-// Prompts for AI requests
-model AIPrompt {
-  id        String   @unique @default(uuid())
-  createdAt DateTime @default(now())
-
-  key  String // Key used to load a specific kind of prompt. eg: news-summaries/create-news
-  text String // The prompt text itself
-
-  bot   Bot    @relation(fields: [botId], references: [id])
-  botId String
-
-  @@unique([key, botId])
-}
-
-// enum BotFeatureType {
-//   // Root
-//   Root
-
-//   // X core
-//   X_PostsFetcher
-//   X_PostsHandler
-//   X_PostsSender
-//   X_PostsGenericReplier
-
-//   // Airdrop contest
-//   AirdropContest_AirdropSender
-//   AirdropContest_AirdropSnapshot
-//   AirdropContest_XPostAirdropAddress
-//   AirdropContest_XPostContestHandler
-//   AirdropContest_XPostContestReposter
-
-//   // News summary
-//   NewsSummaries_XNewsSummaryWriter
-//   NewsSummaries_XRealNewsFilter
-// }
 
 // List of bot features for every bot.
 // Also includes feature configuration for the bot.

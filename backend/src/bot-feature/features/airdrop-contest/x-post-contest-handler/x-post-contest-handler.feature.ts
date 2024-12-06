@@ -1,16 +1,19 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
 import { Bot } from "src/bots/model/bot";
 import { AppLogger } from "src/logs/app-logger";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
-import { infer as zodInfer } from "zod";
+import { z, infer as zodInfer } from "zod";
+import { studyForContest } from "./default-prompts";
 import { studyForContestAgent } from "./study-for-contest.agent";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  _prompts: z.object({
+    studyForContest: z.string()
+  })
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -27,9 +30,12 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
-      enabled: true
+      enabled: true,
+      _prompts: {
+        studyForContest
+      }
     }
   }
 }

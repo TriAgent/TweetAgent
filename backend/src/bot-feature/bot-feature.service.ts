@@ -11,12 +11,12 @@ import { XPostContestReposterProvider } from "./features/airdrop-contest/x-post-
 import { GenericReplierProvider } from "./features/core/generic-replier/generic-replier.feature";
 import { RootSchedulerFeatureProvider } from "./features/core/root-scheduler/root-scheduler.feature";
 import { XNewsSummaryWriterProvider } from "./features/news-summaries/x-news-summary-writer/x-summary-writer.feature";
-import { XRealNewsFilterProvider } from "./features/news-summaries/x-real-news-filter/x-real-news-filter.service";
+import { XRealNewsFilterProvider } from "./features/news-summaries/x-real-news-filter/x-real-news-filter.feature";
 import { XPostsFetcherProvider } from "./features/x-core/x-posts-fetcher/x-post-fetcher.feature";
 import { XPostsHandlerProvider } from "./features/x-core/x-posts-handler/x-posts-handler.feature";
 import { XPostsSenderProvider } from "./features/x-core/x-posts-sender/x-post-sender.feature";
 import { AnyBotFeature } from "./model/bot-feature";
-import { AnyBotFeatureProvider } from "./model/bot-feature-provider";
+import { AnyBotFeatureProvider, DefaultFeatureConfigType } from "./model/bot-feature-provider";
 
 @Injectable()
 export class BotFeatureService {
@@ -110,5 +110,26 @@ export class BotFeatureService {
         data: { config: newConfig }
       });
     }
+  }
+
+  /**
+   * Resets a feature config to its default values and returns the new feature entry
+   */
+  public async resetBotFeatureConfig(bot: Bot, feature: AnyBotFeature): Promise<DefaultFeatureConfigType> {
+    const defaultConfig = feature.provider.getDefaultConfig();
+
+    await this.prisma.botFeature.update({
+      where: {
+        botId_type: {
+          botId: bot.id,
+          type: feature.provider.type
+        }
+      },
+      data: { config: defaultConfig }
+    });
+
+    feature.updateConfig(defaultConfig);
+
+    return defaultConfig;
   }
 }

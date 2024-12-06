@@ -13,10 +13,19 @@ import { replyAgent } from "./reply.agent";
 const ProduceRepliesCheckDelaySec = 60; // 1 minute - interval between loops that check if a reply has to be produced
 
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
-import { infer as zodInfer } from "zod";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
+import { z, infer as zodInfer } from "zod";
+import { classifyPost, replyClassificationTraitCheerful, replyClassificationTraitOpinion, replyClassificationTraitPricing, replyClassificationTraitQuestion, replyToNews } from "./default-prompts";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
+  _prompts: z.object({
+    classifyPost: z.string(),
+    replyClassificationTraitPricing: z.string(),
+    replyClassificationTraitCheerful: z.string(),
+    replyClassificationTraitQuestion: z.string(),
+    replyClassificationTraitOpinion: z.string(),
+    replyToNews: z.string()
+  })
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -33,10 +42,17 @@ export class GenericReplierProvider extends BotFeatureProvider<GenericReplierFea
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      _prompts: {
+        classifyPost,
+        replyClassificationTraitPricing,
+        replyClassificationTraitCheerful,
+        replyClassificationTraitOpinion,
+        replyClassificationTraitQuestion,
+        replyToNews
+      }
     }
   }
 }

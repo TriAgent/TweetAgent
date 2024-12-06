@@ -1,10 +1,10 @@
 import { Body, Controller, Get, HttpException, Post, Put, UseGuards } from '@nestjs/common';
-import { Bot } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
+import { Bot, BotFeature } from '@prisma/client';
+import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, BotFeatureType, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
+import { BotFeatureService } from 'src/bot-feature/bot-feature.service';
 import { ParamPrompt } from 'src/bots/decorators/prompt-decorator';
 import { PromptGuard } from 'src/bots/guards/prompt-guard';
 import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
-import { XPostsService } from 'src/xposts/xposts.service';
 import { BotsService } from './bots.service';
 import { ParamBot } from './decorators/bot-decorator';
 import { ParamFeature } from './decorators/feature-decorator';
@@ -16,7 +16,7 @@ export class BotsController {
   constructor(
     private bots: BotsService,
     private twitterAuthService: TwitterAuthService,
-    private xPosts: XPostsService
+    private botFeatureService: BotFeatureService
   ) { }
 
   @Get()
@@ -68,6 +68,18 @@ export class BotsController {
       throw new HttpException(`Feature not found`, 404);
 
     return this.bots.updateBotFeature(feature, body.feature, body.key);
+  }
+
+  @Post(':botId/features/:featureId/config/reset')
+  @UseGuards(BotGuard, FeatureGuard)
+  async resetFeatureConfig(@ParamBot() dbBot: Bot, @ParamFeature() dbFeature: BotFeature) {
+    if (!dbFeature)
+      throw new HttpException(`Feature not found`, 404);
+
+    const bot = this.bots.getBotById(dbBot.id);
+    const feature = bot.getFeatureByType(dbFeature.type as BotFeatureType);
+
+    return this.botFeatureService.resetBotFeatureConfig(bot, feature);
   }
 
   @Post(':botId/twitter/auth')

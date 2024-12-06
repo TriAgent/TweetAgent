@@ -2,7 +2,7 @@ import { OperationHistoryType } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import moment from 'moment';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
 import { BotConfig } from 'src/config/bot-config';
 import { AppLogger } from 'src/logs/app-logger';
@@ -32,7 +32,7 @@ export class XPostsFetcherProvider extends BotFeatureProvider<XPostFetcherFeatur
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
       fetchNewsAccountsPosts: true,

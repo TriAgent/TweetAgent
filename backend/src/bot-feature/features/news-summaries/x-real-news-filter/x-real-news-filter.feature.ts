@@ -9,11 +9,14 @@ import { prisma, xAccountsService } from "src/services";
 import { categorizeNewsAgent } from "./categorize-news.agent";
 
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from "src/bot-feature/model/bot-feature-provider";
-import { infer as zodInfer } from "zod";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
+import { z, infer as zodInfer } from "zod";
+import { categorizeNews } from "./default-prompts";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  _prompts: z.object({
+    categorizeNews: z.string()
+  })
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -30,10 +33,12 @@ export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterF
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      _prompts: {
+        categorizeNews
+      }
     }
   }
 }

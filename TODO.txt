@@ -1,13 +1,16 @@
 - prompts:
-    - move into features (remove disk template files)
+    - move all prompts into features
+    - remove disk template files
     - add "personnality" prompts to feature configs too
 - esc support
   - airdrop ELA (ESC ok) - 1000 ELA / month
 - bug: newly bound twitter account not used until backend restart
 - Deploy new bot to prod
 
-P3:
+P2:
 - Ability to configure X accounts to get news from, from UI (store in summary news feature)
+
+P3:
 - posts list : pagination and auto fetch more
 - bug: bot list name not changing when bot name changes in settings
 

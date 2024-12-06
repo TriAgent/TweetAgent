@@ -4,26 +4,6 @@ import { BaseSepolia, findChainToken } from "./chain-config";
 export const BotConfig = {
   AiPrompts: {
     Folder: join(__dirname, "../../ai-prompts"),
-    // List of prompt types required for the app. Must be kept up to date otherwise prompts can't get loaded by the 
-    // prompt service.
-    RequiredTypes: [
-      // Core
-      "core/produce-aggregated-reply",
-      // News summaries
-      "news-summaries/reply-to-news-reply-tweet-traits/cheerful",
-      "news-summaries/reply-to-news-reply-tweet-traits/opinion",
-      "news-summaries/reply-to-news-reply-tweet-traits/pricing",
-      "news-summaries/reply-to-news-reply-tweet-traits/question",
-      "news-summaries/categorize-news",
-      "news-summaries/classify-post",
-      "news-summaries/create-news-summary",
-      "news-summaries/reply-to-news-reply",
-      // Airdrop contest
-      "airdrop-contest/elect-best-post-for-contest",
-      "airdrop-contest/extract-address",
-      "airdrop-contest/study-for-contest",
-      "airdrop-contest/write-post-quote-content",
-    ]
   },
   NewsSummaryBot: {
     Generation: {

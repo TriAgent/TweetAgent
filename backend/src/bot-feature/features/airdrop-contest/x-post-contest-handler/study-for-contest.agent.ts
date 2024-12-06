@@ -1,16 +1,15 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
-import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
-import { aiPromptsService, langchainService, xPostsService } from "src/services";
+import { langchainService, xPostsService } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
-import { contestHandlerStateAnnotation } from "./x-post-contest-handler.feature";
+import { contestHandlerStateAnnotation, XPostContestHandlerFeature } from "./x-post-contest-handler.feature";
 
 /**
  * Determines if the post is worth being part of the airdrop contest or not, 
  * and if so, generates a reply for user to know we handled the post.
  */
-export const studyForContestAgent = (feature: AnyBotFeature, logger: Logger, post: XPostWithAccount) => {
+export const studyForContestAgent = (feature: XPostContestHandlerFeature, logger: Logger, post: XPostWithAccount) => {
   return async (state: typeof contestHandlerStateAnnotation.State) => {
     // The current post should mention us (either root possibly for contest, 
     // or a mention reply on the potential contest post), otherwise dismiss
@@ -57,7 +56,7 @@ export const studyForContestAgent = (feature: AnyBotFeature, logger: Logger, pos
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse, responseMessage } = await langchainService().fullyInvoke({
       messages: [
-        ["system", await aiPromptsService().get(feature.bot, "airdrop-contest/study-for-contest")]
+        ["system", feature.config._prompts.studyForContest]
       ],
       invocationParams: {
         tweetContent: postEvaluatedForContest.text

@@ -2,7 +2,7 @@ import { Bot as DBBot, BotFeature as DBBotFeature } from "@prisma/client";
 import { BotFeatureType } from "@x-ai-wallet-bot/common";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { AppLogger } from "src/logs/app-logger";
-import { aiPromptsService, botFeatureService, botsService, xAccountsService } from "src/services";
+import { botFeatureService, botsService, xAccountsService } from "src/services";
 import { BotFeatureUpdate, BotUpdate } from "../bots.service";
 
 /**
@@ -24,7 +24,6 @@ export class Bot {
       await xAccountsService().ensureXAccount(bot, dbBot.twitterUserId);
 
     await botFeatureService().ensureBotRequiredFeatures(bot);
-    await aiPromptsService().ensureBotRequiredPrompts(bot);
 
     const features = await bot.getAllDBFeatures();
     for (const feature of features) {

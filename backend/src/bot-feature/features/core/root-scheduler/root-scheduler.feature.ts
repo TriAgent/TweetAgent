@@ -1,6 +1,6 @@
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
-import { BotFeatureProvider, BotFeatureProviderConfigBase } from 'src/bot-feature/model/bot-feature-provider';
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
 import { wsDispatcherService } from 'src/services';
 import { z, infer as zodInfer } from "zod";
@@ -26,7 +26,7 @@ export class RootSchedulerFeatureProvider extends BotFeatureProvider<RootSchedul
     );
   }
 
-  public getDefaultConfig(): Required<zodInfer<typeof FeatureConfigFormat>> {
+  public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true
     }

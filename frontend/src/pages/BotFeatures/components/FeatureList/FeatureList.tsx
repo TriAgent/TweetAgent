@@ -1,6 +1,6 @@
 import { PageSubtitle } from '@components/base/PageSubtitle/PageSubtitle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Button, Stack, Typography } from "@mui/material";
 import { Bot } from "@services/bots/model/bot";
 import { useFeatureProviders } from "@services/features/hooks/useFeatureProviders";
 import { BotFeatureProvider } from "@services/features/model/bot-feature-provider";
@@ -54,7 +54,6 @@ export const FeatureGroup: FC<{
 }
 
 const FeatureComponent: FC<{
-  //feature: BotFeature;
   bot: Bot;
   provider: BotFeatureProvider;
   expandedAccordionId: string;
@@ -63,9 +62,12 @@ const FeatureComponent: FC<{
 }> = ({ bot, provider, expandedAccordionId, onAccordionChange }) => {
   const features = useBehaviorSubject(bot.features$);
   const feature = useMemo(() => features?.find(feature => feature.type === provider.type), [features, provider]);
+  const isExpanded = expandedAccordionId === feature.type;
+  const config = useBehaviorSubject(feature?.config);
+  const [resettingConfig, setResettingConfig] = useState(false);
 
   const handleConfigChange = useCallback((newConfig: any) => {
-    feature.config = newConfig;
+    feature.config.next(newConfig);
     feature.updateProperty("config");
   }, [feature]);
 
@@ -73,17 +75,29 @@ const FeatureComponent: FC<{
     onAccordionChange(isExpanded);
   }, [onAccordionChange]);
 
+  const handleResetFeatureConfig = useCallback(async () => {
+    setResettingConfig(true);
+    await feature.resetConfig();
+    setResettingConfig(false);
+  }, [feature]);
+
   if (!feature)
     return null;
 
   return <>
-    <Accordion expanded={expandedAccordionId === feature.type} onChange={handleAccordionChange}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography style={{ opacity: feature.config.enabled ? 1 : 0.5 }}>{provider?.title}</Typography>
+    <Accordion expanded={isExpanded} onChange={handleAccordionChange}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} /* style={{ background: isExpanded ? alpha("#000000", 0.3) : null }} */>
+        <Stack direction="row" alignItems="center">
+          <Typography style={{ opacity: config?.enabled ? 1 : 0.5 }}>{provider?.title}</Typography>
+        </Stack>
       </AccordionSummary>
       <AccordionDetails>
         <Typography style={{ marginBottom: 20 }}>{provider.description}</Typography>
-        <FeatureConfigEditor provider={provider} feature={feature} onChange={handleConfigChange} />
+        {/* Make sure to hide the editor while resetting so it can refresh with clear values after reset */}
+        {!resettingConfig && <FeatureConfigEditor provider={provider} feature={feature} onChange={handleConfigChange} />}
+        <Stack direction="row" justifyContent="flex-end" mt={2}>
+          <Button variant="contained" onClick={handleResetFeatureConfig}>Reset config</Button>
+        </Stack>
       </AccordionDetails>
     </Accordion>
   </>

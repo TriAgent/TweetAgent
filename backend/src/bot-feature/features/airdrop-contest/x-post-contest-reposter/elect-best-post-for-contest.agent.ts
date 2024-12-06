@@ -2,16 +2,15 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { Logger } from "@nestjs/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
-import { aiPromptsService, langchainService } from "src/services";
+import { langchainService } from "src/services";
 import { z } from "zod";
 import { PendingContestPostLoader } from "./pending-contest-post-loader";
-import { contestReposterStateAnnotation } from "./x-post-contest-reposter.feature";
-import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
+import { contestReposterStateAnnotation, XPostContestReposterFeature } from "./x-post-contest-reposter.feature";
 
 /**
  * Determines if the post is an airdrop address update or not
  */
-export const electBestPostForContestAgent = (feature: AnyBotFeature, logger: Logger) => {
+export const electBestPostForContestAgent = (feature: XPostContestReposterFeature, logger: Logger) => {
   return async (state: typeof contestReposterStateAnnotation.State) => {
     const loader = new PendingContestPostLoader(feature.bot);
     const docs = await loader.load();
@@ -32,7 +31,7 @@ export const electBestPostForContestAgent = (feature: AnyBotFeature, logger: Log
       messages: [
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
-        ["system", await aiPromptsService().get(feature.bot, "airdrop-contest/elect-best-post-for-contest")]
+        ["system", feature.config._prompts.electBestPostForContest]
       ],
       invocationParams: "",
       structuredOutput: z.object({

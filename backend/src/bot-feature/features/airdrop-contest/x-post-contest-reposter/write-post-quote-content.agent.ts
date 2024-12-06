@@ -1,15 +1,14 @@
 import { Logger } from "@nestjs/common";
 import { BotConfig } from "src/config/bot-config";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
-import { aiPromptsService, langchainService } from "src/services";
+import { langchainService } from "src/services";
 import { z } from "zod";
-import { contestReposterStateAnnotation } from "./x-post-contest-reposter.feature";
-import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
+import { contestReposterStateAnnotation, XPostContestReposterFeature } from "./x-post-contest-reposter.feature";
 
 /**
  * Writes a post header for the quoted airdrop contest post
  */
-export const writePostQuoteContentAgent = (feature: AnyBotFeature, logger: Logger) => {
+export const writePostQuoteContentAgent = (feature: XPostContestReposterFeature, logger: Logger) => {
   return async (state: typeof contestReposterStateAnnotation.State) => {
     if (!state.electedPost)
       return state;
@@ -20,7 +19,7 @@ export const writePostQuoteContentAgent = (feature: AnyBotFeature, logger: Logge
         ["system", BotConfig.AirdropContest.Personality],
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
-        ["system", await aiPromptsService().get(feature.bot, "airdrop-contest/write-post-quote-content")]
+        ["system", feature.config._prompts.writePostQuoteContent]
       ],
       invocationParams: {
         post: state.electedPost.text
