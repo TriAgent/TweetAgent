@@ -1,9 +1,7 @@
 import { Body, Controller, Get, HttpException, Post, Put, UseGuards } from '@nestjs/common';
 import { Bot, BotFeature } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, BotFeatureType, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
+import { Bot as BotDTO, BotFeature as BotFeatureConfigDTO, BotFeatureType, TwitterAuthenticationRequest } from "@x-ai-wallet-bot/common";
 import { BotFeatureService } from 'src/bot-feature/bot-feature.service';
-import { ParamPrompt } from 'src/bots/decorators/prompt-decorator';
-import { PromptGuard } from 'src/bots/guards/prompt-guard';
 import { TwitterAuthService } from 'src/twitter/twitter-auth.service';
 import { BotsService } from './bots.service';
 import { ParamBot } from './decorators/bot-decorator';
@@ -32,24 +30,6 @@ export class BotsController {
   @Put()
   updateBot(@Body() body: { bot: BotDTO, key: Exclude<keyof BotDTO, "id"> }) {
     return this.bots.updateBot(body.bot, body.key);
-  }
-
-  @Get(':botId/prompts')
-  @UseGuards(BotGuard)
-  async listBotPrompts(@ParamBot() bot: Bot) {
-    if (!bot)
-      throw new HttpException(`Bot not found`, 404);
-
-    return this.bots.listBotPrompts(bot);
-  }
-
-  @Put(':botId/prompts/:promptId')
-  @UseGuards(BotGuard, PromptGuard)
-  async updatePrompt(@ParamPrompt() prompt, @Body() body: { prompt: AiPromptDTO, key: Exclude<keyof AiPromptDTO, "id>"> }) {
-    if (!prompt)
-      throw new HttpException(`Prompt not found`, 404);
-
-    return this.bots.updatePrompt(prompt, body.prompt, body.key);
   }
 
   @Get(':botId/features')
@@ -91,7 +71,6 @@ export class BotsController {
   @Put(':botId/twitter/auth')
   @UseGuards(BotGuard)
   public finalizeTwitterAuthenticationWithPIN(@ParamBot() bot: Bot, @Body() body: { request: TwitterAuthenticationRequest, pinCode: string }) {
-    console.log("body", body)
     return this.twitterAuthService.finalizeTwitterAuthenticationWithPIN(bot, body.request, body.pinCode);
   }
 

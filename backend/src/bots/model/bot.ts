@@ -1,8 +1,10 @@
 import { Bot as DBBot, BotFeature as DBBotFeature } from "@prisma/client";
 import { BotFeatureType } from "@x-ai-wallet-bot/common";
+import { RootSchedulerFeature } from "src/bot-feature/features/core/root-scheduler/root-scheduler.feature";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { AppLogger } from "src/logs/app-logger";
-import { botFeatureService, botsService, xAccountsService } from "src/services";
+import { botFeatureService, botsService, prisma, twitterAuthService, xAccountsService } from "src/services";
+import { TwitterAuthEvent } from "src/twitter/twitter-auth.service";
 import { BotFeatureUpdate, BotUpdate } from "../bots.service";
 
 /**
@@ -15,6 +17,7 @@ export class Bot {
   private constructor(public dbBot: DBBot) {
     botsService().onBotUpdate$.subscribe(e => this.handleBotUpdate(e));
     botsService().onBotFeatureUpdate$.subscribe(e => this.handleUpdatedFeatureConfig(e));
+    twitterAuthService().onTwitterAuth$.subscribe(e => this.handleTwitterAuth(e));
   }
 
   public static async newFromPrisma(dbBot: DBBot): Promise<Bot> {
@@ -49,6 +52,10 @@ export class Bot {
     return this.features.find(feature => feature.provider.type === type);
   }
 
+  public getRootFeature(): RootSchedulerFeature {
+    return this.getFeatureByType(BotFeatureType.Core_RootScheduler) as RootSchedulerFeature;
+  }
+
   private async newFeatureFromDBFeature(dbFeature: DBBotFeature) {
     const feature = await botFeatureService().newFromKey(this, dbFeature.type as BotFeatureType);
     feature.updateConfig(dbFeature.config as any);
@@ -81,5 +88,25 @@ export class Bot {
     if (e.updatedKey === "config") {
       feature.updateConfig(e.update.config as any);
     }
+  }
+
+  private async handleTwitterAuth(e: TwitterAuthEvent) {
+    if (e.botId !== this.id)
+      return;
+
+    // Update bot in DB
+    const updatedBot = await prisma().bot.update({
+      where: { id: e.botId },
+      data: { ...e.info }
+    });
+
+    this.dbBot = updatedBot;
+  }
+
+  /**
+   * Tells if this bot is mentioned in the post text
+   */
+  public isMentionedInPostText(text: string): boolean {
+    return text.indexOf(`@${this.dbBot.twitterUserScreenName}`) >= 0;
   }
 }

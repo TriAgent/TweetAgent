@@ -9,6 +9,7 @@ import { BotFeatureGroupType } from '@x-ai-wallet-bot/common';
 import { uniq } from 'lodash';
 import { FC, useCallback, useMemo, useState } from "react";
 import { FeatureConfigEditor } from '../FeatureConfigEditor/FeatureConfigEditor';
+import { FeatureDescription } from './FeatureList.styles';
 
 export const FeatureList: FC<{
   bot: Bot;
@@ -92,7 +93,7 @@ const FeatureComponent: FC<{
         </Stack>
       </AccordionSummary>
       <AccordionDetails>
-        <Typography style={{ marginBottom: 20 }}>{provider.description}</Typography>
+        <FeatureDescription>{provider.description}</FeatureDescription>
         {/* Make sure to hide the editor while resetting so it can refresh with clear values after reset */}
         {!resettingConfig && <FeatureConfigEditor provider={provider} feature={feature} onChange={handleConfigChange} />}
         <Stack direction="row" justifyContent="flex-end" mt={2}>

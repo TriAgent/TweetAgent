@@ -13,7 +13,7 @@ export const studyForContestAgent = (feature: XPostContestHandlerFeature, logger
   return async (state: typeof contestHandlerStateAnnotation.State) => {
     // The current post should mention us (either root possibly for contest, 
     // or a mention reply on the potential contest post), otherwise dismiss
-    if (post.text.indexOf(`@${feature.bot.dbBot.twitterUserScreenName}`) < 0)
+    if (!feature.bot.isMentionedInPostText(post.text))
       return state;
 
     let postEvaluatedForContest: XPost;

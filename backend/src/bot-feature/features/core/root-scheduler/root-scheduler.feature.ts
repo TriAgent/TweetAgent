@@ -4,9 +4,13 @@ import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigT
 import { Bot } from 'src/bots/model/bot';
 import { wsDispatcherService } from 'src/services';
 import { z, infer as zodInfer } from "zod";
+import { personality } from './default-prompts';
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  enabled: z.boolean().describe('Activate or deactivate the whole bot')
+  enabled: z.boolean().describe('Activate or deactivate the whole bot'),
+  _prompts: z.object({
+    personality: z.string()
+  })
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -19,8 +23,8 @@ export class RootSchedulerFeatureProvider extends BotFeatureProvider<RootSchedul
     super(
       BotFeatureGroupType.Core,
       BotFeatureType.Core_RootScheduler,
-      `Root scheduler`,
-      `Root feature that schedules all other features`,
+      `Root`,
+      `Root feature that schedules all other features and allows global bot configurations. If this feature gets disabled, nothing else run.`,
       FeatureConfigFormat,
       (bot: Bot) => new RootSchedulerFeature(this, bot)
     );
@@ -28,7 +32,10 @@ export class RootSchedulerFeatureProvider extends BotFeatureProvider<RootSchedul
 
   public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
-      enabled: true
+      enabled: true,
+      _prompts: {
+        personality
+      }
     }
   }
 }

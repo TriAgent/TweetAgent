@@ -5,12 +5,11 @@ import { PostChildren } from "@services/posts/model/post-thread";
 import { XPost } from "@services/posts/model/x-post";
 import { onPostUpdate$ } from "@services/posts/posts.service";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureConfigDTO, ContestAirdrop as ContestAirdropDTO, LinkerTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
+import { Bot as BotDTO, BotFeature as BotFeatureConfigDTO, ContestAirdrop as ContestAirdropDTO, LinkedTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
 import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
 import { BehaviorSubject, Subject } from "rxjs";
 import { BotFeature } from "../../features/model/bot-feature";
 import { setActiveBot } from "../bots.service";
-import { AiPrompt } from "./ai-prompt";
 
 export class Bot {
   @Expose() public id: string;
@@ -21,14 +20,12 @@ export class Bot {
   @Expose() public twitterAccessToken?: string; // X access token for this user, after web/pin authorization
   @Expose() public twitterAccessSecret?: string; // X secret token for this user, after web/pin authorization
 
-  public prompts$ = new BehaviorSubject<AiPrompt[]>(undefined);
   public features$ = new BehaviorSubject<BotFeature[]>(undefined);
 
   public onNewPost$ = new Subject<XPost>();
 
   public async initialize(): Promise<void> {
     await Promise.all([
-      this.fetchPrompts(),
       this.fetchFeatureConfigs()
     ]);
 
@@ -50,15 +47,6 @@ export class Bot {
     notifyDataSaved();
   }
 
-  private async fetchPrompts() {
-    const rawPrompts = await apiGet<AiPromptDTO[]>(`${backendUrl}/bots/${this.id}/prompts`);
-    if (rawPrompts) {
-      const prompts = plainToInstance(AiPrompt, rawPrompts, { excludeExtraneousValues: true });
-      console.log("Got prompts", prompts)
-      this.prompts$.next(prompts);
-    }
-  }
-
   private async fetchFeatureConfigs() {
     const rawConfigs = await apiGet<BotFeatureConfigDTO[]>(`${backendUrl}/bots/${this.id}/features`);
     if (rawConfigs) {
@@ -73,7 +61,7 @@ export class Bot {
   }
 
   public async finalizeTwitterAuthWithPIN(request: TwitterAuthenticationRequest, pinCode: string) {
-    const authResult = await apiPut<LinkerTwitterAccountInfo>(`${backendUrl}/bots/${this.id}/twitter/auth`, { request, pinCode });
+    const authResult = await apiPut<LinkedTwitterAccountInfo>(`${backendUrl}/bots/${this.id}/twitter/auth`, { request, pinCode });
 
     // Refresh local model
     this.twitterUserId = authResult.twitterUserId;

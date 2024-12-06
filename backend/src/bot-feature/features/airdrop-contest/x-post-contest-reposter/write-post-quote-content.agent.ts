@@ -1,5 +1,4 @@
 import { Logger } from "@nestjs/common";
-import { BotConfig } from "src/config/bot-config";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { langchainService } from "src/services";
 import { z } from "zod";
@@ -16,7 +15,7 @@ export const writePostQuoteContentAgent = (feature: XPostContestReposterFeature,
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse } = await langchainService().fullyInvoke({
       messages: [
-        ["system", BotConfig.AirdropContest.Personality],
+        ["system", feature.bot.getRootFeature().config._prompts.personality],
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
         ["system", feature.config._prompts.writePostQuoteContent]

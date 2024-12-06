@@ -25,7 +25,7 @@ export class XPostsHandlerProvider extends BotFeatureProvider<XPostsHandlerFeatu
       BotFeatureGroupType.XCore,
       BotFeatureType.XCore_PostHandler,
       `Root handler for upcoming X posts`,
-      `Handles unanswered third party posts and generate replies when possible.`,
+      `Root handler for unanswered third party posts. Requests other features to produce potential reply parts, then aggregates all the replies into a single tweet.`,
       FeatureConfigFormat,
       (bot: Bot) => new XPostsHandlerFeature(this, bot)
     );

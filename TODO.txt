@@ -1,10 +1,6 @@
-- prompts:
-    - move all prompts into features
-    - remove disk template files
-    - add "personnality" prompts to feature configs too
+- show "not real news" reason in logs - too many NOT real news for now
 - esc support
   - airdrop ELA (ESC ok) - 1000 ELA / month
-- bug: newly bound twitter account not used until backend restart
 - Deploy new bot to prod
 
 P2:

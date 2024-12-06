@@ -3,14 +3,14 @@ import { XPost } from "@prisma/client";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { Bot } from "src/bots/model/bot";
-import { BotConfig } from "src/config/bot-config";
 import { AppLogger } from "src/logs/app-logger";
-import { prisma, xAccountsService } from "src/services";
+import { prisma } from "src/services";
 import { categorizeNewsAgent } from "./categorize-news.agent";
 
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { z, infer as zodInfer } from "zod";
+import { XPostFetcherFeature } from "../../x-core/x-posts-fetcher/x-post-fetcher.feature";
 import { categorizeNews } from "./default-prompts";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
@@ -59,8 +59,8 @@ export class XRealNewsFilterFeature extends BotFeature<FeatureConfigType> {
 
   private async categorizeFollowedNewsAccountsTweetsAsRealNews() {
     // Retrieve user ids of accounts we are following for their news
-    const targetAuthorAccounts = await xAccountsService().getXAccountsFromScreenNames(this.bot, BotConfig.NewsSummaryBot.News.XSourceAccounts)
-    const targetAuthorIds = targetAuthorAccounts.map(a => a.userId);
+    const postFetcher = this.bot.getFeatureByType(BotFeatureType.XCore_PostFetcher) as XPostFetcherFeature;
+    const { targetAuthorIds } = await postFetcher.getMonitoredNewsAccountList();
 
     const recentPosts = await prisma().xPost.findMany({
       where: {

@@ -1,6 +1,6 @@
 import { forwardRef, HttpException, Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { AIPrompt, BotFeature, Bot as DBBot, Prisma } from '@prisma/client';
-import { AiPrompt as AiPromptDTO, Bot as BotDTO, BotFeature as BotFeatureDTO } from "@x-ai-wallet-bot/common";
+import { BotFeature, Bot as DBBot, Prisma } from '@prisma/client';
+import { Bot as BotDTO, BotFeature as BotFeatureDTO } from "@x-ai-wallet-bot/common";
 import { Subject } from 'rxjs';
 import { Bot } from 'src/bots/model/bot';
 import { AppLogger } from 'src/logs/app-logger';
@@ -8,7 +8,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { BotsRunnerService } from './bot-runner.service';
 
 const allowedBotUpdateKeys = ["name"];
-const allowedPromptUpdateKeys = ["text"];
 const allowedFeatureUpdateKeys = ["config"];
 
 /**
@@ -99,25 +98,6 @@ export class BotsService implements OnApplicationBootstrap {
     return updatedBot;
   }
 
-  public listBotPrompts(bot: DBBot): Promise<AIPrompt[]> {
-    return this.prisma.aIPrompt.findMany({
-      where: { botId: bot.id },
-      orderBy: { key: "asc" }
-    });
-  }
-
-  public updatePrompt(currentPrompt: AIPrompt, updatedPrompt: AiPromptDTO, key: Exclude<keyof AiPromptDTO, "id>">) {
-    if (!(allowedPromptUpdateKeys.includes(key)))
-      throw new HttpException(`Not allowed to update field prompt property ${key}`, 403);
-
-    const updateData: Prisma.AIPromptUpdateArgs["data"] = {};
-    updateData[key] = updatedPrompt[key];
-
-    return this.prisma.aIPrompt.update({
-      where: { id: currentPrompt.id },
-      data: updateData
-    });
-  }
 
   public getBotFeatures(bot: DBBot, enabledOnly = false): Promise<BotFeature[]> {
     return this.prisma.botFeature.findMany({

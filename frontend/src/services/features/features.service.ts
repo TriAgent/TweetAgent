@@ -8,13 +8,15 @@ import { FeatureHandler } from "./feature-handler";
 import { XPostContestHandler } from "./handlers/x-post-contest-handler.handler";
 import { XPostHandler } from "./handlers/x-post.handler";
 import { BotFeatureProvider } from "./model/bot-feature-provider";
+import { XRealNewsHandler } from "./handlers/x-real-news-handler";
 
 export const activeFeatureAction$ = new BehaviorSubject<ActiveFeature>(undefined);
 export const botFeatureProviders$ = new BehaviorSubject<BotFeatureProvider[]>(undefined);
 
 export const featureHandlers : FeatureHandler[] = [
   new XPostHandler(),
-  new XPostContestHandler(BotFeatureType.AirdropContest_XPostContestHandler)
+  new XPostContestHandler(BotFeatureType.AirdropContest_XPostContestHandler),
+  new XRealNewsHandler(BotFeatureType.NewsSummaries_XRealNewsFilter)
 ];
 
 const fetchBotFeatureProviders = async () => {  

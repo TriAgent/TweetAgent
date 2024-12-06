@@ -36,7 +36,7 @@ export class GenericReplierProvider extends BotFeatureProvider<GenericReplierFea
       BotFeatureGroupType.Core,
       BotFeatureType.Core_GenericReplier,
       `Generic replier`,
-      `Write generic replies to users posts for all interactions with us`,
+      `Potentially writes generic replies to users posts for all interactions with us. Posts are first studied to decide if they are worth being replied or not. Then depending on their content, different kind of reply guidelines are used to produce replies.`,
       FeatureConfigFormat,
       (bot: Bot) => new GenericReplierFeature(this, bot)
     );
@@ -86,7 +86,13 @@ export class GenericReplierFeature extends BotFeature<FeatureConfigType> {
     // Get conversation thread for this post. 
     const conversation = await xPostsService().getParentConversation(this.bot, xPost.postId);
     if (!conversation || conversation.length === 0)
-      return;
+      return null;
+
+    // Only study reply if we are somewhere in the conversation, as author or mentioned in a post text
+    const botInConversationAuthors = conversation.find(post => post.xAccountUserId === this.bot.dbBot.twitterUserId);
+    const botIsMentioned = conversation.find(post => this.bot.isMentionedInPostText(post.text));
+    if (!botInConversationAuthors && !botIsMentioned)
+      return null;
 
     this.logger.log("Building X reply for post:");
     this.logger.log(xPost);

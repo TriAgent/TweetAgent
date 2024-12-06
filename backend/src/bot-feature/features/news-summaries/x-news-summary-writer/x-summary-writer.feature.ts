@@ -12,7 +12,6 @@ import { formatDocumentsAsString } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
 import { langchainService, xPostsService } from "src/services";
 import { z, infer as zodInfer } from "zod";
-import { botPersonalityPromptChunk } from "../../../../bots/model/prompt-parts/news-summary";
 import { createNewsSummary } from "./default-prompts";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
 
@@ -84,7 +83,7 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
       const vectorStoreRetriever = vectorStore.asRetriever();
 
       const prompt = ChatPromptTemplate.fromMessages([
-        ["system", botPersonalityPromptChunk()],
+        ["system", this.bot.getRootFeature().config._prompts.personality],
         ["system", forbiddenWordsPromptChunk()],
         ["system", tweetCharactersSizeLimitationPromptChunk()],
         ["system", this.config._prompts.createNewsSummary]

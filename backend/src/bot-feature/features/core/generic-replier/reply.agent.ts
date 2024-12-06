@@ -1,7 +1,6 @@
 import { BaseMessageLike } from "@langchain/core/messages";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { XPost } from "@prisma/client";
-import { botPersonalityPromptChunk } from "src/bots/model/prompt-parts/news-summary";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { AppLogger } from "src/logs/app-logger";
 import { langchainService, xPostsService } from "src/services";
@@ -52,7 +51,7 @@ export const replyAgent = (feature: GenericReplierFeature, reply: XPost) => {
 
     // No actual user message, everything is in the system prompt.
     const messages: BaseMessageLike[] = [
-      ["system", botPersonalityPromptChunk()],
+      ["system", feature.bot.getRootFeature().config._prompts.personality],
       ["system", forbiddenWordsPromptChunk()],
       ["system", tweetCharactersSizeLimitationPromptChunk()],
       ["system", REQUEST_TEMPLATE]

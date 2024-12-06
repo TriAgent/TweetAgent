@@ -1,11 +1,14 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Bot as DBBot } from '@prisma/client';
-import { LinkerTwitterAccountInfo, TwitterAuthenticationRequest } from '@x-ai-wallet-bot/common';
+import { LinkedTwitterAccountInfo, TwitterAuthenticationRequest } from '@x-ai-wallet-bot/common';
+import { Subject } from 'rxjs';
 import { Bot } from 'src/bots/model/bot';
 import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ensureEnv } from 'src/utils/ensure-env';
 import client, { TwitterApi } from 'twitter-api-v2';
+
+export type TwitterAuthEvent = { botId: string; info: LinkedTwitterAccountInfo };
 
 @Injectable()
 export class TwitterAuthService implements OnModuleInit {
@@ -16,7 +19,11 @@ export class TwitterAuthService implements OnModuleInit {
 
   private botClient: client; // cached authenticated client to access the bot user.
 
-  constructor(private prisma: PrismaService) { }
+  public onTwitterAuth$ = new Subject<TwitterAuthEvent>();
+
+  constructor(
+    private prisma: PrismaService
+  ) { }
 
   onModuleInit() {
     this.appConsumerKey = ensureEnv("TWITTER_APP_CONSUMER_KEY");
@@ -71,7 +78,7 @@ export class TwitterAuthService implements OnModuleInit {
     }
   }
 
-  public async finalizeTwitterAuthenticationWithPIN(bot: DBBot, request: TwitterAuthenticationRequest, pinCode: string): Promise<LinkerTwitterAccountInfo> {
+  public async finalizeTwitterAuthenticationWithPIN(dbBot: DBBot, request: TwitterAuthenticationRequest, pinCode: string): Promise<LinkedTwitterAccountInfo> {
     const step2Client = new TwitterApi({
       appKey: this.appConsumerKey,
       appSecret: this.appSecret,
@@ -84,14 +91,12 @@ export class TwitterAuthService implements OnModuleInit {
       const { client: loggedClient, accessToken, accessSecret } = await step2Client.login(pinCode);
       const user = await loggedClient.currentUser();
 
-      console.log("user", user)
-
       if (!user) {
         this.logger.error("Hmm, auth failed for some reason");
         return;
       }
 
-      const newTwitterInfo: LinkerTwitterAccountInfo = {
+      const newTwitterInfo: LinkedTwitterAccountInfo = {
         twitterAccessSecret: accessSecret,
         twitterAccessToken: accessToken,
         twitterUserId: user.id_str,
@@ -99,12 +104,9 @@ export class TwitterAuthService implements OnModuleInit {
         twitterUserScreenName: user.screen_name
       }
 
-      // Update bot in DB
-      await this.prisma.bot.update({
-        where: { id: bot.id },
-        data: {
-          ...newTwitterInfo
-        }
+      this.onTwitterAuth$.next({
+        botId: dbBot.id,
+        info: newTwitterInfo
       });
 
       return newTwitterInfo;

@@ -4,7 +4,7 @@ export type TwitterAuthenticationRequest = {
   url: string;
 }
 
-export type LinkerTwitterAccountInfo = {
+export type LinkedTwitterAccountInfo = {
   twitterUserId?: string; // X user id eg: 1849649146669695000
   twitterUserName?: string; // X user name eg: Proctar Elastos
   twitterUserScreenName?: string; // X user name eg: proctar2626

@@ -19,6 +19,7 @@ export type XPost = {
 
   worthForAirdropContest?: boolean;
   contestQuotedPostId?: string;
+  isRealNews?: boolean;
 }
 
 /**

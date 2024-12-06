@@ -6,7 +6,7 @@ import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigT
 import { Bot } from 'src/bots/model/bot';
 import { BotConfig } from 'src/config/bot-config';
 import { AppLogger } from 'src/logs/app-logger';
-import { operationHistoryService, twitterService, xPostsService } from 'src/services';
+import { operationHistoryService, twitterService, xAccountsService, xPostsService } from 'src/services';
 import { TweetV2 } from 'twitter-api-v2';
 import { z, infer as zodInfer } from "zod";
 
@@ -63,7 +63,8 @@ export class XPostFetcherFeature extends BotFeature<FeatureConfigType> {
   }
 
   private async fetchLatestTargetAccountPosts() {
-    const targetTwitterAccounts = BotConfig.NewsSummaryBot.News.XSourceAccounts;
+    const postFetcher = this.bot.getFeatureByType(BotFeatureType.XCore_PostFetcher) as XPostFetcherFeature;
+    const { targetAccountNames } = await postFetcher.getMonitoredNewsAccountList();
 
     // Check when we last fetched - fetch max 12 hours ago if no previous history
     let latestFetchDate = await operationHistoryService().mostRecentOperationDate(OperationHistoryType.FetchAccountsPosts, 12 * 60);
@@ -74,7 +75,7 @@ export class XPostFetcherFeature extends BotFeature<FeatureConfigType> {
       // Fetch recent posts, not earlier than last time we checked
       this.logger.log(`Fetching recent target accounts X posts not earlier than ${latestFetchDate}`);
       // subtract 1 minute to compensate twitter's api lag after a post is published
-      return twitterService().fetchAuthorsPosts(this.bot, targetTwitterAccounts, moment(latestFetchDate).subtract(1, "minutes"));
+      return twitterService().fetchAuthorsPosts(this.bot, targetAccountNames, moment(latestFetchDate).subtract(1, "minutes"));
     });
 
     if (posts != null) {
@@ -119,6 +120,21 @@ export class XPostFetcherFeature extends BotFeature<FeatureConfigType> {
     if (posts != null) {
       // Remember last fetch time
       await operationHistoryService().saveRecentOperation(OperationHistoryType.FetchPostsWeAreMentionnedIn);
+    }
+  }
+
+  /**
+ * Returns the list of accounts we follow as providers of real news.
+ */
+  public async getMonitoredNewsAccountList() {
+    // Retrieve user ids of accounts we are following for their news
+    const targetAuthorAccounts = await xAccountsService().getXAccountsFromScreenNames(this.bot, BotConfig.NewsSummaryBot.News.XSourceAccounts)
+    const targetAuthorIds = targetAuthorAccounts.map(a => a.userId);
+
+    return {
+      targetAccountNames: BotConfig.NewsSummaryBot.News.XSourceAccounts,
+      targetAuthorAccounts,
+      targetAuthorIds
     }
   }
 }
