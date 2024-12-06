@@ -1,5 +1,3 @@
-- esc support
-  - airdrop ELA (ESC ok) - 1000 ELA / month
 - Deploy new bot to prod
 
 P2:
