@@ -94,6 +94,7 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
       this.logger.log("Scheduling new X reply post");
       await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, result.reply, {
         isSimulated: result.electedPost.isSimulated,
+        publishRequestAt: new Date(),
         quotedPostId: result.electedPost.postId,
         contestQuotedPostId: result.electedPost.id
       });

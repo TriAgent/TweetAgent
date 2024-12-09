@@ -31,6 +31,8 @@ export const extractAddressAgent = (feature: XPostAirdropAddressFeature, logger:
     });
 
     state.airdropAddress = structuredResponse?.airdropAddress;
+    if (state.airdropAddress === "null")
+      state.airdropAddress = null; // LLM returns a "null" string
     state.isAnAirdropAddressRequest = !isNullOrUndefined(state.airdropAddress);
 
     if (state.isAnAirdropAddressRequest)

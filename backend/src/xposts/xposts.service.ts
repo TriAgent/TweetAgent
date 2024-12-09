@@ -181,12 +181,19 @@ export class XPostsService {
    * Post is not split yes, can be longer than just one tweet. Will be split later
    * when (if) publishing.
    */
-  public async createPost(bot: DBBot, xAccountId: string, text: string, optValues?: OptionalPostCreationInputs): Promise<XPostWithAccount> {
+  public async createPost(dbBot: DBBot, xAccountId: string, text: string, optValues?: OptionalPostCreationInputs): Promise<XPostWithAccount> {
     const createData: Prisma.XPostCreateArgs["data"] = {
-      bot: { connect: { id: bot.id } },
+      bot: { connect: { id: dbBot.id } },
       xAccount: { connect: { userId: xAccountId } },
       text: text
     }
+
+    const bot = await this.botsService.getBotById(dbBot.id);
+
+    // Ensure account exists, or throw an error
+    const publisherAccount = await this.xAccounts.ensureXAccount(bot, xAccountId);
+    if (!publisherAccount)
+      throw new Error(`No xAccount with id ${xAccountId} founds, cannot create post!`);
 
     if (optValues?.postId) createData.postId = optValues?.postId;
     if (optValues?.parentPostId) createData.parentPostId = optValues?.parentPostId;
@@ -212,7 +219,7 @@ export class XPostsService {
     }
 
     // If publishing account is our bot, write the bot as handled, no matter what
-    if (bot.twitterUserId === xAccountId)
+    if (dbBot.twitterUserId === xAccountId)
       createData.wasReplyHandled = true;
 
     const post = await this.prisma.xPost.create({

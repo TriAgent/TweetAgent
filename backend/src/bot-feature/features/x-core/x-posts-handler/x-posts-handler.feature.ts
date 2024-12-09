@@ -102,7 +102,8 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
 
         await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, fullReply, {
           isSimulated: xPost.isSimulated,
-          parentPostId: xPost.postId
+          parentPostId: xPost.postId,
+          publishRequestAt: new Date()
         });
       }
     }
