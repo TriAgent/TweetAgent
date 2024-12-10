@@ -8,7 +8,7 @@ import { TweetTrait } from "./model/tweet-trait";
 /**
  * Based on tweet traits, decide to reply or not
  */
-export const postReplyRouter = (tools: StructuredTool[], reply: XPost) => {
+export const shouldReplyRouter = (tools: StructuredTool[], reply: XPost) => {
   return async (state: typeof replierStateAnnotation.State) => {
 
     const hasTrait = (trait: TweetTrait) => state.tweetTraits.includes(trait);

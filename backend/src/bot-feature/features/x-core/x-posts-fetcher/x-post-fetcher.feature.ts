@@ -1,5 +1,6 @@
 import { OperationHistoryType } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
+import { uniqWith } from 'lodash';
 import moment from 'moment';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from 'src/bot-feature/model/bot-feature-provider';
@@ -91,31 +92,36 @@ export class XPostFetcherFeature extends BotFeature<FeatureConfigType> {
       return;
 
     // Fetch recent posts, not earlier than last time we checked
-    const posts = await xPostsService().fetchAndSaveXPosts(this.bot, () => {
+    // Also fetch posts' related posts, but make sure to insert them all in DB at once to avoid first inserting 
+    // posts in DB and take the risk of failing API calls while retrieving dependencies.
+    const posts = await xPostsService().fetchAndSaveXPosts(this.bot, async () => {
       this.logger.log(`Fetching recent X posts we are mentioned in, not earlier than ${latestFetchDate}`);
+      const fetchedTweets: TweetV2[] = [];
       // subtract 1 minute to compensate twitter's api lag after a post is published
-      return twitterService().fetchPostsMentioningOurAccount(this.bot, moment(latestFetchDate).subtract(1, "minutes"));
+      const mentioningTweets = await twitterService().fetchPostsMentioningOurAccount(this.bot, moment(latestFetchDate).subtract(1, "minutes"));
+      if (!mentioningTweets)
+        return [];
+
+      fetchedTweets.push(...mentioningTweets);
+
+      // For each post we get mentioned in, fetch and save the whole conversation before it (parent posts).
+      // This is needed for example by the contest service to study the root post vs the mentioned post (possibly in replies).
+      for (const tweet of mentioningTweets) {
+        const quotedPostId = tweet.referenced_tweets?.find(t => t.type === "quoted")?.id;
+        if (quotedPostId) {
+          this.logger.log(`Fetching quoted post for mentioning post`);
+          fetchedTweets.push(await twitterService().fetchSinglePost(this.bot, quotedPostId));
+        }
+
+        this.logger.log(`Fetching parent conversation for mentioning post`);
+        fetchedTweets.push(...(await twitterService().fetchParentPosts(this.bot, tweet.id)));
+      }
+
+      return uniqWith(fetchedTweets, (t1, t2) => t1.id === t2.id);
     });
 
     if (!posts)
       return;
-
-    // For each post we get mentioned in, fetch and save the whole conversation before it (parent posts).
-    // This is needed for example by the contest service to study the root post vs the mentioned post (possibly in replies).
-    for (const post of posts) {
-      await xPostsService().fetchAndSaveXPosts(this.bot, async () => {
-        const fetchedPosts: TweetV2[] = [];
-        if (post.quotedPostId) {
-          this.logger.log(`Fetching quoted post for mentioning post`);
-          fetchedPosts.push(await twitterService().fetchSinglePost(this.bot, post.quotedPostId));
-        }
-
-        this.logger.log(`Fetching parent conversation for mentioning post`);
-        fetchedPosts.push(...(await twitterService().fetchParentPosts(this.bot, post.postId)));
-
-        return fetchedPosts;
-      });
-    }
 
     if (posts != null) {
       // Remember last fetch time

@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Bot as DBBot, Prisma, XPost } from '@prisma/client';
 import { XPostCreationDTO } from '@x-ai-wallet-bot/common';
 import moment from 'moment';
+import { Subject } from 'rxjs';
 import { BotsService } from 'src/bots/bots.service';
 import { Bot } from 'src/bots/model/bot';
 import { AppLogger } from 'src/logs/app-logger';
@@ -34,6 +35,8 @@ export type OptionalPostCreationInputs = {
 @Injectable()
 export class XPostsService {
   private logger = new AppLogger("XPosts");
+
+  public onPostPublished$ = new Subject<XPost>(); // Sent when a schedule DB post has actually been published on X (X post id becomes known)
 
   constructor(
     private prisma: PrismaService,
@@ -152,7 +155,7 @@ export class XPostsService {
     // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
     if (createdTweets && createdTweets.length > 0) {
       const rootTweet = createdTweets[0];
-      await this.updatePost(postToSend.id, {
+      const updatedPostToSend = await this.updatePost(postToSend.id, {
         bot: { connect: { id: bot.dbBot.id } },
         text: rootTweet.text, // Original post request has possibly been truncated by twitter so we keep what was really published for this post chunk
         postId: rootTweet.postId,
@@ -160,6 +163,9 @@ export class XPostsService {
         xAccount: { connect: { userId: botXAccount.userId } },
         wasReplyHandled: true // directly mark has handled post, as this is our own post
       });
+
+      // Notify this post was published
+      this.onPostPublished$.next(updatedPostToSend);
 
       // Create child xPosts if needed
       let parentPostId = rootTweet.postId;
@@ -194,6 +200,9 @@ export class XPostsService {
     const publisherAccount = await this.xAccounts.ensureXAccount(bot, xAccountId);
     if (!publisherAccount)
       throw new Error(`No xAccount with id ${xAccountId} founds, cannot create post!`);
+
+    if (!text)
+      throw new Error(`Text is mandatory to create a X post!`);
 
     if (optValues?.postId) createData.postId = optValues?.postId;
     if (optValues?.parentPostId) createData.parentPostId = optValues?.parentPostId;

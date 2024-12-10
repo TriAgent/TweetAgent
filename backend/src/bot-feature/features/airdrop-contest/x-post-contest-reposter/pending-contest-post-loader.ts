@@ -21,7 +21,7 @@ export class PendingContestPostLoader extends BaseDocumentLoader {
         botId: this.bot.id,
         worthForAirdropContest: true,
         quotedForAirdropContestAt: null,
-        createdAt: { gt: moment().subtract(6, "hours").toDate() }
+        publishedAt: { gt: moment().subtract(6, "hours").toDate() } // Dismiss old posts, we only want fresh ones
       },
       orderBy: { createdAt: "desc" },
       take: 3,

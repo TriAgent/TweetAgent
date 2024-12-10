@@ -1,5 +1,4 @@
 import { BaseMessageLike } from "@langchain/core/messages";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { XPost } from "@prisma/client";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { AppLogger } from "src/logs/app-logger";
@@ -43,7 +42,7 @@ export const replyAgent = (feature: GenericReplierFeature, reply: XPost) => {
       .join("\n"); // Skip lines and make as string
 
     const REQUEST_TEMPLATE = `
-      ${feature.config._prompts.replyToNews}
+      ${feature.config._prompts.replyToNewsIntroduction}
 
       [Guidelines]
       ${replyGuidelines}
@@ -65,20 +64,25 @@ export const replyAgent = (feature: GenericReplierFeature, reply: XPost) => {
     }
 
     // Action request
-    messages.push(["system",
-      `Write the tweet reply. You are mainly replying to the most recent 
-       tweet above. Do not @ the user ID in the reply.`]);
-
-    //console.log("messages", messages)
-
-    const prompt = ChatPromptTemplate.fromMessages(messages);
+    messages.push(["system", feature.config._prompts.replyToNewsCommand]);
 
     logger.log("Generating tweet reply");
-    const response = await prompt.pipe(model).invoke({});
+    const { structuredResponse } = await langchainService().fullyInvoke({
+      messages,
+      structuredOutput: z.object({
+        reply: z.string().describe("The new tweet reply, if it was worth writing one. null otherwise"),
+        noReplyReason: z.string().describe("If you don't write a reply, explain why it was not worth it")
+      })
+    });
 
-    console.log("response", state)
+    console.log("structuredResponse", structuredResponse)
 
-    state.tweetReply = response?.tweetReply;
+    state.tweetReply = structuredResponse?.reply;
+
+    if (structuredResponse?.noReplyReason) {
+      logger.log(`No generic reply generated. Reason:`);
+      logger.log(structuredResponse?.noReplyReason);
+    }
 
     return state;
   }

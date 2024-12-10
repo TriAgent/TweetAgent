@@ -8,6 +8,7 @@ import { Bot } from "src/bots/model/bot";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma, xPostsService } from "src/services";
 import { z, infer as zodInfer } from "zod";
+import { xPostAIRewrite } from "../../x-core/generic-x-post-rewriter";
 import { electBestPostForContest, writePostQuoteContent } from "./default-prompts";
 import { electBestPostForContestAgent } from "./elect-best-post-for-contest.agent";
 import { writePostQuoteContentAgent } from "./write-post-quote-content.agent";
@@ -59,6 +60,8 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
 
   constructor(provider: XPostContestReposterProvider, bot: Bot) {
     super(provider, bot, 20);
+
+    xPostsService().onPostPublished$.subscribe(post => this.handlePostPublished(post));
   }
 
   async scheduledExecution() {
@@ -104,5 +107,26 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
         quotedForAirdropContestAt: new Date()
       });
     }
+  }
+
+  /**
+   * Handler called when a post has actually been published on X.
+   */
+  private async handlePostPublished(post: XPost) {
+    if (!post.contestQuotedPostId)
+      return; // We only want to know when a quote post we wrote got published, so we can follow up.
+
+    this.logger.log(`Creating a new reply for contest user to know our quote post has been published`);
+    this.logger.log(post);
+
+    // Schedule a reply to the mentionning user so he knows where to find the quote post and start marketing it to his user base.
+    const quotePostUrl = `https://x.com/@${this.bot.dbBot.twitterUserScreenName}/status/${post.postId}`;
+    const replyToMentioningUser = `Your post has been quoted! We will gather stats in a few days to determine your airdrop amount, enjoy. ${quotePostUrl}`;
+    const rewrittenResponse = await xPostAIRewrite(this.bot, replyToMentioningUser);
+    await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, rewrittenResponse, {
+      isSimulated: post.isSimulated,
+      publishRequestAt: new Date(),
+      parentPostId: post.postId
+    });
   }
 }

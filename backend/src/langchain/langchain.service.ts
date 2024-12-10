@@ -79,6 +79,7 @@ export class LangchainService implements OnModuleInit {
       //const messageHistory: BaseMessage[] = await prompt.formatMessages(invocationParams);
       let responseMessage: AIMessage;
       let structuredResponse: zodInfer<OutputSchema>; // zod type to simple typescript fields
+      let stringResponse: string;
       while (true) {
         const chain = RunnableSequence.from([
           ...runnablesBefore,
@@ -86,6 +87,8 @@ export class LangchainService implements OnModuleInit {
           model,
         ] as any); // dirty as any because of headache with from() typing (first input type etc)
         responseMessage = await chain.invoke(invocationParams); // NOTE: using "" instead of "" to avoid text.replace is not a function when using vector stores
+
+        stringResponse = responseMessage?.content.toString();
 
         // Save this preliminary/final message to history
         messageHistory.push(responseMessage);
@@ -105,7 +108,7 @@ export class LangchainService implements OnModuleInit {
         this.logger.error(responseMessage);
       }
 
-      return { responseMessage, structuredResponse }
+      return { responseMessage, structuredResponse, stringResponse }
     }
     catch (e) {
       console.error("fullyInvoke error", e);

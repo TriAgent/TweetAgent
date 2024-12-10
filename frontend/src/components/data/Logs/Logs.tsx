@@ -3,11 +3,14 @@ import { useBehaviorSubject } from '@services/ui-ux/hooks/useBehaviorSubject';
 import { Console } from 'console-feed';
 import { Message } from 'console-feed/lib/definitions/Component';
 import moment from 'moment';
-import { FC, useEffect, useMemo, useRef } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { useScroll } from 'react-use';
 
 export const Logs: FC = () => {
   const rawLogs = useBehaviorSubject(logs$);
   const logsRef = useRef(null);
+  const logsScrollState = useScroll(logsRef);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   const logs: Message[] = useMemo(() => {
     return rawLogs?.map(l => ({
@@ -19,9 +22,20 @@ export const Logs: FC = () => {
   }, [rawLogs]);
 
   useEffect(() => {
-    // Scroll to bottom of div
-    logsRef.current.scrollTop = logsRef.current.scrollHeight;
-  }, [logs]);
+    const logsElement = logsRef.current;
+    if (!logsElement)
+      return;
+
+    if (isAtBottom) {
+      // Continue auto scrolling to stick to the bottom to bottom of div
+      logsElement.scrollTop = logsElement.scrollHeight;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logs]); // Important: Do not depend on scroll state
+
+  useEffect(() => {
+    setIsAtBottom(logsScrollState.y === logsRef.current?.scrollHeight - logsRef.current?.clientHeight);
+  }, [logsRef, logsScrollState.y]);
 
   return (
     <div ref={logsRef} style={{ backgroundColor: '#242424', height: "100%", overflowY: "auto", padding: 10 }}>

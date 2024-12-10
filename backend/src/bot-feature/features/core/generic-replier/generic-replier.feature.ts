@@ -7,15 +7,15 @@ import { xPostsService } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { classifyPostAgent } from "./classify-post.agent";
 import { ReplierNode } from "./model/replier-node";
-import { postReplyRouter } from "./post-reply.router";
 import { replyAgent } from "./reply.agent";
+import { shouldReplyRouter } from "./should-reply.router";
 
 const ProduceRepliesCheckDelaySec = 60; // 1 minute - interval between loops that check if a reply has to be produced
 
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { z, infer as zodInfer } from "zod";
-import { classifyPost, replyClassificationTraitCheerful, replyClassificationTraitOpinion, replyClassificationTraitPricing, replyClassificationTraitQuestion, replyToNews } from "./default-prompts";
+import { classifyPost, replyClassificationTraitCheerful, replyClassificationTraitOpinion, replyClassificationTraitPricing, replyClassificationTraitQuestion, replyToNewsCommand, replyToNewsIntroduction } from "./default-prompts";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
   _prompts: z.object({
@@ -24,7 +24,8 @@ const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
     replyClassificationTraitCheerful: z.string(),
     replyClassificationTraitQuestion: z.string(),
     replyClassificationTraitOpinion: z.string(),
-    replyToNews: z.string()
+    replyToNewsIntroduction: z.string(),
+    replyToNewsCommand: z.string()
   })
 }).strict();
 
@@ -51,7 +52,8 @@ export class GenericReplierProvider extends BotFeatureProvider<GenericReplierFea
         replyClassificationTraitCheerful,
         replyClassificationTraitOpinion,
         replyClassificationTraitQuestion,
-        replyToNews
+        replyToNewsIntroduction,
+        replyToNewsCommand
       }
     }
   }
@@ -94,12 +96,12 @@ export class GenericReplierFeature extends BotFeature<FeatureConfigType> {
     if (!botInConversationAuthors && !botIsMentioned)
       return null;
 
-    this.logger.log("Building X reply for post:");
+    this.logger.log("Generating generic X reply for post:");
     this.logger.log(xPost);
 
     const tools = [];
     const _classifyReplyAgent = classifyPostAgent(this, xPost);
-    const _shouldReplyRouter = postReplyRouter(tools, xPost);
+    const _shouldReplyRouter = shouldReplyRouter(tools, xPost);
     const _replyAgent = replyAgent(this, xPost);
 
     const graph = new StateGraph(replierStateAnnotation)

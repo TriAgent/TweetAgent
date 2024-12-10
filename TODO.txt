@@ -1,14 +1,17 @@
-- Deploy new bot to prod
-
-- need to reply to the contest post mentioner after we publish ths quote post, so he knows he can start sharing.
-- show WS status on UI, to be aware when server has crashed.
-- show recent logs after reloading the frontend. Not just "WS client connected".
+- Debug notes: attach a note to any thing, including posts. 
+  - for example we can show reasons why a post is not worth for contest. Just a text with the optional post id, bot and feature type that generated it
+  - UI should auto update through WD for easy debugging.
+- ON GOING need to reply to the contest post mentioner after we publish the quote post, so he knows he can start sharing.
+- IMPORTANT don't ask for wallet address in replies if address has already been asked before in the conversation to avoid dead loop
 
 P2:
+- show recent logs after reloading the frontend. Not just "WS client connected". (but truncate on the backend side)
+- accounts list: ability to click a user id to reach his X profile.
 - post sender feature: configurable min delay between posts
 - WS event for new airdrops + refresh on UI
 
 P3:
+- show WS status on UI, to be aware when server has crashed.
 - Ability to configure X accounts to get news from, from UI (store in summary news feature)
 - posts list : pagination and auto fetch more
 - bug: bot list name not changing when bot name changes in settings
