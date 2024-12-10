@@ -12,6 +12,7 @@ import { TwitterModule } from './twitter/twitter.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { XaccountsModule } from './xaccounts/xaccounts.module';
 import { XPostsModule } from './xposts/xposts.module';
+import { DebugCommentModule } from './debug-comment/debug-comment.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { XPostsModule } from './xposts/xposts.module';
     WebsocketsModule,
     BotFeatureModule,
     ContestAirdropModule,
-    ChainModule
+    ChainModule,
+    DebugCommentModule
   ]
 })
 export class AppModule { }

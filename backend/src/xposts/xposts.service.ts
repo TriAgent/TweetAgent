@@ -106,7 +106,10 @@ export class XPostsService {
           postId: twitterPostId
         }
       },
-      include: { xAccount: true }
+      include: {
+        xAccount: true,
+        debugComments: true
+      }
     });
   }
 
@@ -120,7 +123,6 @@ export class XPostsService {
     const mostRecentlyPublishedPost = await this.prisma.xPost.findFirst({
       where: {
         publishRequestAt: { not: null },
-        isSimulated: false,
         AND: [
           { publishedAt: { not: null } },
           // TODO: replace code below with a "publish not before date" field in database, to be more generic
@@ -138,7 +140,6 @@ export class XPostsService {
       where: {
         publishRequestAt: { not: null },
         publishedAt: null,
-        isSimulated: false // Don't try publish simulated/test posts to X, this stays in local DB
       }
     });
 
@@ -146,13 +147,22 @@ export class XPostsService {
     if (!postToSend)
       return;
 
-    this.logger.log(`Sending tweet for queued db posted post id ${postToSend.id}`);
-    const bot = this.botsService.getBotById(postToSend.botId);
-    const createdTweets = await this.twitter.publishTweet(bot, postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
+    this.logger.log(`Sending tweet (${postToSend.isSimulated ? "simulated" : "live"}) for queued db posted post id ${postToSend.id}`);
 
+    const bot = this.botsService.getBotById(postToSend.botId);
     const botXAccount = await this.xAccounts.ensureXAccount(bot, bot.dbBot.twitterUserId);
 
-    // Mark as sent and create additional DB posts if the tweet has been split while publishing (because of X post character limitation)
+    // Handle simulated posts and real X psots differently
+    let createdTweets: { postId: string, text: string }[];
+    if (postToSend.isSimulated) {
+      // Simulaterd posts always remain as a single post, they are not split
+      createdTweets = [{ postId: postToSend.postId, text: postToSend.text }];
+    }
+    else {
+      createdTweets = await this.twitter.publishTweet(bot, postToSend.text, postToSend.parentPostId, postToSend.quotedPostId);
+    }
+
+    // Mark as sent and create additional DB posts if the tweet has been split (real X posts only) while publishing (because of X post character limitation)
     if (createdTweets && createdTweets.length > 0) {
       const rootTweet = createdTweets[0];
       const updatedPostToSend = await this.updatePost(postToSend.id, {
@@ -323,7 +333,10 @@ export class XPostsService {
         where: {
           id: rootPostId
         },
-        include: { xAccount: true }
+        include: {
+          xAccount: true,
+          debugComments: true
+        }
       });
     }
 
@@ -335,8 +348,12 @@ export class XPostsService {
           botId: bot.id,
           ...(root && { parentPostId: root.postId })
         },
-        include: { xAccount: true },
-        orderBy: { createdAt: "desc" } // Sort by creation date instead of publishing, so we can also see unpublished posts ordered
+        include: {
+          xAccount: true,
+          debugComments: true
+        },
+        orderBy: { createdAt: "desc" }, // Sort by creation date instead of publishing, so we can also see unpublished posts ordered
+        take: 50 // For now, no pagination, limit to 50
       });
     }
 

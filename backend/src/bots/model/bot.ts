@@ -16,7 +16,7 @@ export class Bot {
 
   private constructor(public dbBot: DBBot) {
     botsService().onBotUpdate$.subscribe(e => this.handleBotUpdate(e));
-    botsService().onBotFeatureUpdate$.subscribe(e => this.handleUpdatedFeatureConfig(e));
+    botsService().onBotFeatureUpdate$.subscribe(e => this.handleUpdatedFeature(e));
     twitterAuthService().onTwitterAuth$.subscribe(e => this.handleTwitterAuth(e));
   }
 
@@ -57,8 +57,7 @@ export class Bot {
   }
 
   private async newFeatureFromDBFeature(dbFeature: DBBotFeature) {
-    const feature = await botFeatureService().newFromKey(this, dbFeature.type as BotFeatureType);
-    feature.updateConfig(dbFeature.config as any);
+    const feature = await botFeatureService().newFromDBFeature(this, dbFeature);
     this.features.push(feature);
   }
 
@@ -79,14 +78,14 @@ export class Bot {
   /**
    * Called whenever one of the features gets changed (enabled, config...)
    */
-  private async handleUpdatedFeatureConfig(e: BotFeatureUpdate) {
+  private async handleUpdatedFeature(e: BotFeatureUpdate) {
     if (e.bot.id !== this.id)
       return;
 
     const feature = this.features.find(f => f.provider.type === e.update.type);
 
     if (e.updatedKey === "config") {
-      feature.updateConfig(e.update.config as any);
+      feature.updateDBFeature(e.update);
     }
   }
 

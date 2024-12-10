@@ -1,6 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
-import { langchainService, xPostsService } from "src/services";
+import { debugCommentService, langchainService, xPostsService } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
 import { contestHandlerStateAnnotation, XPostContestHandlerFeature } from "./x-post-contest-handler.feature";
@@ -9,13 +9,8 @@ import { contestHandlerStateAnnotation, XPostContestHandlerFeature } from "./x-p
  * Determines if the post is worth being part of the airdrop contest or not, 
  * and if so, generates a reply for user to know we handled the post.
  */
-export const studyForContestAgent = (feature: XPostContestHandlerFeature, logger: Logger, post: XPostWithAccount) => {
+export const studyWorthForContestAgent = (feature: XPostContestHandlerFeature, logger: Logger, post: XPostWithAccount) => {
   return async (state: typeof contestHandlerStateAnnotation.State) => {
-    // The current post should mention us (either root possibly for contest, 
-    // or a mention reply on the potential contest post), otherwise dismiss
-    if (!feature.bot.isMentionedInPostText(post.text))
-      return state;
-
     let postEvaluatedForContest: XPost;
     if (post.quotedPostId) {
       // If the post is quoting another post, we consider this quoted post as the potential post for contest so
@@ -40,29 +35,12 @@ export const studyForContestAgent = (feature: XPostContestHandlerFeature, logger
     if (postEvaluatedForContest.xAccountUserId === feature.bot.dbBot.twitterUserId)
       return state;
 
-    // Check if any child tweet mentions us.
-    // const conversationTree = await xPosts().getConversationTree(post);
-    // const mentioningPosts = conversationTree.searchPosts(`@${botAccount.userScreenName}`);
-
-    // // We are not mentioned, give up on this post, don't update the worth for contest field in post.
-    // if (mentioningPosts.length === 0) {
-    //   logger.log(`Post conversation is not mentioning us. Not electing for contest.`);
-    //   return state;
-    // }
-
-    // // Make sure to sort mentioning posts by oldest first, so we only consider the first mention as the right one, not late users.
-    // mentioningPosts.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-    // const targetMentioningPost = mentioningPosts[0];
     const targetMentioningPost = post;
 
     // Invoke command, execute all tools, and get structured json response.
     const { structuredResponse, responseMessage } = await langchainService().fullyInvoke({
-      messages: [
-        ["system", feature.config._prompts.studyForContest]
-      ],
-      invocationParams: {
-        tweetContent: postEvaluatedForContest.text
-      },
+      messages: [["system", feature.config._prompts.studyForContest]],
+      invocationParams: { tweetContent: postEvaluatedForContest.text },
       structuredOutput: z.object({
         isWorthForContest: z.boolean().describe("Whether the post is worth for the airdrop contest or not"),
         reason: z.string().describe("The reason why you think the post is worth for the airdrop contest or not")
@@ -74,8 +52,6 @@ export const studyForContestAgent = (feature: XPostContestHandlerFeature, logger
       logger.error(responseMessage);
       return state;
     }
-
-    // TODO: change the reply to let user know he should not forget to send his airdrop address too, if not sent yet.
 
     state.isWorthForContest = structuredResponse.isWorthForContest;
     if (state.isWorthForContest) {
@@ -92,6 +68,10 @@ export const studyForContestAgent = (feature: XPostContestHandlerFeature, logger
     else {
       logger.log(`Post is NOT eligible for airdrop contest:`);
       logger.log(`Reason: ${structuredResponse.reason}`);
+
+      // Attach dismiss reason as comment
+      if (structuredResponse.reason)
+        await debugCommentService().createPostComment(post, structuredResponse.reason, feature.dbFeature);
     }
 
     // Save worth for contest info into post.

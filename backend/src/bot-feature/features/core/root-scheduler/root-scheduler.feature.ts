@@ -1,3 +1,4 @@
+import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from 'src/bot-feature/model/bot-feature-provider';
@@ -26,7 +27,7 @@ export class RootSchedulerFeatureProvider extends BotFeatureProvider<RootSchedul
       `Root`,
       `Root feature that schedules all other features and allows global bot configurations. If this feature gets disabled, nothing else run.`,
       FeatureConfigFormat,
-      (bot: Bot) => new RootSchedulerFeature(this, bot)
+      (bot, dbFeature) => new RootSchedulerFeature(this, bot, dbFeature)
     );
   }
 
@@ -41,8 +42,8 @@ export class RootSchedulerFeatureProvider extends BotFeatureProvider<RootSchedul
 }
 
 export class RootSchedulerFeature extends BotFeature<FeatureConfigType> {
-  constructor(provider: RootSchedulerFeatureProvider, bot: Bot) {
-    super(provider, bot, 5);
+  constructor(provider: RootSchedulerFeatureProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 5);
   }
 
   public async scheduledExecution() {

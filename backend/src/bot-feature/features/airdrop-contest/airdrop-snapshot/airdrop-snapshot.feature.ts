@@ -1,4 +1,4 @@
-import { ContestAirdrop, ContestAirdropTargetUser, XAccount, XPost } from "@prisma/client";
+import { ContestAirdrop, ContestAirdropTargetUser, BotFeature as DBBotFeature, XAccount, XPost } from "@prisma/client";
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
@@ -26,7 +26,7 @@ export class AirdropSnapshotProvider extends BotFeatureProvider<AirdropSnapshotF
       `Snapshots`,
       `Dispatches airdrop tokens to authors of best 'for contest' posts, at regular intervals, but without transfering them yet`,
       FeatureConfigFormat,
-      (bot: Bot) => new AirdropSnapshotFeature(this, bot)
+      (bot, dbFeature) => new AirdropSnapshotFeature(this, bot, dbFeature)
     );
   }
 
@@ -49,8 +49,8 @@ export class AirdropSnapshotProvider extends BotFeatureProvider<AirdropSnapshotF
 export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("AirdropSnapshot", this.bot);
 
-  constructor(provider: AirdropSnapshotProvider, bot: Bot) {
-    super(provider, bot, 10);
+  constructor(provider: AirdropSnapshotProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 10);
   }
 
   async scheduledExecution() {
@@ -93,6 +93,9 @@ export class AirdropSnapshotFeature extends BotFeature<FeatureConfigType> {
         }
       }
     });
+
+    if (eligiblePosts.length === 0)
+      return;
 
     this.logger.log(`Starting to produce a new airdrop. Using ${eligiblePosts.length} posts. For posts published between ${eligibleStartate} and ${eligibleEndDate}.`);
 

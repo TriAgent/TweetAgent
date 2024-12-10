@@ -1,3 +1,4 @@
+import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from 'src/bot-feature/model/bot-feature-provider';
@@ -20,7 +21,7 @@ export class XPostsSenderProvider extends BotFeatureProvider<XPostSenderFeature,
       `Post sender`,
       `Sends our unpublished posts (in database - from our bot) to X through X api`,
       FeatureConfigFormat,
-      (bot: Bot) => new XPostSenderFeature(this, bot)
+      (bot, dbFeature) => new XPostSenderFeature(this, bot, dbFeature)
     );
   }
 
@@ -35,8 +36,8 @@ export class XPostsSenderProvider extends BotFeatureProvider<XPostSenderFeature,
 export class XPostSenderFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XPostSender", this.bot);
 
-  constructor(provider: XPostsSenderProvider, bot: Bot) {
-    super(provider, bot, 5);
+  constructor(provider: XPostsSenderProvider, bot: Bot, feature: DBBotFeature) {
+    super(provider, bot, feature, 5);
   }
 
   public async scheduledExecution() {

@@ -1,4 +1,5 @@
 import { Annotation, BaseChannel, END, START, StateGraph } from "@langchain/langgraph";
+import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
@@ -6,7 +7,7 @@ import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-ana
 import { Bot } from "src/bots/model/bot";
 import { standardStringAnnotationReducer } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
-import { prisma, wsDispatcherService, xPostsService } from "src/services";
+import { debugCommentService, prisma, wsDispatcherService, xPostsService } from "src/services";
 import { z, infer as zodInfer } from "zod";
 import { produceAggregatedReplyAgent } from "./aggregated-reply.agent";
 import { produceAggregatedReply } from "./default-prompts";
@@ -27,7 +28,7 @@ export class XPostsHandlerProvider extends BotFeatureProvider<XPostsHandlerFeatu
       `Root handler for upcoming X posts`,
       `Root handler for unanswered third party posts. Requests other features to produce potential reply parts, then aggregates all the replies into a single tweet.`,
       FeatureConfigFormat,
-      (bot: Bot) => new XPostsHandlerFeature(this, bot)
+      (bot, dbFeature) => new XPostsHandlerFeature(this, bot, dbFeature)
     );
   }
 
@@ -58,8 +59,8 @@ export let replyAggregatorStateAnnotation = Annotation.Root<ReplyAggregatorState
 export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XPostsHandler", this.bot);
 
-  constructor(provider: XPostsHandlerProvider, bot: Bot) {
-    super(provider, bot, 20);
+  constructor(provider: XPostsHandlerProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 20);
   }
 
   public async scheduledExecution() {
@@ -94,6 +95,7 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
       }
     }
 
+    let replyGenerated = false;
     if (replyAnalysisResults.length > 0) {
       const fullReply = await this.produceAggregatedXReply(replyAnalysisResults);
       if (fullReply) {
@@ -105,8 +107,13 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
           parentPostId: xPost.postId,
           publishRequestAt: new Date()
         });
+
+        replyGenerated = true;
       }
     }
+
+    if (!replyGenerated)
+      await debugCommentService().createPostComment(xPost, `None of the enabled reply handlers wanted to write a reply.`, this.dbFeature);
 
     // No matter if we could generate a reply or not, mark as reply as 
     // handled, so we don't try to handle it again later. A missed reply is better than being stuck forever.

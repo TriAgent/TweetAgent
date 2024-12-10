@@ -1,4 +1,4 @@
-import { XPost } from "@prisma/client";
+import { BotFeature as DBBotFeature, XPost } from "@prisma/client";
 import { Bot } from "src/bots/model/bot";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { AnyBotFeatureProvider, BotFeatureConfigBase } from "./bot-feature-provider";
@@ -6,12 +6,12 @@ import { XPostReplyAnalysisResult } from "./x-post-reply-analysis-result";
 
 export abstract class BotFeature<ConfigType extends BotFeatureConfigBase> {
   private lastExecutionTime: number = 0;
-  public config: ConfigType;
+  //public config: ConfigType;
 
   /**
    * @param runLoopMinIntervalSec In case there is a run loop implemented, how often should it be launched 
    */
-  constructor(public provider: AnyBotFeatureProvider, public bot: Bot, public runLoopMinIntervalSec?: number) { }
+  constructor(public provider: AnyBotFeatureProvider, public bot: Bot, public dbFeature: DBBotFeature, public runLoopMinIntervalSec?: number) { }
 
   async initialize() { }
 
@@ -43,6 +43,10 @@ export abstract class BotFeature<ConfigType extends BotFeatureConfigBase> {
     return this.config.enabled;
   }
 
+  public get config(): ConfigType {
+    return this.dbFeature.config as ConfigType;
+  }
+
   /**
    * Tells if at least runLoopMinIntervalSec seconds have elapsed since the last execution.
    */
@@ -59,11 +63,11 @@ export abstract class BotFeature<ConfigType extends BotFeatureConfigBase> {
   }
 
   /**
-   * Called by other services when some of the feature configurations gets modified, 
+   * Called by other services when some of the underlying feature gets modified, 
    * for example from the dashboard.
    */
-  public updateConfig(config: ConfigType) {
-    this.config = config;
+  public updateDBFeature(dbFeature: DBBotFeature) {
+    this.dbFeature = dbFeature;
   }
 }
 

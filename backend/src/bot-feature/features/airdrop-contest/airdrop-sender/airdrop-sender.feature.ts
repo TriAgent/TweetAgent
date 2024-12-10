@@ -1,4 +1,4 @@
-import { XPost } from "@prisma/client";
+import { BotFeature as DBBotFeature, XPost } from "@prisma/client";
 import { BotFeatureGroupType, BotFeatureType, Chain } from "@x-ai-wallet-bot/common";
 import { Contract, ContractTransactionReceipt, ContractTransactionResponse, JsonRpcProvider, Wallet } from 'ethers';
 import { BotFeature } from "src/bot-feature/model/bot-feature";
@@ -30,7 +30,7 @@ export class AirdropSenderProvider extends BotFeatureProvider<AirdropSenderFeatu
       `On chain transaction sender`,
       `Sends airdrop tokens on chain`,
       FeatureConfigFormat,
-      (bot: Bot) => new AirdropSenderFeature(this, bot)
+      (bot, dbFeature) => new AirdropSenderFeature(this, bot, dbFeature)
     );
   }
 
@@ -51,8 +51,8 @@ export class AirdropSenderFeature extends BotFeature<FeatureConfigType> {
   private wallet: Wallet;
   private airdropContract: Contract;
 
-  constructor(provider: BotFeatureProvider<AirdropSenderFeature, typeof FeatureConfigFormat>, bot: Bot) {
-    super(provider, bot, 10);
+  constructor(provider: BotFeatureProvider<AirdropSenderFeature, typeof FeatureConfigFormat>, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 10);
 
     this.rpcProvider = new JsonRpcProvider(BotConfig.AirdropContest.Chain.rpcUrl);
     this.wallet = new Wallet(BotConfig.AirdropContest.WalletPrivateKey, this.rpcProvider);

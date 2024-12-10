@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { BotFeature as DBBotFeature } from "@prisma/client";
 import { BotFeatureType } from "@x-ai-wallet-bot/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { deepMergeAndPrune } from "src/utils/deep-merge-prune";
@@ -60,11 +61,11 @@ export class BotFeatureService {
   }
 
   /**
-   * Instantiates a feature instance specific to a bot
+   * Instantiates a memory feature instance specific to a bot
    */
-  public async newFromKey(bot: Bot, featureKey: BotFeatureType): Promise<AnyBotFeature> {
-    const provider = this.getFeatureProvider(featureKey);
-    const feature = provider.newInstance(bot);
+  public async newFromDBFeature(bot: Bot, dbFeature: DBBotFeature): Promise<AnyBotFeature> {
+    const provider = this.getFeatureProvider(dbFeature.type as BotFeatureType);
+    const feature = provider.newInstance(bot, dbFeature);
 
     // Safety check
     if (feature.runLoopMinIntervalSec === undefined && feature.scheduledExecution !== undefined)
@@ -118,7 +119,7 @@ export class BotFeatureService {
   public async resetBotFeatureConfig(bot: Bot, feature: AnyBotFeature): Promise<DefaultFeatureConfigType> {
     const defaultConfig = feature.provider.getDefaultConfig();
 
-    await this.prisma.botFeature.update({
+    const updatedDbFeature = await this.prisma.botFeature.update({
       where: {
         botId_type: {
           botId: bot.id,
@@ -128,7 +129,7 @@ export class BotFeatureService {
       data: { config: defaultConfig }
     });
 
-    feature.updateConfig(defaultConfig);
+    feature.updateDBFeature(updatedDbFeature);
 
     return defaultConfig;
   }

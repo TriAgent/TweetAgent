@@ -2,7 +2,7 @@ import { BaseMessageLike } from "@langchain/core/messages";
 import { XPost } from "@prisma/client";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { AppLogger } from "src/logs/app-logger";
-import { langchainService, xPostsService } from "src/services";
+import { debugCommentService, langchainService, xPostsService } from "src/services";
 import { z } from "zod";
 import { GenericReplierFeature, replierStateAnnotation } from "./generic-replier.feature";
 import { TweetTrait } from "./model/tweet-trait";
@@ -71,7 +71,7 @@ export const replyAgent = (feature: GenericReplierFeature, reply: XPost) => {
       messages,
       structuredOutput: z.object({
         reply: z.string().describe("The new tweet reply, if it was worth writing one. null otherwise"),
-        noReplyReason: z.string().describe("If you don't write a reply, explain why it was not worth it")
+        reason: z.string().describe("Explain why you decided to produce a reply or not")
       })
     });
 
@@ -79,9 +79,12 @@ export const replyAgent = (feature: GenericReplierFeature, reply: XPost) => {
 
     state.tweetReply = structuredResponse?.reply;
 
-    if (structuredResponse?.noReplyReason) {
-      logger.log(`No generic reply generated. Reason:`);
-      logger.log(structuredResponse?.noReplyReason);
+    if (structuredResponse?.reason) {
+      logger.log(`Generic reply reason:`);
+      logger.log(structuredResponse?.reason);
+
+      // Attach reply reason as comment
+      await debugCommentService().createPostComment(post, structuredResponse?.reason, feature.dbFeature);
     }
 
     return state;

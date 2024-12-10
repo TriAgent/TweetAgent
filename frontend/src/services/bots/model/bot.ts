@@ -140,4 +140,8 @@ export class Bot {
 
     return null;
   }
+
+  public getFeatureById(featureId: string):BotFeature {
+    return this.features$.value?.find(feature => feature.id === featureId);
+  }
 }

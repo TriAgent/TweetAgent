@@ -1,5 +1,5 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import { XPost } from "@prisma/client";
+import { BotFeature as DBBotFeature, XPost } from "@prisma/client";
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
@@ -31,7 +31,7 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
       `Post reposter`,
       `Quotes user posts from time to time, for the airdrop contest`,
       FeatureConfigFormat,
-      (bot: Bot) => new XPostContestReposterFeature(this, bot)
+      (bot, dbFeature) => new XPostContestReposterFeature(this, bot, dbFeature)
     );
   }
 
@@ -49,6 +49,7 @@ export class XPostContestReposterProvider extends BotFeatureProvider<XPostContes
 
 export const contestReposterStateAnnotation = Annotation.Root({
   electedPost: Annotation<XPost>,
+  mentioningPost: Annotation<XPost>,
   reply: Annotation<string>
 });
 
@@ -58,8 +59,8 @@ export const contestReposterStateAnnotation = Annotation.Root({
 export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XPostContestReposter", this.bot);
 
-  constructor(provider: XPostContestReposterProvider, bot: Bot) {
-    super(provider, bot, 20);
+  constructor(provider: XPostContestReposterProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 20);
 
     xPostsService().onPostPublished$.subscribe(post => this.handlePostPublished(post));
   }
@@ -93,10 +94,16 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
     if (result?.electedPost && result?.reply) {
       // A post has been elected for quoting. Schedule the post to X and mark it has handled.
 
+      // Retrieve the mentioning post
+      const postWithMoreInfo = await prisma().xPost.findFirst({
+        where: { id: result?.electedPost.id },
+        include: { contestMentioningPost: true }
+      });
+
       // Schedule the post
       this.logger.log("Scheduling new X reply post");
       await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, result.reply, {
-        isSimulated: result.electedPost.isSimulated,
+        isSimulated: postWithMoreInfo.contestMentioningPost.isSimulated, // Our quote post is simulated if the post requesting us to join the contest is simulated
         publishRequestAt: new Date(),
         quotedPostId: result.electedPost.postId,
         contestQuotedPostId: result.electedPost.id
@@ -119,14 +126,28 @@ export class XPostContestReposterFeature extends BotFeature<FeatureConfigType> {
     this.logger.log(`Creating a new reply for contest user to know our quote post has been published`);
     this.logger.log(post);
 
+    // Reload same quote post from database but with more data
+    const postWithMoreInfo = await prisma().xPost.findFirst({
+      where: { id: post.id },
+      include: {
+        contestQuotedPost: {
+          include: {
+            contestMentioningPost: true
+          }
+        }
+      }
+    });
+
+    const mentioningPost = postWithMoreInfo.contestQuotedPost.contestMentioningPost;
+
     // Schedule a reply to the mentionning user so he knows where to find the quote post and start marketing it to his user base.
-    const quotePostUrl = `https://x.com/@${this.bot.dbBot.twitterUserScreenName}/status/${post.postId}`;
+    const quotePostUrl = `https://x.com/${this.bot.dbBot.twitterUserScreenName}/status/${post.postId}`;
     const replyToMentioningUser = `Your post has been quoted! We will gather stats in a few days to determine your airdrop amount, enjoy. ${quotePostUrl}`;
     const rewrittenResponse = await xPostAIRewrite(this.bot, replyToMentioningUser);
     await xPostsService().createPost(this.bot.dbBot, this.bot.dbBot.twitterUserId, rewrittenResponse, {
-      isSimulated: post.isSimulated,
+      isSimulated: mentioningPost.isSimulated,
       publishRequestAt: new Date(),
-      parentPostId: post.postId
+      parentPostId: mentioningPost.postId
     });
   }
 }

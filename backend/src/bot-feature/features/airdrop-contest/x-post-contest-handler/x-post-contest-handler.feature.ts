@@ -1,4 +1,5 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
+import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
@@ -7,11 +8,13 @@ import { Bot } from "src/bots/model/bot";
 import { AppLogger } from "src/logs/app-logger";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z, infer as zodInfer } from "zod";
-import { studyForContest } from "./default-prompts";
-import { studyForContestAgent } from "./study-for-contest.agent";
+import { studyContestRequest, studyForContest } from "./default-prompts";
+import { studyContestRequestAgent } from "./study-contest-request.agent";
+import { studyWorthForContestAgent } from "./study-worth-for-contest.agent";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
   _prompts: z.object({
+    studyContestRequest: z.string(),
     studyForContest: z.string()
   })
 }).strict();
@@ -26,7 +29,7 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
       `Post handler`,
       `Classifies upcoming X posts as eligible for the airdrop contest or not`,
       FeatureConfigFormat,
-      (bot: Bot) => new XPostContestHandlerFeature(this, bot)
+      (bot, dbFeature) => new XPostContestHandlerFeature(this, bot, dbFeature)
     );
   }
 
@@ -34,6 +37,7 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
     return {
       enabled: true,
       _prompts: {
+        studyContestRequest,
         studyForContest
       }
     }
@@ -41,7 +45,8 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
 }
 
 export const contestHandlerStateAnnotation = Annotation.Root({
-  isWorthForContest: Annotation<boolean>,
+  isContestRequest: Annotation<boolean>, // Evaluated post must request to join the contest
+  isWorthForContest: Annotation<boolean>, // Target post (eg: conversation root) must be worth for contest
   reply: Annotation<string>
 });
 
@@ -52,8 +57,8 @@ export const contestHandlerStateAnnotation = Annotation.Root({
 export class XPostContestHandlerFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XPostContestHandler", this.bot);
 
-  constructor(provider: XPostContestHandlerProvider, bot: Bot) {
-    super(provider, bot, 5);
+  constructor(provider: XPostContestHandlerProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 5);
   }
 
   async studyReplyToXPost(post: XPostWithAccount): Promise<XPostReplyAnalysisResult> {
@@ -64,9 +69,10 @@ export class XPostContestHandlerFeature extends BotFeature<FeatureConfigType> {
       return null;
 
     const graph = new StateGraph(contestHandlerStateAnnotation)
-      .addNode("StudyForContest", studyForContestAgent(this, this.logger, post))
-      .addEdge(START, END)
-      .addEdge(START, "StudyForContest")
+      .addNode("StudyContestRequest", studyContestRequestAgent(this, this.logger, post))
+      .addNode("StudyForContest", studyWorthForContestAgent(this, this.logger, post))
+      .addEdge(START, "StudyContestRequest")
+      .addConditionalEdges("StudyContestRequest", (input) => input.isContestRequest ? "StudyForContest" : END)
       .addEdge("StudyForContest", END)
 
     const app = graph.compile();

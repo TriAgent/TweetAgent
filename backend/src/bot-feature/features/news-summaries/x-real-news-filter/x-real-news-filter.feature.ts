@@ -1,16 +1,15 @@
 import { END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
-import { XPost } from "@prisma/client";
+import { BotFeature as DBBotFeature, XPost } from "@prisma/client";
+import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
+import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { AppLogger } from "src/logs/app-logger";
 import { prisma } from "src/services";
-import { categorizeNewsAgent } from "./categorize-news.agent";
-
-import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
-import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { z, infer as zodInfer } from "zod";
 import { XPostFetcherFeature } from "../../x-core/x-posts-fetcher/x-post-fetcher.feature";
+import { categorizeNewsAgent } from "./categorize-news.agent";
 import { categorizeNews } from "./default-prompts";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
@@ -29,7 +28,7 @@ export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterF
       `Real news classifier`,
       `Classifies posts as real news or not (used by the news summary writer).`,
       FeatureConfigFormat,
-      (bot: Bot) => new XRealNewsFilterFeature(this, bot)
+      (bot, dbFeature) => new XRealNewsFilterFeature(this, bot, dbFeature)
     );
   }
 
@@ -49,8 +48,8 @@ export class XRealNewsFilterProvider extends BotFeatureProvider<XRealNewsFilterF
 export class XRealNewsFilterFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XRealNewsFilter", this.bot);
 
-  constructor(provider: XRealNewsFilterProvider, bot: Bot) {
-    super(provider, bot, 10);
+  constructor(provider: XRealNewsFilterProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 10);
   }
 
   public scheduledExecution() {

@@ -1,7 +1,4 @@
-- Debug notes: attach a note to any thing, including posts. 
-  - for example we can show reasons why a post is not worth for contest. Just a text with the optional post id, bot and feature type that generated it
-  - UI should auto update through WD for easy debugging.
-- ON GOING need to reply to the contest post mentioner after we publish the quote post, so he knows he can start sharing.
+- contest: mentioning post should request for contest, not just mention. otherwise simpel comments become for contest too
 - IMPORTANT don't ask for wallet address in replies if address has already been asked before in the conversation to avoid dead loop
 
 P2:

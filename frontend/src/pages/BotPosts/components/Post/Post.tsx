@@ -1,11 +1,13 @@
+import { DebugCommentList } from "@components/data/DebugCommentList/DebugCommentList";
 import { PostWriterModalContext } from "@components/modals/PostWriterModal/PostWriterModal";
 import { Comment, Repeat, Star } from "@mui/icons-material";
 import { Icon, IconButton, Stack } from "@mui/material";
 import { useActiveBot } from "@services/bots/hooks/useActiveBot";
 import { usePostByXPostId } from "@services/posts/hooks/usePost";
 import { XPost } from "@services/posts/model/x-post";
+import { useBehaviorSubject } from "@services/ui-ux/hooks/useBehaviorSubject";
 import { formatDate } from "@utils/dates";
-import { FC, useCallback, useContext } from "react";
+import { FC, useCallback, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PostTags } from "../PostTags/PostTags";
 import { HeaderSecondaryLabel, HeaderUserNameLabel, PostTextContainer, QuotedPostContainer, RepliedToLabel } from "./Post.styles";
@@ -20,6 +22,8 @@ export const Post: FC<{
   const parentPost = usePostByXPostId(post.parentPostId);
   const quotedPost = usePostByXPostId(post.quotedPostId);
   const botIsAuthor = post.xAccountUserId === activeBot.twitterUserId;
+  const debugComments = useBehaviorSubject(post.debugComments$);
+  const [showNotes, setShowNotes] = useState(false);
 
   const handlePostClicked = useCallback((post: XPost) => {
     navigate(`/bot/posts/${post.id}`);
@@ -40,7 +44,10 @@ export const Post: FC<{
         <HeaderUserNameLabel>{post.xAccount.userName}</HeaderUserNameLabel>
       </Stack>
       <HeaderSecondaryLabel>@{post.xAccount.userScreenName}</HeaderSecondaryLabel> <HeaderSecondaryLabel>{formatDate(post.createdAt)}</HeaderSecondaryLabel>
+      {debugComments?.length > 0 && <HeaderSecondaryLabel onClick={() => setShowNotes(!showNotes)} style={{ cursor: "pointer" }}>{debugComments?.length} notes</HeaderSecondaryLabel>}
     </Stack>
+
+    {showNotes && <DebugCommentList comments={debugComments} />}
 
     {/* Main content */}
     <PostTextContainer>

@@ -1,4 +1,5 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
+import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
@@ -26,7 +27,7 @@ export class XPostAirdropAddressProvider extends BotFeatureProvider<XPostAirdrop
       `Airdrop address collector`,
       `Collects user airdrop addresses from X posts and acknowledges with a reply when successfully handled`,
       FeatureConfigFormat,
-      (bot: Bot) => new XPostAirdropAddressFeature(this, bot)
+      (bot, dbFeature) => new XPostAirdropAddressFeature(this, bot, dbFeature)
     );
   }
 
@@ -49,8 +50,8 @@ export const airdropAddressStateAnnotation = Annotation.Root({
 export class XPostAirdropAddressFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XPostAirdropAddress", this.bot);
 
-  constructor(provider: XPostAirdropAddressProvider, bot: Bot) {
-    super(provider, bot, 20);
+  constructor(provider: XPostAirdropAddressProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 20);
   }
 
   async studyReplyToXPost(post: XPostWithAccount): Promise<XPostReplyAnalysisResult> {

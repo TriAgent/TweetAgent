@@ -68,9 +68,15 @@ export class LangchainService implements OnModuleInit {
 
     const allTools: StructureToolOrBindToolsInput[] = tools; // can be an empty array
 
+    messages.push(["system", `Today's date is ${new Date().toISOString()}. Make sure to take this date into account when answering`]);
+
     // If the output is structured, add it as a tool, this is the recommended way to mix tools and structured output.
-    if (structuredOutput)
+    if (structuredOutput) {
       allTools.push(zodSchemaToOpenAICompatibleTool(StructuredOutputToolName, structuredOutput));
+
+      // Try to make sure LLM always calls the structured output tool, otherwise it sometimes doesnt
+      messages.push(["system", "Return your reply as structured output and call suitable tools"]);
+    }
 
     const model = this.getModel().bindTools(allTools);
 
@@ -157,6 +163,8 @@ export class LangchainService implements OnModuleInit {
         const targetTool = callableTools.find(t => t.name === call.name);
         if (!targetTool)
           throw new Error(`Failed to invoke tool for tool call named ${call.name} as it's not in the provided tools list.`);
+
+        this.logger.log(`Invoking LLM tool: ${targetTool.name}`);
 
         // Invoke the tool. Output can be a string or a JS object, etc (anything decided by the tool).
         const toolInvocationResponse = await targetTool.invoke(call.args);

@@ -1,8 +1,9 @@
 import { PostTag } from "@services/features/feature-handler";
 import { featureHandlers } from "@services/features/features.service";
-import type { XAccount, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
-import { Expose, Type } from "class-transformer";
+import type { DebugComment as DebugCommentDTO, XAccount, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
+import { Expose, Transform, Type } from "class-transformer";
 import { flatten } from "lodash";
+import { BehaviorSubject } from "rxjs";
 
 type RefactoredXPost = Omit<XPostDTO, "createdAt"|"publishRequestAt"|"publishedAt">;
 
@@ -28,6 +29,11 @@ export class XPost implements RefactoredXPost {
   @Expose() public worthForAirdropContest?: boolean;
   @Expose() public contestQuotedPostId?:string;
   @Expose() public isRealNews: boolean;
+
+  @Expose({name: 'debugComments'}) 
+  @Transform(({ value }) => new BehaviorSubject<DebugCommentDTO[]>(value), { toClassOnly: true })  
+  @Transform(({ value }) => value.value, { toPlainOnly: true }) 
+  public debugComments$ = new BehaviorSubject<DebugCommentDTO[]>(undefined); 
 
   public getTags(): PostTag[] {
     return flatten(featureHandlers.map(h => h.getPostTags(this)));

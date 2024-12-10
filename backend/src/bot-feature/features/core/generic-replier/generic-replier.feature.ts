@@ -1,4 +1,5 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
+import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { XPostReplyAnalysisResult } from "src/bot-feature/model/x-post-reply-analysis-result";
 import { Bot } from "src/bots/model/bot";
@@ -39,7 +40,7 @@ export class GenericReplierProvider extends BotFeatureProvider<GenericReplierFea
       `Generic replier`,
       `Potentially writes generic replies to users posts for all interactions with us. Posts are first studied to decide if they are worth being replied or not. Then depending on their content, different kind of reply guidelines are used to produce replies.`,
       FeatureConfigFormat,
-      (bot: Bot) => new GenericReplierFeature(this, bot)
+      (bot, dbFeature) => new GenericReplierFeature(this, bot, dbFeature)
     );
   }
 
@@ -73,8 +74,8 @@ export let replierStateAnnotation = Annotation.Root({
 export class GenericReplierFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("GenericReplier", this.bot);
 
-  constructor(provider: GenericReplierProvider, bot: Bot) {
-    super(provider, bot, ProduceRepliesCheckDelaySec);
+  constructor(provider: GenericReplierProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, ProduceRepliesCheckDelaySec);
   }
 
   /**

@@ -1,5 +1,6 @@
 import { BotFeatureService } from "./bot-feature/bot-feature.service";
 import { BotsService } from "./bots/bots.service";
+import { DebugCommentService } from "./debug-comment/debug-comment.service";
 import { LangchainService } from "./langchain/langchain.service";
 import { app } from "./main";
 import { OperationHistoryService } from "./operation-history/operation-history.service";
@@ -48,4 +49,8 @@ export const operationHistoryService = (): OperationHistoryService => {
 
 export const wsDispatcherService = (): DispatcherService => {
   return app.get(DispatcherService);
+}
+
+export const debugCommentService = (): DebugCommentService => {
+  return app.get(DebugCommentService);
 }

@@ -24,10 +24,11 @@ model Bot {
   twitterAccessToken    String? // X access token for this user, after web/pin authorization
   twitterAccessSecret   String? // X secret token for this user, after web/pin authorization
 
-  botFeatures BotFeature[]
-  posts       XPost[]
-  logs        Log[]
-  airdrops    ContestAirdrop[]
+  botFeatures  BotFeature[]
+  posts        XPost[]
+  logs         Log[]
+  airdrops     ContestAirdrop[]
+  DebugComment DebugComment[]
 }
 
 // List of bot features for every bot.
@@ -39,8 +40,9 @@ model BotFeature {
   bot   Bot    @relation(fields: [botId], references: [id])
   botId String
 
-  type   String // BotFeatureType
-  config Json   @default("{}") // Feature-specific json config for the bot
+  type         String // BotFeatureType
+  config       Json           @default("{}") // Feature-specific json config for the bot
+  DebugComment DebugComment[]
 
   @@unique([botId, type])
 }
@@ -115,7 +117,8 @@ model XPost {
   contestQuotedPostId String? @unique
   contestQuotedByPost XPost?  @relation(name: "ContestQuotedPost") // Database bot post that quoted this user post, for the airdrop contest
 
-  postAirdrops PostContestAirdrop[] // Potential post airdrops this post got involved into. 0-2 possible (none vs airdrop to authord and/or mentionner).
+  postAirdrops  PostContestAirdrop[] // Potential post airdrops this post got involved into. 0-2 possible (none vs airdrop to authord and/or mentionner).
+  debugComments DebugComment[]
 
   @@unique([botId, postId])
 }
@@ -215,4 +218,25 @@ model Log {
 
   bot   Bot?    @relation(fields: [botId], references: [id]) // Optional bot related to this los entry
   botId String?
+}
+
+// Arbitrary comment attach to various kind of items such as posts.
+// Used by bot features to attach permanent debug info to what they do, so we can show more reasons on UI.
+// eg: why did a AI agent decide to not reply to a post?
+// Most fields are optional to remain flexible, as comments can be related to a bot or not, a feature or not, a 
+// post or not...
+model DebugComment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  text String // The comment itself
+
+  bot   Bot?    @relation(fields: [botId], references: [id])
+  botId String?
+
+  feature   BotFeature? @relation(fields: [featureId], references: [id])
+  featureId String?
+
+  post   XPost?  @relation(fields: [postId], references: [id])
+  postId String?
 }

@@ -1,3 +1,4 @@
+import { DebugComment } from "./debug-comment";
 import { XAccount } from "./x-account";
 
 export type XPost = {
@@ -20,6 +21,8 @@ export type XPost = {
   worthForAirdropContest?: boolean;
   contestQuotedPostId?: string;
   isRealNews?: boolean;
+
+  debugComments?: DebugComment[];
 }
 
 /**

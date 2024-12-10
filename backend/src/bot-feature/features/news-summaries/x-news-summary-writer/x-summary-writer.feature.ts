@@ -2,6 +2,7 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { RunnablePassthrough, RunnableSequence } from "@langchain/core/runnables";
 import { OpenAIEmbeddings } from "@langchain/openai";
+import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
@@ -34,7 +35,7 @@ export class XNewsSummaryWriterProvider extends BotFeatureProvider<XNewsSummaryW
       `Summary writer`,
       `From time to time, write news summary from cached news posts, and publish to X`,
       FeatureConfigFormat,
-      (bot: Bot) => new XNewsSummaryWriterFeature(this, bot)
+      (bot, dbFeature) => new XNewsSummaryWriterFeature(this, bot, dbFeature)
     );
   }
 
@@ -56,8 +57,8 @@ export class XNewsSummaryWriterProvider extends BotFeatureProvider<XNewsSummaryW
 export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XSummaryWriter", this.bot);
 
-  constructor(provider: XNewsSummaryWriterProvider, bot: Bot) {
-    super(provider, bot, PostXSummaryDelaySec);
+  constructor(provider: XNewsSummaryWriterProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, PostXSummaryDelaySec);
   }
 
   public scheduledExecution() {

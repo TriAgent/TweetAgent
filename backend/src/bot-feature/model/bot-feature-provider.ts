@@ -1,3 +1,4 @@
+import { BotFeature as DBBotFeature } from "@prisma/client";
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { Bot } from "src/bots/model/bot";
 import { z } from "zod";
@@ -22,11 +23,12 @@ export abstract class BotFeatureProvider<FeatureType extends BotFeature<any>, Co
     public title: string,
     public description: string,
     public configFormat: ConfigFormat, // Zod config 
-    private instanceBuilder: (bot: Bot) => FeatureType
+    private instanceBuilder: (bot: Bot, dbFeature: DBBotFeature) => FeatureType
   ) { }
 
-  public newInstance(bot: Bot): FeatureType {
-    return this.instanceBuilder(bot);
+  public newInstance(bot: Bot, dbFeature: DBBotFeature): FeatureType {
+    const instance = this.instanceBuilder(bot, dbFeature);
+    return instance;
   }
 
   public abstract getDefaultConfig(): DefaultFeatureConfigType;

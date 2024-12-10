@@ -1,4 +1,4 @@
-import { OperationHistoryType } from '@prisma/client';
+import { BotFeature as DBBotFeature, OperationHistoryType } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
 import { uniqWith } from 'lodash';
 import moment from 'moment';
@@ -29,7 +29,7 @@ export class XPostsFetcherProvider extends BotFeatureProvider<XPostFetcherFeatur
       `Post fetcher`,
       `Fetches and caches X Posts`,
       FeatureConfigFormat,
-      (bot: Bot) => new XPostFetcherFeature(this, bot)
+      (bot, dbFeature) => new XPostFetcherFeature(this, bot, dbFeature)
     );
   }
 
@@ -49,8 +49,8 @@ export class XPostsFetcherProvider extends BotFeatureProvider<XPostFetcherFeatur
 export class XPostFetcherFeature extends BotFeature<FeatureConfigType> {
   private logger = new AppLogger("XPostFetcher", this.bot);
 
-  constructor(provider: XPostsFetcherProvider, bot: Bot) {
-    super(provider, bot, 5);
+  constructor(provider: XPostsFetcherProvider, bot: Bot, dbFeature: DBBotFeature) {
+    super(provider, bot, dbFeature, 5);
   }
 
   public async scheduledExecution() {
