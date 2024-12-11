@@ -48,8 +48,8 @@ export class Bot {
     return this.features;
   }
 
-  public getFeatureByType(type: BotFeatureType) {
-    return this.features.find(feature => feature.provider.type === type);
+  public getFeatureByType<T extends AnyBotFeature = AnyBotFeature>(type: BotFeatureType): T {
+    return this.features.find(feature => feature.provider.type === type) as T;
   }
 
   public getRootFeature(): RootSchedulerFeature {

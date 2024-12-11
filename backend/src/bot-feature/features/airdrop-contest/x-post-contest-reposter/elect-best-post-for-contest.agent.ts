@@ -2,7 +2,7 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { Logger } from "@nestjs/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
-import { langchainService } from "src/services";
+import { debugCommentService, langchainService } from "src/services";
 import { z } from "zod";
 import { PendingContestPostLoader } from "./pending-contest-post-loader";
 import { contestReposterStateAnnotation, XPostContestReposterFeature } from "./x-post-contest-reposter.feature";
@@ -35,7 +35,8 @@ export const electBestPostForContestAgent = (feature: XPostContestReposterFeatur
       ],
       invocationParams: "",
       structuredOutput: z.object({
-        selectedPostId: z.string().describe("The selected post ID")
+        selectedPostId: z.string().describe("The selected post ID"),
+        reason: z.string().describe("The reason why you decided to select this post against the others")
       }),
       runnablesBefore: [{
         posts: vectorStoreRetriever
@@ -44,6 +45,9 @@ export const electBestPostForContestAgent = (feature: XPostContestReposterFeatur
 
     if (structuredResponse.selectedPostId)
       state.electedPost = docs.find(d => d.metadata.postId === structuredResponse.selectedPostId).metadata.post;
+
+    if (structuredResponse?.reason)
+      await debugCommentService().createPostComment(state.electedPost, structuredResponse?.reason, feature.dbFeature);
 
     return state;
   }

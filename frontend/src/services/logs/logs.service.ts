@@ -1,3 +1,5 @@
+import { apiGet } from "@services/api-base";
+import { backendUrl } from "@services/backend/backend";
 import { wsService } from "@services/backend/websocket-proxy";
 import { Log, LogType, LogUpdate } from "@x-ai-wallet-bot/common";
 import { Methods } from 'console-feed/lib/definitions/Methods';
@@ -15,9 +17,16 @@ export const logTypeToConsoleMethod = (logType: LogType): Methods => {
   }
 }
 
+const fetchLatestLogs = async () => {
+  const rawLogs = await apiGet<Log[]>(`${backendUrl}/logs/latest`);
+  logs$.next(rawLogs || []);
+}
+
 wsService.onNewMessage$.subscribe(message => {
   if (message.op === "log") {
     const logsUpdate = message as LogUpdate;
     logs$.next([...logs$.value, logsUpdate.data]);
   }
 });
+
+fetchLatestLogs();

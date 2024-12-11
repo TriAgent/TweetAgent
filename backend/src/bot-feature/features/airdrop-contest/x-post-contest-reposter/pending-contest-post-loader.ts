@@ -1,8 +1,10 @@
 import { BaseDocumentLoader } from "@langchain/core/document_loaders/base";
 import { Document } from "@langchain/core/documents";
+import { BotFeatureType } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { Bot } from "src/bots/model/bot";
 import { prisma } from "src/services";
+import { XPostContestHandlerFeature } from "../x-post-contest-handler/x-post-contest-handler.feature";
 
 export type SummaryDocument = Document<{ "authorId", "postId", "post" }>;
 
@@ -16,12 +18,15 @@ export class PendingContestPostLoader extends BaseDocumentLoader {
   }
 
   async load(): Promise<SummaryDocument[]> {
+    const airdropHandlerFeature = this.bot.getFeatureByType<XPostContestHandlerFeature>(BotFeatureType.AirdropContest_XPostContestHandler);
+    const maxAge = airdropHandlerFeature.config.maxPostAge;
+
     const posts = await prisma().xPost.findMany({
       where: {
         botId: this.bot.id,
         worthForAirdropContest: true,
         quotedForAirdropContestAt: null,
-        publishedAt: { gt: moment().subtract(6, "hours").toDate() } // Dismiss old posts, we only want fresh ones
+        publishedAt: { gt: moment().subtract(maxAge, "seconds").toDate() } // Dismiss old posts, we only want fresh ones
       },
       orderBy: { createdAt: "desc" },
       take: 3,

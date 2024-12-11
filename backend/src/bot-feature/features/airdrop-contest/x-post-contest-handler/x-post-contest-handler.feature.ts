@@ -13,9 +13,10 @@ import { studyContestRequestAgent } from "./study-contest-request.agent";
 import { studyWorthForContestAgent } from "./study-worth-for-contest.agent";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
+  maxPostAge: z.number().describe("Post must not be older (published date) than this number of seconds to have a chance to get elected"),
   _prompts: z.object({
     studyContestRequest: z.string(),
-    studyForContest: z.string()
+    studyForContest: z.string(),
   })
 }).strict();
 
@@ -36,6 +37,7 @@ export class XPostContestHandlerProvider extends BotFeatureProvider<XPostContest
   public getDefaultConfig(): DefaultFeatureConfigType<z.infer<typeof FeatureConfigFormat>> {
     return {
       enabled: true,
+      maxPostAge: 6 * 60 * 60, // 6 hours
       _prompts: {
         studyContestRequest,
         studyForContest

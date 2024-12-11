@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { XPost } from "@prisma/client";
+import moment from "moment";
 import { debugCommentService, langchainService, xPostsService } from "src/services";
 import { XPostWithAccount } from "src/xposts/model/xpost-with-account";
 import { z } from "zod";
@@ -34,6 +35,12 @@ export const studyWorthForContestAgent = (feature: XPostContestHandlerFeature, l
     // Make sure the root is not our own bot post
     if (postEvaluatedForContest.xAccountUserId === feature.bot.dbBot.twitterUserId)
       return state;
+
+    // Post must not be too old
+    if (moment().diff(postEvaluatedForContest.publishedAt, "seconds") > feature.config.maxPostAge) {
+      await debugCommentService().createPostComment(post, "Ths post is too old to get elected for the airdrop contest", feature.dbFeature);
+      return state;
+    }
 
     const targetMentioningPost = post;
 
