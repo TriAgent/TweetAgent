@@ -21,7 +21,7 @@ export const Post: FC<{
   const { openPostWriter } = useContext(PostWriterModalContext);
   const parentPost = usePostByXPostId(post.parentPostId);
   const quotedPost = usePostByXPostId(post.quotedPostId);
-  const botIsAuthor = post.xAccountUserId === activeBot.twitterUserId;
+  const botIsAuthor = post.xAccountUserId === activeBot?.twitterUserId;
   const debugComments = useBehaviorSubject(post.debugComments$);
   const [showNotes, setShowNotes] = useState(false);
 

@@ -1,3 +1,4 @@
+import { DebugComment } from "./debug-comment";
 import { ActiveFeature } from "./feature";
 import { Log } from "./log";
 import { State } from "./state";
@@ -23,3 +24,5 @@ export type LogUpdate = DispatcherUpdate<"log", Log>;
 export type XPostUpdate = DispatcherUpdate<"xpost", XPost>;
 
 export type ActiveFeatureUpdate = DispatcherUpdate<"active-feature", ActiveFeature>;
+
+export type DebugCommentUpdate = DispatcherUpdate<"debugcomment", DebugComment>;

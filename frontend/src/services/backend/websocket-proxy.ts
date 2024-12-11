@@ -42,10 +42,7 @@ export class WebsocketProxy {
         case "log":
         case "xpost":
         case "active-feature":
-          // case "state":
-          //   const stateUpdate = message as StateUpdate;
-          // backendState$.next(stateUpdate.data);
-          // break;
+        case "debugcomment":
           this.onNewMessage$.next(message);
           break;
         default:

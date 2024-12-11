@@ -76,7 +76,10 @@ export class XPostsHandlerFeature extends BotFeature<FeatureConfigType> {
         botId: this.bot.id,
         wasReplyHandled: false
       },
-      include: { xAccount: true }
+      include: {
+        xAccount: true,
+        debugComments: true
+      }
     });
 
     if (!xPost)

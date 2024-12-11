@@ -1,3 +1,4 @@
+import { onDebugComment$ } from "@services/debug-comments/debug-comments.service";
 import { PostTag } from "@services/features/feature-handler";
 import { featureHandlers } from "@services/features/features.service";
 import type { DebugComment as DebugCommentDTO, XAccount, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
@@ -34,6 +35,17 @@ export class XPost implements RefactoredXPost {
   @Transform(({ value }) => new BehaviorSubject<DebugCommentDTO[]>(value), { toClassOnly: true })  
   @Transform(({ value }) => value.value, { toPlainOnly: true }) 
   public debugComments$ = new BehaviorSubject<DebugCommentDTO[]>(undefined); 
+
+  constructor() {
+    onDebugComment$.subscribe(debugComment => {
+      if (debugComment.postId === this.id) {
+        this.debugComments$.next([
+          ...(this.debugComments$.value || []).filter(c => c.id !== debugComment.id),
+          debugComment
+        ]);
+      }
+    })
+  }
 
   public getTags(): PostTag[] {
     return flatten(featureHandlers.map(h => h.getPostTags(this)));

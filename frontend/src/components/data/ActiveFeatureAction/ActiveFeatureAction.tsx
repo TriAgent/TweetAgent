@@ -19,7 +19,7 @@ export const ActiveFeatureAction: FC = () => {
   const botName = useMemo(() => {
     if (displayedAction?.botId) {
       const bot = getBotById(displayedAction?.botId);
-      return bot.name;
+      return bot?.name;
     }
     return undefined;
   }, [displayedAction]);

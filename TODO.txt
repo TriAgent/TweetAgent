@@ -1,14 +1,18 @@
-- contest: mentioning post should request for contest, not just mention. otherwise simpel comments become for contest too
-- IMPORTANT don't ask for wallet address in replies if address has already been asked before in the conversation to avoid dead loop
+- sunny: know the reason why a post was selected for the airdrop or not
+- new post while on a specific post page should update correctly, not with all news posts
+- time between 2 news summaries is wrong, just a few minutes + make it customizable from ui
+- Deploy new version, with prisma reset
+
+- release target date: january 15 - need to provide usage guidelines before that for PR.
 
 P2:
+- WS event for new airdrops + refresh on UI
 - show recent logs after reloading the frontend. Not just "WS client connected". (but truncate on the backend side)
 - accounts list: ability to click a user id to reach his X profile.
 - post sender feature: configurable min delay between posts
-- WS event for new airdrops + refresh on UI
+- Don't ask for wallet address in replies if address has already been asked before in the conversation to avoid dead loop
 
 P3:
-- show WS status on UI, to be aware when server has crashed.
 - Ability to configure X accounts to get news from, from UI (store in summary news feature)
 - posts list : pagination and auto fetch more
 - bug: bot list name not changing when bot name changes in settings

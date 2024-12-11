@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { Log } from "@prisma/client";
-import { ActiveFeatureUpdate, BotFeatureType, DispatcherUpdate, LogType, LogUpdate, State, StateUpdate, XPostUpdate } from "@x-ai-wallet-bot/common";
+import { DebugComment, Log } from "@prisma/client";
+import { ActiveFeatureUpdate, BotFeatureType, DebugCommentUpdate, DispatcherUpdate, LogType, LogUpdate, State, StateUpdate, XPostUpdate } from "@x-ai-wallet-bot/common";
 import moment from "moment";
 import { AnyBotFeature } from "src/bot-feature/model/bot-feature";
 import { Bot } from "src/bots/model/bot";
@@ -38,6 +38,10 @@ export class DispatcherService {
       createdAt: post.createdAt.toISOString(),
       publishRequestAt: post.publishRequestAt?.toISOString(),
       publishedAt: post.publishedAt?.toISOString(),
+      debugComments: post.debugComments.map(dc => ({
+        ...dc,
+        createdAt: dc.createdAt.toISOString()
+      }))
     };
     this.emit<XPostUpdate>(`xpost`, { op: "xpost", data: postDto });
   }
@@ -51,6 +55,14 @@ export class DispatcherService {
         date: moment().toISOString()
       }
     });
+  }
+
+  public emitDebugComment(debugComment: DebugComment) {
+    const dcDto = {
+      ...debugComment,
+      createdAt: debugComment.createdAt.toISOString()
+    };
+    this.emit<DebugCommentUpdate>(`debugcomment`, { op: "debugcomment", data: dcDto });
   }
 
   public emitState(state: State) {

@@ -244,7 +244,8 @@ export class XPostsService {
     const post = await this.prisma.xPost.create({
       data: createData,
       include: {
-        xAccount: true
+        xAccount: true,
+        debugComments: true
       }
     });
 
@@ -258,7 +259,8 @@ export class XPostsService {
       where: { id },
       data,
       include: {
-        xAccount: true
+        xAccount: true,
+        debugComments: true
       }
     });
     this.emitPostWSUpdate(updatedPost);

@@ -2,12 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { BotFeature, DebugComment, XPost } from '@prisma/client';
 import { AppLogger } from 'src/logs/app-logger';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { DispatcherService } from 'src/websockets/dispatcher.service';
 
 @Injectable()
 export class DebugCommentService {
   private logger = new AppLogger("DebugComment");
 
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private dispatcher: DispatcherService
+  ) { }
 
   /**
    * @param postId DB Id, not X
@@ -32,6 +36,8 @@ export class DebugCommentService {
         text
       }
     });
+
+    this.dispatcher.emitDebugComment(comment);
 
     return comment;
   }

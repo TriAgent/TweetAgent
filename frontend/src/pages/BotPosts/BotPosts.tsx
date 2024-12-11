@@ -35,11 +35,25 @@ const BotPosts: FC = () => {
       if (newPost.botId !== activeBot.id)
         return;
 
-      // Delete post from current list if existing. Then re-add in any case.
-      const newPosts: XPost[] = posts?.filter(p => p.id !== newPost.id);
-      newPosts.push(newPost);
-      newPosts.sort((p1, p2) => p2.createdAt.getTime() - p1.createdAt.getTime());
-      setPosts(newPosts);
+      if (rootPost?.id === newPost.id) {
+        // Upcoming post is an update for the root post
+        setRootPost(newPost);
+      }
+      else {
+        if (rootPost && newPost.parentPostId !== rootPost.postId) {
+          // This is not for this page, as we are showing a root post thread but 
+          // the upcoming post has a different parent post id. Do nothing
+        }
+        else {
+          // Same root post, so we can upsert the upcoming post to the current posts list
+          const newPosts: XPost[] = [
+            ...posts?.filter(p => p.id !== newPost.id),
+            newPost
+          ];
+          newPosts.sort((p1, p2) => p2.createdAt.getTime() - p1.createdAt.getTime());
+          setPosts(newPosts);
+        }
+      }
     });
 
     return () => sub?.unsubscribe();
