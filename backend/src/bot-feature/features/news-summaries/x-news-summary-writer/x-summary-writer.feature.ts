@@ -5,13 +5,14 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from "@x-ai-wallet-bot/common";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import moment from "moment";
 import { BotFeature } from "src/bot-feature/model/bot-feature";
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from "src/bot-feature/model/bot-feature-provider";
 import { Bot } from "src/bots/model/bot";
 import { forbiddenWordsPromptChunk, tweetCharactersSizeLimitationPromptChunk } from "src/langchain/prompt-parts";
 import { formatDocumentsAsString } from "src/langchain/utils";
 import { AppLogger } from "src/logs/app-logger";
-import { langchainService, xPostsService } from "src/services";
+import { langchainService, prisma, xPostsService } from "src/services";
 import { z, infer as zodInfer } from "zod";
 import { createNewsSummary } from "./default-prompts";
 import { SummaryDocument, SummaryPostLoader } from "./summary-post-loader";
@@ -20,6 +21,7 @@ const PostXSummaryDelaySec = 1 * 60 * 60; // 1 hour
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
   simulatedSummaries: z.boolean().describe('If true, summary news remain in database and are never published to X'),
+  minIntervalBetweenSummaries: z.number().describe("Minimum number of seconds between 2 summaries"),
   _prompts: z.object({
     createNewsSummary: z.string()
   })
@@ -43,6 +45,7 @@ export class XNewsSummaryWriterProvider extends BotFeatureProvider<XNewsSummaryW
     return {
       enabled: true,
       simulatedSummaries: true,
+      minIntervalBetweenSummaries: 1 * 60 * 60, // 1 hour
       _prompts: {
         createNewsSummary
       }
@@ -66,6 +69,22 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
   }
 
   public async createRecentTweetsSummary() {
+    // Make sure enough time has passed since the most recent summary
+    const limitDate = moment().subtract(this.config.minIntervalBetweenSummaries, "seconds").toDate();
+    const recentSummary = await prisma().xPost.findFirst({
+      where: {
+        OR: [
+          // Post must have been either created, orpublished more than X seconds ago
+          { createdAt: { gt: limitDate } },
+          { publishedAt: { gt: limitDate } }
+        ],
+        summarySourcePosts: { some: {} } // Summarizing posts only
+      }
+    });
+
+    if (recentSummary)
+      return;
+
     const loader = new SummaryPostLoader(this.bot);
     const docs = await loader.load();
 
@@ -130,57 +149,3 @@ export class XNewsSummaryWriterFeature extends BotFeature<FeatureConfigType> {
     }
   }
 }
-
-/*
-    // Tools
-    const tavilyTool = new TavilySearchResults({
-      apiKey: this.langchain.tavilyAPIKey,
-      maxResults: 1
-    });
-    const tools = [];// [tavilyTool];
-    const toolNode = new ToolNode(tools);
-
-    // LLM model
-    const model = new ChatOpenAI({ apiKey: this.langchain.openAIAPIKey, model: 'gpt-4o-2024-08-06', temperature: 0 }).bindTools(tools);
-
-    // Define the function that determines whether to continue or not
-    const shouldContinue = ({ messages }: typeof MessagesAnnotation.State): string => {
-      const lastMessage = messages[messages.length - 1];
-
-      // If the LLM makes a tool call, then we route to the "tools" node
-      if (lastMessage.additional_kwargs.tool_calls) {
-        return "tools";
-      }
-      // Otherwise, we stop (reply to the user) using the special "__end__" node
-      return "__end__";
-    }
-
-    // Define the function that calls the model
-    const callModel = async (state: typeof MessagesAnnotation.State) => {
-      const response = await model.invoke(state.messages);
-      // We return a list, because this will get added to the existing list
-      return { messages: [response] };
-    }
-
-    // Define a new graph
-    const workflow = new StateGraph(MessagesAnnotation)
-      .addNode("agent", callModel)
-      .addNode("tools", toolNode)
-      .addEdge("__start__", "agent") // __start__ is a special name for the entrypoint
-      .addEdge("tools", "agent")
-      .addConditionalEdges("agent", shouldContinue);
-
-    const app = workflow.compile();
-
-    const finalState = await app.invoke({
-      messages: [new HumanMessage("what is the weather in sf")],
-    });
-    console.log(finalState.messages[finalState.messages.length - 1].content);
-
-    // const nextState = await app.invoke({
-    //   // Including the messages from the previous run gives the LLM context.
-    //   // This way it knows we're asking about the weather in NY
-    //   messages: [...finalState.messages, new HumanMessage("what about ny")],
-    // });
-    // console.log(nextState.messages[nextState.messages.length - 1].content);
-*/
