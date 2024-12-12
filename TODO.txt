@@ -1,5 +1,3 @@
-- sunny: know the reason why a post was selected for the airdrop or not
-- time between 2 news summaries is wrong, just a few minutes + make it customizable from ui
 - Deploy new version, with prisma reset
 
 - release target date: january 15 - need to provide usage guidelines before that for PR.

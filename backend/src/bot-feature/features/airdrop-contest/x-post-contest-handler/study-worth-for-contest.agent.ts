@@ -28,6 +28,7 @@ export const studyWorthForContestAgent = (feature: XPostContestHandlerFeature, l
 
     // Make sure the root has not been evaluated (worth) to true or false yet (should be null)
     if (postEvaluatedForContest.worthForAirdropContest !== null) {
+      await debugCommentService().createPostComment(post, "The targeted post has already been evaluated for the airdrop contest before", feature.dbFeature);
       logger.warn(`Target post already evaluated for contest. Skipping`);
       return state;
     }
@@ -38,7 +39,7 @@ export const studyWorthForContestAgent = (feature: XPostContestHandlerFeature, l
 
     // Post must not be too old
     if (moment().diff(postEvaluatedForContest.publishedAt, "seconds") > feature.config.maxPostAge) {
-      await debugCommentService().createPostComment(post, "Ths post is too old to get elected for the airdrop contest", feature.dbFeature);
+      await debugCommentService().createPostComment(post, "The post is too old to get elected for the airdrop contest", feature.dbFeature);
       return state;
     }
 

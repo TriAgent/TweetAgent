@@ -1,5 +1,6 @@
 export const studyContestRequest = `
-If the following twitter post seems to be a request to join our airdrop contest, return true for the "isContestRequest" field. Otherwise return false.
+If the following twitter post seems to be a request to join our airdrop contest, or seems to be refering to a post that could join the contest,
+return true for the "isContestRequest" field. Otherwise return false.
 Also explain the reason for your decision as "reason" output.
 
 Here is the post:
