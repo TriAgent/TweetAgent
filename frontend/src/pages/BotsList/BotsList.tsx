@@ -4,21 +4,16 @@ import { IconButton, List, ListItemButton, ListItemText, Stack } from "@mui/mate
 import { createBot, setActiveBot } from "@services/bots/bots.service";
 import { useBots } from "@services/bots/hooks/useBots";
 import { Bot } from "@services/bots/model/bot";
+import { useBehaviorSubject } from "@services/ui-ux/hooks/useBehaviorSubject";
 import { FC, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 const BotsList: FC = () => {
   const bots = useBots();
-  const navigate = useNavigate();
 
   const handleCreateBot = useCallback(() => {
     createBot();
   }, []);
-
-  const handleBotClicked = useCallback((bot: Bot) => {
-    setActiveBot(bot);
-    navigate(`/bot/settings`);
-  }, [navigate]);
 
   return (
     <>
@@ -30,15 +25,28 @@ const BotsList: FC = () => {
           </IconButton>
         </Stack>
         <List>
-          {bots.map((bot, i) => (
-            <ListItemButton key={i} onClick={() => handleBotClicked(bot)}>
-              <ListItemText primary={bot.name} />
-            </ListItemButton>
-          ))}
+          {bots.map((bot, i) => <BotEntry key={i} bot={bot} />)}
         </List>
       </Stack>
     </>
   );
 };
+
+
+const BotEntry: FC<{
+  bot: Bot;
+}> = ({ bot }) => {
+  const name = useBehaviorSubject(bot.name$);
+  const navigate = useNavigate();
+
+  const handleBotClicked = useCallback((bot: Bot) => {
+    setActiveBot(bot);
+    navigate(`/bot/settings`);
+  }, [navigate]);
+
+  return <ListItemButton onClick={() => handleBotClicked(bot)}>
+    <ListItemText primary={name} />
+  </ListItemButton>
+}
 
 export default BotsList;

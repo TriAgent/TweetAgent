@@ -1,4 +1,5 @@
-- Deploy new version, with prisma reset
+- bug: bot list name not changing when bot name changes in settings
+- Ability to configure X accounts to get news from, from UI (store in summary news feature)
 
 - release target date: january 15 - need to provide usage guidelines before that for PR.
 
@@ -8,9 +9,7 @@ P2:
 
 P3:
 - accounts list: ability to click a user id to reach his X profile.
-- Ability to configure X accounts to get news from, from UI (store in summary news feature)
 - posts list : pagination and auto fetch more
-- bug: bot list name not changing when bot name changes in settings
 
 AIRDROPS:
 - other ideas:

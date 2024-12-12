@@ -6,19 +6,23 @@ import { XPost } from "@services/posts/model/x-post";
 import { onPostUpdate$ } from "@services/posts/posts.service";
 import { notifyDataSaved } from "@services/ui-ux/ui.service";
 import { Bot as BotDTO, BotFeature as BotFeatureConfigDTO, ContestAirdrop as ContestAirdropDTO, LinkedTwitterAccountInfo, TwitterAuthenticationRequest, XAccount as XAccountDTO, XPostCreationDTO, XPost as XPostDTO } from "@x-ai-wallet-bot/common";
-import { Expose, instanceToPlain, plainToInstance } from "class-transformer";
+import { Expose, instanceToPlain, plainToInstance, Transform } from "class-transformer";
 import { BehaviorSubject, Subject } from "rxjs";
 import { BotFeature } from "../../features/model/bot-feature";
 import { setActiveBot } from "../bots.service";
 
 export class Bot {
   @Expose() public id: string;
-  @Expose() public name: string;
   @Expose() public twitterUserId?: string; // X user id eg: 1849649146669695000
   @Expose() public twitterUserName?: string; // X user name eg: Proctar Elastos
   @Expose() public twitterUserScreenName?: string; // X user name eg: proctar2626
   @Expose() public twitterAccessToken?: string; // X access token for this user, after web/pin authorization
   @Expose() public twitterAccessSecret?: string; // X secret token for this user, after web/pin authorization
+  
+  @Expose({name: 'name'}) 
+  @Transform(({ value }) =>new BehaviorSubject<string>(value), { toClassOnly: true })  
+  @Transform(({ value }) => value.value, { toPlainOnly: true }) 
+  public name$: BehaviorSubject<string>;
 
   public features$ = new BehaviorSubject<BotFeature[]>(undefined);
 
