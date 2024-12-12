@@ -1,14 +1,15 @@
 import { BotFeature as DBBotFeature } from '@prisma/client';
 import { BotFeatureGroupType, BotFeatureType } from '@x-ai-wallet-bot/common';
+import moment from 'moment';
 import { BotFeature } from 'src/bot-feature/model/bot-feature';
 import { BotFeatureProvider, BotFeatureProviderConfigBase, DefaultFeatureConfigType } from 'src/bot-feature/model/bot-feature-provider';
 import { Bot } from 'src/bots/model/bot';
 import { AppLogger } from 'src/logs/app-logger';
 import { xPostsService } from 'src/services';
-import { infer as zodInfer } from "zod";
+import { z, infer as zodInfer } from "zod";
 
 const FeatureConfigFormat = BotFeatureProviderConfigBase.extend({
-  //snapshotInterval: z.number().describe('Min delay (in seconds) between 2 airdrop snapshots')
+  minPostInterval: z.number().describe('Min delay (in seconds) between 2 posts publishing (to avoid spamming X)')
 }).strict();
 
 type FeatureConfigType = Required<zodInfer<typeof FeatureConfigFormat>>;
@@ -28,7 +29,7 @@ export class XPostsSenderProvider extends BotFeatureProvider<XPostSenderFeature,
   public getDefaultConfig(): DefaultFeatureConfigType<zodInfer<typeof FeatureConfigFormat>> {
     return {
       enabled: false,
-      //snapshotInterval: 24 * 60 * 60 // 1 per day
+      minPostInterval: 1 * 60 // 1 minute
     }
   }
 }
@@ -41,7 +42,10 @@ export class XPostSenderFeature extends BotFeature<FeatureConfigType> {
   }
 
   public async scheduledExecution() {
-    // Send our pending posts
-    await xPostsService().sendPendingXPosts();
+    const mostRecentlyPublishedPost = await xPostsService().getMostRecentlyPublishedPost(this.bot);
+    if (!mostRecentlyPublishedPost || moment().diff(mostRecentlyPublishedPost.publishedAt, "seconds") > this.config.minPostInterval) {
+      // Send our pending posts
+      await xPostsService().sendNextPendingXPost();
+    }
   }
 }

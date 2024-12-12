@@ -110,11 +110,17 @@ export class XPostFetcherFeature extends BotFeature<FeatureConfigType> {
         const quotedPostId = tweet.referenced_tweets?.find(t => t.type === "quoted")?.id;
         if (quotedPostId) {
           this.logger.log(`Fetching quoted post for mentioning post`);
-          fetchedTweets.push(await twitterService().fetchSinglePost(this.bot, quotedPostId));
+          const quotePost = await twitterService().fetchSinglePost(this.bot, quotedPostId);
+          if (!quotePost)
+            return []; // Make the whole retrieval fail 
+          fetchedTweets.push(quotePost);
         }
 
         this.logger.log(`Fetching parent conversation for mentioning post`);
-        fetchedTweets.push(...(await twitterService().fetchParentPosts(this.bot, tweet.id)));
+        const parentPosts = await twitterService().fetchParentPosts(this.bot, tweet.id);
+        if (!parentPosts)
+          return []; // Make the whole retrieval fail 
+        fetchedTweets.push(...parentPosts);
       }
 
       return uniqWith(fetchedTweets, (t1, t2) => t1.id === t2.id);

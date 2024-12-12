@@ -4,7 +4,6 @@
 
 P2:
 - WS event for new airdrops + refresh on UI
-- post sender feature: configurable min delay between posts
 - Don't ask for wallet address in replies if address has already been asked before in the conversation to avoid dead loop
 
 P3:

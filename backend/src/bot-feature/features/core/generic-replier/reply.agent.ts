@@ -18,10 +18,6 @@ export const replyAgent = (feature: GenericReplierFeature, reply: XPost) => {
       tweetReply: z.string().describe("The tweet reply"),
     });
 
-    const model = langchainService().getModel().withStructuredOutput(outputSchema);
-
-    //const botAccount = await twitterAuthService().getAuthenticatedBotAccount();
-
     // Retrieve conversation
     // TODO: store in state for multiple agents to use it?
     const conversation = await xPostsService().getParentConversation(feature.bot, reply.postId);

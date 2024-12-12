@@ -46,7 +46,11 @@ export class LangchainService implements OnModuleInit {
   public get tavilyAPIKey() { return this._tavilyAPIKey }
 
   public getModel(temperature = 0): ChatOpenAI {
-    return new ChatOpenAI({ apiKey: this._openAIAPIKey, model: 'gpt-4o-2024-08-06', temperature });
+    return new ChatOpenAI({
+      apiKey: this._openAIAPIKey,
+      model: 'gpt-4o-2024-08-06',
+      temperature
+    });
   }
 
   /**

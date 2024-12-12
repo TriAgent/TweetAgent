@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Bot as DBBot, Prisma, XPost } from '@prisma/client';
 import { XPostCreationDTO } from '@x-ai-wallet-bot/common';
-import moment from 'moment';
 import { Subject } from 'rxjs';
 import { BotsService } from 'src/bots/bots.service';
 import { Bot } from 'src/bots/model/bot';
@@ -114,27 +113,25 @@ export class XPostsService {
   }
 
   /**
-   * Sends a queued post in database, that has not been puslished to twitter yet.
-   * In case the original post text is too long, the post is split into sub-tweets and
-   * therefore also into sub-posts on our end.
+   * Returns the X post most recently published by the given bot.
    */
-  public async sendPendingXPosts() {
+  public async getMostRecentlyPublishedPost(bot: Bot): Promise<XPost> {
     // Make sure we haven't published too recently
-    const mostRecentlyPublishedPost = await this.prisma.xPost.findFirst({
+    return this.prisma.xPost.findFirst({
       where: {
         publishRequestAt: { not: null },
-        AND: [
-          { publishedAt: { not: null } },
-          // TODO: replace code below with a "publish not before date" field in database, to be more generic
-          { publishedAt: { gt: moment().subtract(2, "minutes").toDate() } }
-        ]
+        publishedAt: { not: null }
       },
       orderBy: { publishedAt: "desc" }
     });
+  }
 
-    if (mostRecentlyPublishedPost)
-      return;
-
+  /**
+   * Sends a queued post in database, that has not been published to twitter yet.
+   * In case the original post text is too long, the post is split into sub-tweets and
+   * therefore also into sub-posts on our end.
+   */
+  public async sendNextPendingXPost() {
     // Find a tweet that we can send.
     const postToSend = await this.prisma.xPost.findFirst({
       where: {
